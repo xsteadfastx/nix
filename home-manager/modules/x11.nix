@@ -23,9 +23,7 @@ in
       # quickemu
       arandr
       bumblebee-status
-      dunst
       evince
-      flameshot
       gimp
       handbrake
       libmediainfo
@@ -40,7 +38,6 @@ in
       pkgs.calibre
       rawtherapee
       remmina
-      rofi
       rustdesk
       signal-desktop
       slack
