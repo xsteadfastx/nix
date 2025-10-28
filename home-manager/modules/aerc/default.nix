@@ -1,6 +1,5 @@
 {
   lib,
-  nixosConfig,
   pkgsUnstable,
   ...
 }:
@@ -20,8 +19,31 @@
       archive           = [Gmail]/All Mail
       cache-headers     = true
     '';
-  }
-  // lib.optionalAttrs (!nixosConfig.virtualisation ? vmVariant) { mode = "0600"; };
+    target = ".config/aerc/accounts.conf";
+    onChange = ''
+      chmod 600 ~/.config/aerc/accounts.conf
+    '';
+    force = true;
+  };
+
+  home.activation.secureAercConf = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    echo "Securing ~/.config/aerc/accounts.conf..."
+    target="$HOME/.config/aerc/accounts.conf"
+
+    if [ -L "$target" ]; then
+      echo "→ Replacing symlink with writable file"
+      src="$(readlink -f "$target")"
+      mkdir -p "$(dirname "$target")"
+      rm -f "$target"
+      cp -f "$src" "$target"
+      chmod 600 "$target"
+    elif [ -e "$target" ]; then
+      echo "→ File already exists, adjusting permissions"
+      chmod 600 "$target"
+    else
+      echo "⚠️ Warning: $target not found"
+    fi
+  '';
 
   xdg.configFile."aerc/aerc.conf".source = ./aerc.conf;
 
