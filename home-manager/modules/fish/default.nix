@@ -10,6 +10,9 @@
     recursive = true;
   };
 
+  xdg.configFile."fish/functions/fzf_key_bindings.fish".source =
+    "${pkgsUnstable.fzf}/share/fzf/key-bindings.fish";
+
   xdg.configFile."starship.toml".text = ''
     [kubernetes]
     disabled = false
