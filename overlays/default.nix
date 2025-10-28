@@ -1,5 +1,5 @@
 { inputs, ... }:
-final: prev: {
+_final: prev: {
   # needed because there is a system gpg-agent and gpg from wrapped gopass mismatch
   gopass = prev.gopass.overrideAttrs rec {
     wrapperPath = prev.lib.makeBinPath (

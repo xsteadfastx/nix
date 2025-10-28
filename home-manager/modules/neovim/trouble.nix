@@ -1,4 +1,9 @@
-{pkgsUnstable, nixosConfig, lib,...}:
+{
+  pkgsUnstable,
+  nixosConfig,
+  lib,
+  ...
+}:
 let
   cfg = nixosConfig.xsfx;
 

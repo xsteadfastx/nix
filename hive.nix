@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
 {
   meta = {
     nixpkgs = import inputs.nixpkgs {
@@ -22,21 +22,5 @@
       };
     };
 
-  troy =
-    { ... }:
-    {
-      imports = [
-        ./modules/home-manager
-        ./hosts/troy
-        inputs.home-manager.nixosModules.home-manager
-        inputs.nixos-hardware.nixosModules.dell-xps-13-7390
-      ];
-
-      xsfx.kodi = true;
-      xsfx.neovim = true;
-      xsfx.work = true;
-      xsfx.x11 = true;
-
-      home-manager.users.marv = import ./home-manager/marv.nix;
-    };
+  troy = import ./hosts/troy { inherit inputs lib; };
 }

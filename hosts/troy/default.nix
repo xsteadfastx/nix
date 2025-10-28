@@ -1,15 +1,23 @@
-{ lib, ... }:
+{ lib, inputs, ... }:
 {
   imports = [
+    ../../modules/home-manager
     ./configuration.nix
     ./hardware-configuration.nix
     ./syncthing.nix
+    inputs.home-manager.nixosModules.home-manager
+    inputs.nixos-hardware.nixosModules.dell-xps-13-7390
   ];
+
+  xsfx.kodi = true;
+  xsfx.neovim = true;
+  xsfx.work = true;
+  xsfx.x11 = true;
+
+  home-manager.users.marv = import ../../home-manager/marv.nix;
 
   virtualisation.vmVariant = {
     users.users.marv.initialPassword = "notsafe";
-    # services.xserver.enable = lib.mkForce false;
-    # services.xserver.windowManager.i3.enable = lib.mkForce false;
     xsfx.kodi = lib.mkForce false;
   };
 

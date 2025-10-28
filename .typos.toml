@@ -1,0 +1,9 @@
+[default]
+extend-ignore-re = [
+	"(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+	"(?s)//\\s*spellchecker:ignore-next-line[^\\n]*\\n[^\\n]*",
+]
+
+[default.extend-words]
+mosquitto = "mosquitto"
+therre = "therre"

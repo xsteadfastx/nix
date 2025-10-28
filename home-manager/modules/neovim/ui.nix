@@ -14,7 +14,7 @@ in
       local opt = vim.opt -- to set options
 
       opt.number = true -- numbers on the side
-      opt.relativenumber = true -- ralative line numbers
+      opt.relativenumber = true -- relative line numbers
       opt.backspace = "2"
       opt.laststatus = 2
       opt.synmaxcol = 120

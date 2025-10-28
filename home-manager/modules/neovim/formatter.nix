@@ -1,4 +1,9 @@
-{pkgsUnstable, nixosConfig, lib,...}:
+{
+  pkgsUnstable,
+  nixosConfig,
+  lib,
+  ...
+}:
 let
   cfg = nixosConfig.xsfx;
 
@@ -9,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       conform-nvim
     ];
-    extraPackages = with pkgsUnstable;[
+    extraPackages = with pkgsUnstable; [
       black
       clang-tools
       golines
