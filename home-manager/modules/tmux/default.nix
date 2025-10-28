@@ -2,6 +2,7 @@
 {
   home.packages = [
     pkgs.tmux
+    pkgs.tmux-xpanes
     # tmux wrapper for always same session
     (pkgs.writeShellScriptBin "tmx" ''
       set -e
