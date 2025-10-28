@@ -1,0 +1,211 @@
+# windows key
+set $mod Mod4
+# alt key
+#set $mod Mod1
+
+font pango: JetBrainsMono Nerd Font Mono 10.5
+
+# Use Mouse+$mod to drag floating windows to their wanted position
+floating_modifier $mod
+
+# start a terminal
+# bindsym $mod+Return exec ~/.local/bin/st -e tmux new-session -t global-session || tmux new-session -s global-session
+bindsym $mod+Return exec ghostty -e tmx
+
+# kill focused window
+bindsym $mod+Shift+q kill
+
+bindsym $mod+d exec rofi -show combi -combi-modi window#run#ssh -modi combi -terminal ghostty
+
+# change focus
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+# alternatively, you can use the cursor keys:
+# bindsym $mod+Left focus left
+# bindsym $mod+Down focus down
+# bindsym $mod+Up focus up
+# bindsym $mod+Right focus right
+
+# move focused window
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+# alternatively, you can use the cursor keys:
+# bindsym $mod+Shift+Left move left
+# bindsym $mod+Shift+Down move down
+# bindsym $mod+Shift+Up move up
+# bindsym $mod+Shift+Right move right
+
+# split in horizontal orientation
+bindsym $mod+- split h
+
+# split in vertical orientation
+bindsym $mod+| split v
+
+# enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen
+
+# change container layout (stacked, tabbed, toggle split)
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# focus the parent container
+bindsym $mod+a focus parent
+
+# focus the child container
+#bindsym $mod+d focus child
+
+# switch to workspace
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+bindsym $mod+0 workspace 10
+
+bindsym $mod+Control+1 workspace 11
+bindsym $mod+Control+2 workspace 12
+bindsym $mod+Control+3 workspace 13
+bindsym $mod+Control+4 workspace 14
+bindsym $mod+Control+5 workspace 15
+bindsym $mod+Control+6 workspace 16
+bindsym $mod+Control+7 workspace 17
+bindsym $mod+Control+8 workspace 18
+bindsym $mod+Control+9 workspace 19
+bindsym $mod+Control+0 workspace 20
+
+# move focused container to workspace
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+9 move container to workspace 9
+bindsym $mod+Shift+0 move container to workspace 10
+
+bindsym $mod+Shift+Control+1 move container to workspace 11
+bindsym $mod+Shift+Control+2 move container to workspace 12
+bindsym $mod+Shift+Control+3 move container to workspace 13
+bindsym $mod+Shift+Control+4 move container to workspace 14
+bindsym $mod+Shift+Control+5 move container to workspace 15
+bindsym $mod+Shift+Control+6 move container to workspace 16
+bindsym $mod+Shift+Control+7 move container to workspace 17
+bindsym $mod+Shift+Control+8 move container to workspace 18
+bindsym $mod+Shift+Control+9 move container to workspace 19
+bindsym $mod+Shift+Control+0 move container to workspace 20
+
+# toggle fullscreen mode for a window
+bindsym $mod+Shift+f fullscreen toggle global
+
+# reload the configuration file
+bindsym $mod+Shift+c reload
+
+# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+bindsym $mod+Shift+r restart
+
+# exit i3 (logs you out of your X session)
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
+
+# sticky window
+bindsym $mod+Shift+w sticky toggle
+
+mode "resize" {
+        bindsym h resize shrink width 10 px or 10 ppt
+        bindsym j resize grow height 10 px or 10 ppt
+        bindsym k resize shrink height 10 px or 10 ppt
+        bindsym l resize grow width 10 px or 10 ppt
+
+        # back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym $mod+r mode "resize"
+
+# scratchpad
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# pulseaudio controls
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5% && pactl set-sink-volume 1 -5% #decrease sound volume
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle && pactl set-sink-mute 1 toggle # mute sound
+
+# lock
+bindsym Control+mod1+l exec xset s activate
+
+# run password manager
+bindsym $mod+p exec gopass ls --flat | rofi -dmenu -p gopass | xargs --no-run-if-empty gopass show -o | head -n 1 | xdotool type --clearmodifiers --file -
+
+# dracula
+bar {
+        mode hide
+        modifier Mod4
+        position top
+        output primary
+        status_command bumblebee-status \
+                -m cpu memory disk nic battery pipewire datetime \
+                -p \
+                        nic.exclude="enp0,veth,vir,docker,lxc,br,lo,cni0,flannel.1,cali,vxlan.calico,w1nd50r" \
+                        disk.format="{percent:05.02f}%" \
+                        memory.format="{percent:05.02f}%" \
+                        datetime.format="%T %d/%m/%Y" \
+                -t dracula-powerline
+        colors {
+		background #282A36
+		statusline #F8F8F2
+		separator  #44475A
+
+		focused_workspace  #44475A #44475A #F8F8F2
+		active_workspace   #282A36 #44475A #F8F8F2
+		inactive_workspace #282A36 #282A36 #BFBFBF
+		urgent_workspace   #FF5555 #FF5555 #F8F8F2
+		binding_mode       #FF5555 #FF5555 #F8F8F2
+        }
+}
+
+client.focused          #6272A4 #6272A4 #F8F8F2 #6272A4   #6272A4
+client.focused_inactive #44475A #44475A #F8F8F2 #44475A   #44475A
+client.unfocused        #282A36 #282A36 #BFBFBF #282A36   #282A36
+client.urgent           #44475A #FF5555 #F8F8F2 #FF5555   #FF5555
+client.placeholder      #282A36 #282A36 #F8F8F2 #282A36   #282A36
+
+client.background       #F8F8F2
+
+# border
+new_window pixel 1
+new_float pixel 1
+for_window [class="^.*"] border pixel 1
+
+# josm (found class with xprop)
+for_window [class="org-openstreetmap-josm-Main"] floating disable
+for_window [class="org-openstreetmap-josm-Main"] layout splitv
+
+# qemu to scratchpad
+for_window [class="Qemu-kvm"] move scratchpad
+for_window [class="Qemu-system-x86_64"] move scratchpad
+
+# ghostty fullscreen
+# for_window [class="com.mitchellh.ghostty"] fullscreen enable
+
+# AUTOSTART
+exec --no-startup-id exec /bin/sh ~/bin/i3auto
