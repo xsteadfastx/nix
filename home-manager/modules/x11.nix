@@ -13,6 +13,7 @@ in
     ./firefox.nix
     ./fonts
     ./ghostty.nix
+    ./gtk
     ./i3
   ];
 

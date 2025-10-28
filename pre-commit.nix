@@ -8,7 +8,10 @@
   excludes = [
     "flake.lock"
     "hosts/.+/secrets.yaml"
+    "home-manager/modules/tmux/.tmux-dracula/.+$"
+    "home-manager/modules/gtk/Dracula.+"
   ];
+
   hooks = {
     check-yaml.enable = true;
     convco.enable = true;
@@ -23,7 +26,6 @@
       enable = true;
       excludes = [
         ".envrc"
-        "home-manager/modules/tmux/.tmux-dracula/.+$"
       ];
     };
 
@@ -35,7 +37,6 @@
     typos = {
       enable = true;
       excludes = [
-        "home-manager/modules/tmux/.tmux-dracula/.+$"
         "home-manager/modules/aerc/aerc.conf"
         "home-manager/modules/i3/config"
       ];
