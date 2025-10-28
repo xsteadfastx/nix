@@ -208,4 +208,4 @@ for_window [class="Qemu-system-x86_64"] move scratchpad
 # for_window [class="com.mitchellh.ghostty"] fullscreen enable
 
 # AUTOSTART
-exec --no-startup-id exec /bin/sh ~/bin/i3auto
+exec --no-startup-id exec i3auto
