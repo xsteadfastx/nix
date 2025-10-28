@@ -11,6 +11,7 @@ in
   imports = [
     ./aerc
     ./fish
+    ./git.nix
     ./tmux
   ];
 
@@ -28,7 +29,6 @@ in
     git-annex
     gping
     htop
-    killall
     mtr
     ncdu
     nmap
@@ -40,6 +40,7 @@ in
     tree
     unzip
     viddy
+    vimv
 
     # go
     go
