@@ -47,6 +47,7 @@ in
       xdotool
       xsaneGimp
       meshcore-cli
+      meshcore-web
 
       (lib.mkIf cfg.work _1password-cli)
       (lib.mkIf cfg.work _1password-gui)

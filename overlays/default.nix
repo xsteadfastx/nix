@@ -43,4 +43,5 @@ _final: prev: {
   attic = inputs.attic.packages.${prev.system}.attic;
 
   meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
+  meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
 }
