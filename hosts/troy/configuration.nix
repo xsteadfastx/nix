@@ -268,6 +268,8 @@
   # https://discourse.nixos.org/t/turn-off-autosuspend-for-usb/58933/3
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   networking.firewall.allowedUDPPorts = [

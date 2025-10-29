@@ -15,6 +15,8 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-25.05";
     kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.12.8";
+    nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
@@ -67,6 +69,30 @@
         };
 
         formatter = treefmtEval.config.build.wrapper;
+
+        packages.phil-sdcard-img =
+          let
+            system = "aarch64-linux";
+            pkgs = import inputs.nixpkgs {
+              inherit system;
+              overlays = [
+                (_final: super: {
+                  makeModulesClosure = x: super.makeModulesClosure (x // { allowMissing = true; });
+                })
+              ];
+            };
+          in
+          inputs.nixos-generators.nixosGenerate {
+            inherit system pkgs;
+            format = "sd-aarch64";
+            modules = [
+              ./hosts/phil
+            ];
+            specialArgs = {
+              lib = pkgs.lib;
+              inherit inputs;
+            };
+          };
       }
     );
 }

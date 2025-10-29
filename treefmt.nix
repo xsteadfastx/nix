@@ -13,6 +13,7 @@
       shfmt = {
         excludes = [
           "home-manager/modules/tmux/.tmux-dracula/*"
+          "home-manager/modules/gtk/Dracula/*"
         ];
       };
     };

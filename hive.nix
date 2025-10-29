@@ -23,4 +23,6 @@
     };
 
   troy = import ./hosts/troy { inherit inputs lib; };
+
+  phil = import ./hosts/phil { };
 }
