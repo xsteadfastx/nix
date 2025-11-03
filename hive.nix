@@ -1,18 +1,13 @@
 {
   inputs,
-  lib,
   ...
 }:
-let
-  evalMeta = {
+{
+  meta = {
     nixpkgs = import inputs.nixpkgs {
       system = "x86_64-linux";
-      config.allowUnfree = true;
     };
   };
-in
-{
-  meta = evalMeta;
 
   defaults =
     { config, ... }:
@@ -25,10 +20,7 @@ in
       };
     };
 
-  troy = import ./hosts/troy {
-    pkgs = evalMeta.nixpkgs;
-    inherit inputs lib;
-  };
+  troy = import ./hosts/troy { inherit inputs; };
 
   phil = import ./hosts/phil { inherit inputs; };
 }
