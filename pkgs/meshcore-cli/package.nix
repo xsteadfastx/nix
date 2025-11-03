@@ -47,7 +47,7 @@ python3Packages.buildPythonPackage {
   propagatedBuildInputs = [
     meshcore
     python3Packages.click
-    python3Packages.prompt_toolkit
+    python3Packages.prompt-toolkit
     python3Packages.pyserial
     python3Packages.requests
   ];
