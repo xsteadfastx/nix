@@ -43,7 +43,7 @@ in
       signal-desktop
       slack
       system-config-printer
-      tor-browser-bundle-bin
+      tor-browser
       xdotool
       xsaneGimp
       meshcore-cli
