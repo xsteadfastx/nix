@@ -23,6 +23,8 @@
     pre-commit-hooks.url = "github:cachix/git-hooks.nix";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
     quickemu.url = "github:quickemu-project/quickemu";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.url = "github:Mic92/sops-nix";
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
