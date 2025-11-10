@@ -10,7 +10,7 @@ let
 in
 {
   imports = [
-    ./firefox.nix
+    # ./firefox.nix
     ./fonts
     ./ghostty.nix
     ./gtk

@@ -6,6 +6,7 @@
   imports = [
     ../../modules/home-manager
     ../../modules/users
+    ./chromium.nix
     ./configuration.nix
     ./hardware-configuration.nix
     ./syncthing.nix
