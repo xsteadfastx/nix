@@ -31,7 +31,7 @@
   outputs =
     inputs:
     let
-      lib = inputs.nixpkgs.lib;
+      inherit (inputs.nixpkgs) lib;
     in
     {
       colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
@@ -49,7 +49,11 @@
         inherit (pkgs) mkShell;
 
         preCommit = import ./pre-commit.nix {
-          inherit (pkgsUnstable) trufflehog yamlfmt nixfmt-rfc-style;
+          inherit (pkgsUnstable)
+            nixfmt-rfc-style
+            trufflehog
+            yamlfmt
+            ;
         };
 
         treefmtEval = inputs.treefmt-nix.lib.evalModule pkgsUnstable ./treefmt.nix;

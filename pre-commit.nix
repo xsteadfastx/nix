@@ -46,5 +46,7 @@
       enable = true;
       package = trufflehog;
     };
+
+    statix.enable = true;
   };
 }
