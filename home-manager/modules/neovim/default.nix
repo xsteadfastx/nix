@@ -18,6 +18,7 @@ in
     ./ftplugin.nix
     ./fzf.nix
     ./keymaps.nix
+    ./lint.nix
     ./lspconfig.nix
     ./misc-plugins.nix
     ./treesitter.nix

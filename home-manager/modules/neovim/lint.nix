@@ -14,25 +14,29 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       nvim-lint
     ];
+
     extraPackages = with pkgsUnstable; [
+      ansible-lint
+      hadolint
       markdownlint-cli
       shellcheck
       sqlfluff
-      hadolint
-      ansible_lint
+      statix
     ];
+
     extraLuaConfig = ''
-      require("lint").lint.linters.sqlfluff.args = {
+      require("lint").linters.sqlfluff.args = {
         "lint",
         "--format=json",
         "--dialect=postgres",
       }
 
-      require("lint").lint.linters_by_ft = {
-        sh = { "shellcheck" },
+      require("lint").linters_by_ft = {
         ansible = { "ansible_lint" },
         dockerfile = { "hadolint" },
         markdown = { "markdownlint" },
+        nix = { "statix" },
+        sh = { "shellcheck" },
         sql = { "sqlfluff" },
       }
 
@@ -41,7 +45,7 @@ in
         callback = function()
           require("lint").try_lint()
         end,
-        group = nvim.api.nvim_create_augroup("lint", { clear = true }),
+        group = vim.api.nvim_create_augroup("lint", { clear = true }),
       })
     '';
   };
