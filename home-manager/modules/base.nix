@@ -26,7 +26,6 @@ in
     fd
     file
     fzf
-    git-annex
     gping
     htop
     mtr
@@ -46,8 +45,6 @@ in
     go
 
     # dev
-    difftastic
-    git
     gcc
 
     # k8s

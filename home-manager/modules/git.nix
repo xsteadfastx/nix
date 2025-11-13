@@ -1,63 +1,53 @@
-{ ... }:
+{ pkgsUnstable, ... }:
+let
+  inherit (pkgsUnstable) git-lfs delta;
+in
 {
-  home.file.".gitconfig".text = ''
-    [user]
-      name = Marvin Preuss
-      email = marvin@xsteadfastx.org
+  home.packages = [
+    git-lfs
+    delta
+  ];
 
-    [github]
-      user = xsteadfastx
-
-    [merge]
-      tool = nvim
-
-    [mergetool]
-      keepBackup = false
-      prompt = false
-
-    [mergetool "nvim"]
-      cmd = "nvim -d -c \"wincmd l\" -c \"norm ]c\" \"$LOCAL\" \"$MERGED\" \"$REMOTE\""
-      layout = LOCAL,MERGED,REMOTE
-
-    [alias]
-      please = push --force-with-lease
-      graph = log --oneline --abbrev-commit --all --graph --decorate --color
-      hist = log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all
-
-    [credential]
-      helper = gopass
-
-    [push]
-      followTags = true
-
-    [filter "lfs"]
-      process = git-lfs filter-process
-      required = true
-      clean = git-lfs clean -- %f
-      smudge = git-lfs smudge -- %f
-    [init]
-      defaultBranch = main
-
-    [sendemail]
-      smtpserver = smtp.gmail.com
-      smtpuser = xsteadfastx@gmail.com
-      smtpencryption = tls
-      smtpserverport = 587
-      annotate = yes
-
-    [rerere]
-      enabled = true
-
-    [diff]
-      external = difft
-
-    [difftool]
-      prompt = false
-
-    [pager]
-      difftool = true
-
-    [url "git@git.wobcom.de:"]
-      insteadOf = https://git.wobcom.de/
-  '';
+  programs.git = {
+    enable = true;
+    package = pkgsUnstable.git;
+    userName = "Marvin Preuss";
+    userEmail = "marvin@xsteadfastx.org";
+    extraConfig = {
+      "filter \"lfs\"".clean = "git-lfs clean -- %f";
+      "filter \"lfs\"".process = "git-lfs filter-process";
+      "filter \"lfs\"".required = true;
+      "filter \"lfs\"".smudge = "git-lfs smudge -- %f";
+      "mergetool \"nvim\"".cmd =
+        "nvim -d -c \"wincmd l\" -c \"norm ]c\" \"$LOCAL\" \"$MERGED\" \"$REMOTE\"";
+      "mergetool \"nvim\"".layout = "LOCAL,MERGED,REMOTE";
+      "url \"git@git.wobcom.de:\"".insteadOf = "https://git.wobcom.de";
+      alias.graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
+      alias.hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
+      alias.please = "push --force-with-lease";
+      core.pager = "delta";
+      credential.helper = "gopass";
+      delta.dark = true;
+      delta.lineNumbers = true;
+      delta.navigate = true;
+      delta.side-by-side = true;
+      delta.smoothScroll = true;
+      delta.theme = "Dracula";
+      difftool.prompt = false;
+      github.user = "xsteadfastx";
+      init.defaultBranch = "main";
+      interactive.diffFilter = "delta --color-only";
+      merge.tool = "nvim";
+      mergetool.keepBackup = false;
+      mergetool.prompt = false;
+      pager.difftool = true;
+      push.followTags = true;
+      rerere.enabled = true;
+      sendemail.annotate = "yes";
+      sendemail.smtpencryption = "tls";
+      sendemail.smtpserver = "smtp.gmail.com";
+      sendemail.smtpserverport = 587;
+      sendemail.smtpuser = "xsteadfastx@gmail.com";
+    };
+  };
 }
