@@ -1,8 +1,5 @@
 { ... }:
 {
-  nixpkgs.system = "aarch64-linux";
-  nixpkgs.config.allowUnsupportedSystem = true;
-
   networking.hostName = "phil";
 
   security.sudo.wheelNeedsPassword = false;
