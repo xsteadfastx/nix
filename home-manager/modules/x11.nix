@@ -10,7 +10,6 @@ let
 in
 {
   imports = [
-    # ./firefox.nix
     ./fonts
     ./ghostty.nix
     ./gtk
@@ -52,4 +51,13 @@ in
       (lib.mkIf cfg.work _1password-cli)
       (lib.mkIf cfg.work _1password-gui)
     ];
+
+  home.sessionVariables.DEFAULT_BROWSER = "chromium";
+
+  xdg.mimeApps.enable = true;
+  xdg.mimeApps.defaultApplications = lib.mkIf cfg.x11 {
+    "x-scheme-handler/http" = [ "chromium-browser.desktop" ];
+    "x-scheme-handler/https" = [ "chromium-browser.desktop" ];
+    "x-scheme-handler/ftp" = [ "chromium-browser.desktop" ];
+  };
 }
