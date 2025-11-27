@@ -95,6 +95,12 @@
   # https://github.com/kachick/dotfiles/issues/959
   # systemd.services.systemd-suspend.environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
 
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-extra
+    noto-fonts-cjk-sans
+  ];
+
   # locking screen
   programs.xss-lock =
     let
