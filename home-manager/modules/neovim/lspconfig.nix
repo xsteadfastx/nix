@@ -19,6 +19,8 @@ in
       nil
       pkgs.golangci-lint-langserver
       python312Packages.python-lsp-server
+      typos
+      typos-lsp
       vscode-langservers-extracted
       yaml-language-server
     ];
@@ -102,6 +104,11 @@ in
         capabilities = capabilities,
       })
 
+      vim.lsp.enable('typos_lsp')
+      vim.lsp.config('typos_lsp', {
+        capabilities = capabilities,
+      })
+
       vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
         border = "single",
       })
@@ -110,7 +117,12 @@ in
         border = "single",
       })
 
-      -- vim.diagnostic.config({ virtual_text = true })
+      vim.diagnostic.config({
+        virtual_text = true;
+        signs = true;
+        update_in_insert = false;
+        severity_sport = true;
+      })
 
       vim.keymap.set("n", "<Leader>ho", "<cmd>lua vim.lsp.buf.hover({border = 'single'})<CR>")
       vim.keymap.set("n", "<Leader>gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
