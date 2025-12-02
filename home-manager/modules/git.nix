@@ -11,9 +11,7 @@ in
   programs.git = {
     enable = true;
     package = pkgsUnstable.git;
-    userName = "Marvin Preuss";
-    userEmail = "marvin@xsteadfastx.org";
-    extraConfig = {
+    settings = {
       "filter \"lfs\"".clean = "git-lfs clean -- %f";
       "filter \"lfs\"".process = "git-lfs filter-process";
       "filter \"lfs\"".required = true;
@@ -48,6 +46,8 @@ in
       sendemail.smtpserver = "smtp.gmail.com";
       sendemail.smtpserverport = 587;
       sendemail.smtpuser = "xsteadfastx@gmail.com";
+      user.email = "marvin@xsteadfastx.org";
+      user.name = "Marvin Preuss";
     };
   };
 }
