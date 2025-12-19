@@ -9,7 +9,6 @@ let
     system = pkgs.stdenv.hostPlatform.system;
     config.allowUnfree = true;
     overlays = [
-      inputs.firefox-addons.overlays.default
       inputs.self.overlays.default
     ];
   };
