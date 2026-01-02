@@ -14,6 +14,20 @@ _final: prev: {
         --prefix PATH : "${wrapperPath}" \
         --set GOPASS_NO_REMINDER true
     '';
+
+    nativeInstallCheckInputs = [
+      prev.versionCheckHook
+      prev.gitMinimal
+      prev.gnupg
+    ];
+  };
+
+  git-credential-gopass = prev.git-credential-gopass.overrideAttrs {
+    nativeInstallCheckInputs = [
+      prev.versionCheckHook
+      prev.gopass
+      prev.gnupg
+    ];
   };
 
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
