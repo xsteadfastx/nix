@@ -1,9 +1,11 @@
 {
   nixfmt-rfc-style,
+  prek,
   trufflehog,
   ...
 }:
 {
+  package = prek;
   src = ./.;
   excludes = [
     "flake.lock"
