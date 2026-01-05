@@ -38,7 +38,7 @@ in
       pkgs.calibre
       rawtherapee
       remmina
-      rustdesk
+      pkgs.rustdesk
       signal-desktop
       slack
       system-config-printer
