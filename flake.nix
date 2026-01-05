@@ -51,6 +51,7 @@
         preCommit = import ./pre-commit.nix {
           inherit (pkgsUnstable)
             nixfmt-rfc-style
+            prek
             trufflehog
             yamlfmt
             ;
