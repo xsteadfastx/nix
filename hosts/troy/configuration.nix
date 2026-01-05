@@ -305,5 +305,7 @@
   # memory save
   services.earlyoom.enable = true;
 
+  services.resolved.enable = true;
+
   system.stateVersion = "24.11";
 }
