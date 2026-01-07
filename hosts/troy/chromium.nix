@@ -15,7 +15,7 @@ lib.mkIf cfg.x11 {
       "gfapcejdoghpoidkfodoiiffaaibpaem;https://clients2.google.com/service/update2/crx" # dracula
       "ddkjiahejlhfcafbddmgiahcphecmpfh;https://clients2.google.com/service/update2/crx" # ublock origin lite
       "dbepggeogbaibhgnhhndojpepiihcmeb;https://clients2.google.com/service/update2/crx" # vimium
-      "fihnjjcciajhdojfnbdddfaoknhalnja;https://clients2.google.com/service/update2/crx" # i dont care about cookies
+      "edibdbjcniadpccecjdfdjjppcpchdlm;https://clients2.google.com/service/update2/crx" # i still dont care about cookies
       "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # tampermonkey
     ];
   };
