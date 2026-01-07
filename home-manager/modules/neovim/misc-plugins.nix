@@ -1,7 +1,8 @@
 {
-  pkgsUnstable,
-  nixosConfig,
   lib,
+  nixosConfig,
+  pkgs,
+  pkgsUnstable,
   ...
 }:
 let
@@ -31,7 +32,7 @@ in
       indent-blankline-nvim
       lexima-vim
       lualine-nvim
-      markid
+      pkgs.vimPlugins.markid
       mini-icons
       neoscroll-nvim
       nvim-colorizer-lua
