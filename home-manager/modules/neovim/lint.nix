@@ -1,7 +1,7 @@
 {
-  pkgsUnstable,
-  nixosConfig,
   lib,
+  nixosConfig,
+  pkgsUnstable,
   ...
 }:
 let
@@ -19,8 +19,8 @@ in
       ansible-lint
       hadolint
       markdownlint-cli
-      shellcheck
       sqlfluff
+      shellcheck
       statix
     ];
 
