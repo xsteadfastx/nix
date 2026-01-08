@@ -19,7 +19,7 @@ in
       clang-tools
       golines
       hclfmt
-      nixfmt-rfc-style
+      nixfmt
       nodePackages.prettier
       shfmt
       sql-formatter

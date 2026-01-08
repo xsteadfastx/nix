@@ -1,5 +1,5 @@
 {
-  nixfmt-rfc-style,
+  nixfmt,
   prek,
   trufflehog,
   ...
@@ -31,9 +31,9 @@
       ];
     };
 
-    nixfmt-rfc-style = {
+    nixfmt = {
       enable = true;
-      package = nixfmt-rfc-style;
+      package = nixfmt;
     };
 
     typos = {
