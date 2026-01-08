@@ -9,10 +9,12 @@ let
 in
 {
   imports = [
+    ./abcde.nix
     ./aerc
     ./fish
     ./git.nix
     ./tmux
+    ./whipper.nix
   ];
 
   systemd.user.startServices = "sd-switch";
@@ -67,9 +69,6 @@ in
 
     # backup
     restic
-
-    # media
-    abcde
 
     # filetransfer
     localsend-go
