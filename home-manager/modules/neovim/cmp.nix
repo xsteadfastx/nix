@@ -17,6 +17,7 @@ in
       cmp-nvim-lsp
       cmp-path
       cmp-tmux
+      cmp_luasnip
       nvim-cmp
     ];
     extraLuaConfig = ''
