@@ -22,6 +22,8 @@ in
         keymap = {
           preset = 'default',
           ['<CR>'] = { 'accept', 'fallback' },
+          ['<Tab>'] = { 'snippet_forward', 'fallback' },
+          ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
         },
 
         appearance = {
@@ -41,6 +43,10 @@ in
             },
           },
 
+          accept = {
+            auto_brackets = { enabled = true },
+          },
+
           documentation = {
             auto_show = true,
             auto_show_delay_ms = 200,
@@ -51,6 +57,8 @@ in
             show_on_insert = true,
           }
         },
+
+        signature = { enabled = true, window = { border = 'rounded' } },
 
         cmdline = {
           enabled = true,
