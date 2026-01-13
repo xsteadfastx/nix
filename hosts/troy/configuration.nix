@@ -81,6 +81,8 @@
     "marv"
   ];
 
+  nix.settings.download-buffer-size = 524288000;
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
