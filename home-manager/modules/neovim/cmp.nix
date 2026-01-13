@@ -6,61 +6,73 @@
 }:
 let
   cfg = nixosConfig.xsfx;
-
   inherit (lib) mkIf;
 in
 {
   programs.neovim = mkIf cfg.neovim {
     plugins = with pkgsUnstable.vimPlugins; [
-      cmp-buffer
-      cmp-cmdline
-      cmp-nvim-lsp
-      cmp-path
-      cmp-tmux
-      cmp_luasnip
-      nvim-cmp
+      blink-cmp
+      luasnip
     ];
+
     extraLuaConfig = ''
-      vim.opt.completeopt = "menu,menuone,noselect"
+      local blink = require('blink.cmp')
 
-      local cmp = require("cmp")
-
-      cmp.setup({
-        window = {
-          completion = cmp.config.window.bordered(),
-          documentation = cmp.config.window.bordered(),
+      blink.setup({
+        keymap = {
+          preset = 'default',
+          ['<CR>'] = { 'accept', 'fallback' },
         },
 
-        mapping = cmp.mapping.preset.insert({
-          ["<C-b>"] = cmp.mapping.scroll_docs(-4),
-          ["<C-f>"] = cmp.mapping.scroll_docs(4),
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<C-e>"] = cmp.mapping.abort(),
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-        }),
+        appearance = {
+          use_nvim_cmp_as_default = true,
+          nerd_font_variant = 'mono',
+        },
 
-        sources = cmp.config.sources({
-          { name = "nvim_lsp" },
-          { name = "luasnip" },
-          { name = "buffer" },
-          { name = "tmux" },
-        }),
-      })
+        completion = {
+          menu = {
+            border = 'rounded',
+            draw = {
+              columns = {
+                { "label", "label_description", gap = 1 },
+                { "kind_icon", "kind", gap = 1 },
+                { "source_name" },
+              },
+            },
+          },
 
-      cmp.setup.cmdline("/", {
-        mapping = cmp.mapping.preset.cmdline(),
+          documentation = {
+            auto_show = true,
+            auto_show_delay_ms = 200,
+            window = { border = 'rounded' },
+          },
+
+          trigger = {
+            show_on_insert = true,
+          }
+        },
+
+        cmdline = {
+          enabled = true,
+          sources = function()
+            local type = vim.fn.getcmdtype()
+            if type == '/' or type == '?' then return { 'buffer' } end
+            if type == ':' then return { 'cmdline', 'path' } end
+            return {}
+          end,
+        },
+
         sources = {
-          { name = "buffer" },
+          default = { 'lsp', 'path', 'snippets', 'buffer' },
+          providers = {
+            lsp = { name = "LSP", score_offset = 10 },
+            path = { name = "Path", score_offset = 5 },
+            snippets = { name = "Snip" },
+            buffer = { name = "Buf" },
+          },
         },
-      })
 
-      cmp.setup.cmdline(":", {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = cmp.config.sources({
-          { name = "path" },
-        }, {
-          { name = "cmdline" },
-        }),
+        snippets = { preset = 'luasnip' },
       })
     '';
   };
