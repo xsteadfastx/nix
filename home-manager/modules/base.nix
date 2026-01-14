@@ -115,6 +115,9 @@ in
     importsony
     importsony-jpegs
 
+    # music
+    picard
+
     # work
     (lib.mkIf cfg.work kerouac)
 
