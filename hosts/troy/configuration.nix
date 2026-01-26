@@ -309,5 +309,14 @@
 
   services.resolved.enable = true;
 
+  # garbage
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 7d";
+  };
+
+  nix.settings.auto-optimise-store = true;
+
   system.stateVersion = "24.11";
 }
