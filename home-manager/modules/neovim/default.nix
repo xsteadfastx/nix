@@ -43,6 +43,8 @@ in
       vim.g.netrw_winsize = 25
 
       vim.opt.swapfile = false
+
+      vim.cmd "filetype indent on"
     '';
   };
 }
