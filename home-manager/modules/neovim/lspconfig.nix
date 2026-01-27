@@ -14,6 +14,7 @@ in
   programs.neovim = mkIf cfg.neovim {
     extraPackages = with pkgsUnstable; [
       bash-language-server
+      buf
       gopls
       lua-language-server
       nil
@@ -96,6 +97,9 @@ in
       vim.lsp.enable('typos_lsp')
       vim.lsp.config('typos_lsp', {
       })
+
+      vim.lsp.enable('buf_ls')
+      vim.lsp.config('buf_ls',{})
 
       vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
         border = "single",
