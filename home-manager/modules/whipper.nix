@@ -1,6 +1,6 @@
-{ pkgsUnstable, ... }:
+{ pkgs, ... }:
 let
-  inherit (pkgsUnstable) whipper;
+  inherit (pkgs) whipper;
 in
 {
   home.packages = [

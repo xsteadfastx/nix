@@ -25,7 +25,7 @@ in
       bumblebee-status
       evince
       gimp
-      handbrake
+      pkgs.handbrake
       libmediainfo
       makemkv
       mediaelch
