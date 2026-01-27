@@ -312,11 +312,15 @@
   # garbage
   nix.gc = {
     automatic = true;
-    dates = "daily";
+    dates = "weekly";
     options = "--delete-older-than 7d";
   };
 
-  nix.settings.auto-optimise-store = true;
+  nix.settings = {
+    auto-optimise-store = true;
+    min-free = 5 * 1024 * 1024 * 1024; # 5GB
+    max-free = 10 * 1024 * 1024 * 1024; # 10GB
+  };
 
   system.stateVersion = "24.11";
 }
