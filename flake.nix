@@ -19,13 +19,11 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
-    pre-commit-hooks.url = "github:cachix/git-hooks.nix";
-    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
+    pre-commit.url = "git+ssh://git@git.wobcom.de/smartmetering/pre-commit-nix.git";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
   outputs =
@@ -46,8 +44,6 @@
         pkgs = inputs.nixpkgs.legacyPackages.${system};
         pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
 
-        inherit (pkgs) mkShell;
-
         preCommit = import ./pre-commit.nix {
           inherit (pkgsUnstable)
             nixfmt
@@ -57,25 +53,21 @@
             ;
         };
 
-        treefmtEval = inputs.treefmt-nix.lib.evalModule pkgsUnstable ./treefmt.nix;
+        preCommitGen = inputs.pre-commit.lib.generate {
+          inherit pkgs system;
+          src = ./.;
+          extra = preCommit;
+          extraPackages = [
+            inputs.agenix.packages.${system}.default
+            inputs.colmena.packages.${system}.colmena
+          ];
+        };
+
       in
       {
-        devShells = {
-          default = mkShell {
-            buildInputs = [
-              inputs.agenix.packages.${system}.default
-              inputs.colmena.packages.${system}.colmena
-            ];
-            inherit (inputs.self.checks.${system}.pre-commit-check) shellHook;
-          };
-        };
-
-        checks = {
-          pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run preCommit;
-          formatting = treefmtEval.config.build.check inputs.self;
-        };
-
-        formatter = treefmtEval.config.build.wrapper;
+        checks.pre-commit-check = preCommitGen.pre-commit-check;
+        formatter = preCommitGen.formatter;
+        devShells.default = preCommitGen.devShell;
 
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
       }

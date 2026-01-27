@@ -6,7 +6,6 @@
 }:
 {
   package = prek;
-  src = ./.;
   excludes = [
     "flake.lock"
     "hosts/.+/secrets.yaml"
@@ -15,6 +14,8 @@
   ];
 
   hooks = {
+    pre-commit-hook-ensure-sops.enable = false;
+
     check-yaml.enable = true;
     convco.enable = true;
     deadnix.enable = true;
