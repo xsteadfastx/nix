@@ -17,7 +17,18 @@ in
       nvim-lspconfig
     ];
     extraLuaConfig = lib.mkAfter ''
-      require("treesitter-context").setup()
+      require("treesitter-context").setup({
+          max_lines = 3, -- Keep small to prevent lag on scroll
+      })
+
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function()
+          local lang = vim.treesitter.language.get_lang(vim.bo.filetype)
+          if lang then
+            pcall(vim.treesitter.start)
+          end
+        end,
+      })
 
       local dracula = require("dracula")
       dracula.setup({
@@ -78,12 +89,6 @@ in
           if client then
             client.server_capabilities.semanticTokensProvider = nil
           end
-        end,
-      })
-
-      vim.api.nvim_create_autocmd("FileType", {
-        callback = function(args)
-          pcall(vim.treesitter.start)
         end,
       })
     '';
