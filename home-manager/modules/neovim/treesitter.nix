@@ -13,19 +13,70 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       dracula-nvim
       nvim-treesitter-context
-      nvim-treesitter.withAllGrammars
       nvim-lspconfig
+
+      (nvim-treesitter.withPlugins (
+        p: with p; [
+          # Core / Config
+          nix
+          lua
+          vim
+          vimdoc
+          query # Required for treesitter inspections
+
+          # Web Development
+          html
+          css
+          javascript
+          typescript
+          tsx
+          json
+          yaml
+          toml
+
+          # Programming Languages
+          go
+          gomod
+          gowork
+          gosum
+          python
+          rust
+          c
+          cpp
+          bash
+
+          # Documentation / Markup
+          markdown
+          markdown_inline
+          dockerfile
+          terraform
+          sql
+        ]
+      ))
     ];
     extraLuaConfig = lib.mkAfter ''
       require("treesitter-context").setup({
           max_lines = 3, -- Keep small to prevent lag on scroll
       })
 
-      vim.api.nvim_create_autocmd("FileType", {
-        callback = function()
-          local lang = vim.treesitter.language.get_lang(vim.bo.filetype)
-          if lang then
-            pcall(vim.treesitter.start)
+      vim.api.nvim_create_autocmd({ "FileType", "BufReadPost" }, {
+        callback = function(args)
+          local bufnr = args.buf
+          -- Optimization: Don't start for large files
+          local max_filesize = 50 * 1024 -- 50 KB
+          local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
+          if ok and stats and stats.size > max_filesize then
+            return
+          end
+
+          -- Check if we have a parser for the current language
+          local ft = vim.bo[bufnr].filetype
+          local lang = vim.treesitter.language.get_lang(ft) or ft
+
+          -- Try to start the native treesitter highlighting
+          local has_parser, _ = pcall(vim.treesitter.get_parser, bufnr, lang)
+          if has_parser then
+            vim.treesitter.start(bufnr, lang)
           end
         end,
       })
@@ -48,17 +99,6 @@ in
         ["@function"]           = { fg = c.green, bold = true },
         ["@function.builtin"]   = { fg = c.cyan },
         ["@keyword"]            = { fg = c.pink },
-        ["@lsp.type.class"]      = { fg = c.yellow },
-        ["@lsp.type.enumMember"] = { fg = c.purple },
-        ["@lsp.type.function"]   = { fg = c.green, bold = true },
-        ["@lsp.type.macro"]      = { fg = c.pink },
-        ["@lsp.type.method"]     = { fg = c.green, bold = true },
-        ["@lsp.type.namespace"]  = { fg = c.pink },
-        ["@lsp.type.parameter"]  = { fg = c.orange, italic = true },
-        ["@lsp.type.property"]   = { fg = c.cyan },
-        ["@lsp.type.type"]       = { fg = c.yellow },
-        ["@lsp.type.variable"]   = { fg = c.fg },
-        ["@lsp.typemod.variable.readonly"] = { fg = c.purple, bold = true },
         ["@method"]             = { fg = c.green },
         ["@module"]             = { fg = c.pink },
         ["@module.go"]           = { fg = c.pink },
@@ -82,15 +122,6 @@ in
       for group, settings in pairs(hls) do
         vim.api.nvim_set_hl(0, group, settings)
       end
-
-      vim.api.nvim_create_autocmd("LspAttach", {
-        callback = function(args)
-          local client = vim.lsp.get_client_by_id(args.data.client_id)
-          if client then
-            client.server_capabilities.semanticTokensProvider = nil
-          end
-        end,
-      })
     '';
   };
 }
