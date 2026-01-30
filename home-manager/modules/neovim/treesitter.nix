@@ -18,6 +18,7 @@ in
       (nvim-treesitter.withPlugins (
         p: with p; [
           # Core / Config
+          gitcommit
           nix
           lua
           vim
