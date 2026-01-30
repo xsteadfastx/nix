@@ -21,6 +21,7 @@ in
     ./lint.nix
     ./lspconfig.nix
     ./misc-plugins.nix
+    ./otter.nix
     ./treesitter.nix
     ./trouble.nix
     ./ui.nix
