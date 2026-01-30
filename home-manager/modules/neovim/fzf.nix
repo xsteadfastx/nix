@@ -42,6 +42,7 @@ in
         vim.keymap.set("n", "<Leader>ll", "<cmd>lua require('fzf-lua').grep_curbuf()<CR>")
         vim.keymap.set("n", "<Leader>cm", "<cmd>lua require('fzf-lua').git_commits()<CR>")
         vim.keymap.set("n", "<Leader>cf", "<cmd>lua require('fzf-lua').git_bcommits()<CR>")
+        vim.keymap.set("n", "<Leader>cs", "<cmd>lua require('fzf-lua').git_status()<CR>")
         vim.keymap.set("n", "<Leader>:", "<cmd>lua require('fzf-lua').commands()<CR>")
         vim.keymap.set("n", "<Leader>fr", "<cmd>lua require('fzf-lua').lsp_references()<CR>")
       '';
