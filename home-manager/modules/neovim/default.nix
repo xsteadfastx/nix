@@ -35,17 +35,19 @@ in
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;
-    extraLuaConfig = ''
-      vim.cmd "set clipboard+=unnamedplus"
-      vim.opt.hidden = true
+    extraLuaConfig =
+      #lua
+      ''
+        vim.cmd "set clipboard+=unnamedplus"
+        vim.opt.hidden = true
 
-      vim.g.netrw_liststyle = 3
-      vim.g.netrw_banner = 0
-      vim.g.netrw_winsize = 25
+        vim.g.netrw_liststyle = 3
+        vim.g.netrw_banner = 0
+        vim.g.netrw_winsize = 25
 
-      vim.opt.swapfile = false
+        vim.opt.swapfile = false
 
-      vim.cmd "filetype indent on"
-    '';
+        vim.cmd "filetype indent on"
+      '';
   };
 }

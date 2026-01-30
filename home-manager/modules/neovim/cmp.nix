@@ -15,73 +15,75 @@ in
       luasnip
     ];
 
-    extraLuaConfig = ''
-      local blink = require('blink.cmp')
+    extraLuaConfig =
+      # lua
+      ''
+        local blink = require('blink.cmp')
 
-      blink.setup({
-        keymap = {
-          preset = 'default',
-          ['<CR>'] = { 'accept', 'fallback' },
-          ['<Tab>'] = { 'snippet_forward', 'fallback' },
-          ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
-        },
+        blink.setup({
+          keymap = {
+            preset = 'default',
+            ['<CR>'] = { 'accept', 'fallback' },
+            ['<Tab>'] = { 'snippet_forward', 'fallback' },
+            ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
+          },
 
-        appearance = {
-          use_nvim_cmp_as_default = true,
-          nerd_font_variant = 'mono',
-        },
+          appearance = {
+            use_nvim_cmp_as_default = true,
+            nerd_font_variant = 'mono',
+          },
 
-        completion = {
-          menu = {
-            border = 'rounded',
-            draw = {
-              columns = {
-                { "label", "label_description", gap = 1 },
-                { "kind_icon", "kind", gap = 1 },
-                { "source_name" },
+          completion = {
+            menu = {
+              border = 'rounded',
+              draw = {
+                columns = {
+                  { "label", "label_description", gap = 1 },
+                  { "kind_icon", "kind", gap = 1 },
+                  { "source_name" },
+                },
               },
+            },
+
+            accept = {
+              auto_brackets = { enabled = true },
+            },
+
+            documentation = {
+              auto_show = true,
+              auto_show_delay_ms = 200,
+              window = { border = 'rounded' },
+            },
+
+            trigger = {
+              show_on_insert = true,
+            }
+          },
+
+          signature = { enabled = true, window = { border = 'rounded' } },
+
+          cmdline = {
+            enabled = true,
+            sources = function()
+              local type = vim.fn.getcmdtype()
+              if type == '/' or type == '?' then return { 'buffer' } end
+              if type == ':' then return { 'cmdline', 'path' } end
+              return {}
+            end,
+          },
+
+          sources = {
+            default = { 'lsp', 'path', 'snippets', 'buffer' },
+            providers = {
+              lsp = { name = "LSP", score_offset = 10 },
+              path = { name = "Path", score_offset = 5 },
+              snippets = { name = "Snip" },
+              buffer = { name = "Buf" },
             },
           },
 
-          accept = {
-            auto_brackets = { enabled = true },
-          },
-
-          documentation = {
-            auto_show = true,
-            auto_show_delay_ms = 200,
-            window = { border = 'rounded' },
-          },
-
-          trigger = {
-            show_on_insert = true,
-          }
-        },
-
-        signature = { enabled = true, window = { border = 'rounded' } },
-
-        cmdline = {
-          enabled = true,
-          sources = function()
-            local type = vim.fn.getcmdtype()
-            if type == '/' or type == '?' then return { 'buffer' } end
-            if type == ':' then return { 'cmdline', 'path' } end
-            return {}
-          end,
-        },
-
-        sources = {
-          default = { 'lsp', 'path', 'snippets', 'buffer' },
-          providers = {
-            lsp = { name = "LSP", score_offset = 10 },
-            path = { name = "Path", score_offset = 5 },
-            snippets = { name = "Snip" },
-            buffer = { name = "Buf" },
-          },
-        },
-
-        snippets = { preset = 'luasnip' },
-      })
-    '';
+          snippets = { preset = 'luasnip' },
+        })
+      '';
   };
 }

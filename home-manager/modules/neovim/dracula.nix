@@ -14,11 +14,13 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       dracula-nvim
     ];
-    extraLuaConfig = ''
-      require("dracula").setup({
-      italic_comment = true,
-      })
-      vim.cmd([[colorscheme dracula]])
-    '';
+    extraLuaConfig =
+      #lua
+      ''
+        require("dracula").setup({
+        italic_comment = true,
+        })
+        vim.cmd([[colorscheme dracula]])
+      '';
   };
 }
