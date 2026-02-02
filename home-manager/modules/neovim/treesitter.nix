@@ -19,39 +19,40 @@ in
         p: with p; [
           # Core / Config
           gitcommit
-          nix
           lua
+          nix
+          query # Required for treesitter inspections
           vim
           vimdoc
-          query # Required for treesitter inspections
 
           # Web Development
-          html
           css
+          html
           javascript
-          typescript
-          tsx
           json
-          yaml
           toml
+          tsx
+          typescript
+          yaml
 
           # Programming Languages
-          go
-          gomod
-          gowork
-          gosum
-          python
-          rust
+          bash
           c
           cpp
-          bash
+          go
+          gomod
+          gosum
+          gowork
+          proto
+          python
+          rust
 
           # Documentation / Markup
+          dockerfile
           markdown
           markdown_inline
-          dockerfile
-          terraform
           sql
+          terraform
         ]
       ))
     ];
