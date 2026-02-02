@@ -25,6 +25,7 @@
 
     # listen to alerts from all windows
     set -g bell-action any
+    set-hook -g alert-bell 'set -g pane-active-border-style "fg=red"; run-shell "sleep 0.2"; set -g pane-active-border-style "fg=#bd93f9"'
 
     # rebind pane tiling
     bind v split-window -h
@@ -73,6 +74,16 @@
     set -g @dracula-ram-usage-label ""
 
     run ~/.tmux-dracula/dracula.sh
+
+    # better visibility on bell alerts
+    # set-option -g window-status-separator ""
+    # set-window-option -g window-status-format "#[fg=#44475a,bg=#{?window_bell_flag,#ff5555,#44475a}]#[fg=#{?window_bell_flag,#282a36,#f8f8f2},bg=#{?window_bell_flag,#ff5555,#44475a},#{?window_bell_flag,bold,none}] #I #W#{?window_flags,#{window_flags}, }#[fg=#{?window_bell_flag,#ff5555,#44475a},bg=#44475a]"
+    # set-window-option -g window-status-current-format "#[fg=#44475a,bg=#bd93f9]#[fg=#282a36,bg=#bd93f9,bold] #I #W#{?window_flags,#{window_flags}, }#[fg=#bd93f9,bg=#44475a]"
+
+    set-option -g status-style "bg=#44475a,fg=#f8f8f2"
+    set-option -g window-status-separator ""
+    set-window-option -g window-status-format "#[fg=#44475a,bg=#{?window_bell_flag,#ff5555,#6272a4}]#[fg=#{?window_bell_flag,#282a36,#f8f8f2},bg=#{?window_bell_flag,#ff5555,#6272a4},#{?window_bell_flag,bold,none}] #I #W #[fg=#{?window_bell_flag,#ff5555,#6272a4},bg=#44475a]"
+    set-window-option -g window-status-current-format "#[fg=#44475a,bg=#bd93f9]#[fg=#282a36,bg=#bd93f9,bold] #I #W #[fg=#bd93f9,bg=#44475a]"
   '';
 
   home.file.".tmux-dracula" = {

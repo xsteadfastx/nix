@@ -20,5 +20,7 @@ lib.mkIf cfg.x11 {
     gtk-single-instance = true
     mouse-hide-while-typing = true
     app-notifications = no-clipboard-copy
+    bell-features = true
+    desktop-notifications = true
   '';
 }
