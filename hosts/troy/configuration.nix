@@ -222,6 +222,15 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+
+    # no audio bell pls
+    extraConfig.pipewire = {
+      "99-silent-bell" = {
+        "context.properties" = {
+          "module.x11.bell" = false;
+        };
+      };
+    };
   };
 
   # Allow unfree packages
@@ -312,7 +321,7 @@
   # garbage
   nix.gc = {
     automatic = true;
-    dates = "weekly";
+    dates = "daily";
     options = "--delete-older-than 7d";
   };
 
