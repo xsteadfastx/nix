@@ -23,6 +23,7 @@ in
         blink.setup({
           keymap = {
             preset = 'default',
+            ['<C-space>'] = { 'show', 'fallback' },
             ['<CR>'] = { 'accept', 'fallback' },
             ['<Tab>'] = { 'snippet_forward', 'fallback' },
             ['<S-Tab>'] = { 'snippet_backward', 'fallback' },
@@ -56,7 +57,7 @@ in
             },
 
             trigger = {
-              show_on_insert = true,
+              show_on_insert = false,
             }
           },
 
