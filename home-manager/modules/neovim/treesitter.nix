@@ -67,7 +67,7 @@ in
           callback = function(args)
             local bufnr = args.buf
             -- Optimization: Don't start for large files
-            local max_filesize = 50 * 1024 -- 50 KB
+            local max_filesize = 1024 * 1024
             local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
             if ok and stats and stats.size > max_filesize then
               return
