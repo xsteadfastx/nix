@@ -1,9 +1,10 @@
 { pkgsUnstable, ... }:
 let
-  inherit (pkgsUnstable) git-lfs diffnav;
+  inherit (pkgsUnstable) git-lfs diffnav delta;
 in
 {
   home.packages = [
+    delta
     diffnav
     git-lfs
   ];
@@ -20,10 +21,11 @@ in
         "nvim -d -c \"wincmd l\" -c \"norm ]c\" \"$LOCAL\" \"$MERGED\" \"$REMOTE\"";
       "mergetool \"nvim\"".layout = "LOCAL,MERGED,REMOTE";
       "url \"git@git.wobcom.de:\"".insteadOf = "https://git.wobcom.de";
+
       alias.graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
       alias.hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
       alias.please = "push --force-with-lease";
-      core.pager = "diffnav";
+      core.pager = "delta";
       credential.helper = "gopass";
       delta.dark = true;
       delta.lineNumbers = true;
@@ -39,6 +41,8 @@ in
       mergetool.keepBackup = false;
       mergetool.prompt = false;
       pager.difftool = true;
+      pager.diff = "diffnav";
+      pager.show = "diffnav";
       push.followTags = true;
       rerere.enabled = true;
       sendemail.annotate = "yes";
