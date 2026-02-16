@@ -1,11 +1,11 @@
 { pkgsUnstable, ... }:
 let
-  inherit (pkgsUnstable) git-lfs delta;
+  inherit (pkgsUnstable) git-lfs diffnav;
 in
 {
   home.packages = [
+    diffnav
     git-lfs
-    delta
   ];
 
   programs.git = {
@@ -23,7 +23,7 @@ in
       alias.graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
       alias.hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
       alias.please = "push --force-with-lease";
-      core.pager = "delta";
+      core.pager = "diffnav";
       credential.helper = "gopass";
       delta.dark = true;
       delta.lineNumbers = true;
@@ -34,7 +34,7 @@ in
       difftool.prompt = false;
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
-      interactive.diffFilter = "delta --color-only";
+      interactive.diffFilter = "diffnav";
       merge.tool = "nvim";
       mergetool.keepBackup = false;
       mergetool.prompt = false;
