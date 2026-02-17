@@ -36,7 +36,7 @@ in
       difftool.prompt = false;
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
-      interactive.diffFilter = "diffnav";
+      interactive.diffFilter = "delta --color-only";
       merge.tool = "nvim";
       mergetool.keepBackup = false;
       mergetool.prompt = false;
