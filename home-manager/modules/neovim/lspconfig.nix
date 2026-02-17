@@ -26,11 +26,15 @@ in
     ];
     plugins = with pkgsUnstable.vimPlugins; [
       SchemaStore-nvim
+      blink-cmp
       nvim-lspconfig
     ];
     extraLuaConfig =
       # lua
       ''
+        local blink = require("blink.cmp")
+        local capabilities = blink.get_lsp_capabilities()
+
         -- Border
         local border = "single"
 
@@ -70,28 +74,32 @@ in
         -- Language Server Configurations
 
         -- Lua
+        vim.lsp.config('lua_ls', {
+          capabilities = capabilities,
+        })
         vim.lsp.enable('lua_ls')
 
         -- Nix (with formatting)
-        vim.lsp.enable('nil_ls')
         vim.lsp.config('nil_ls', {
+          capabilities = capabilities,
           settings = {
             ["nil"] = {
               formatting = { command = { "nixfmt" } },
             },
           },
         })
+        vim.lsp.enable('nil_ls')
 
         -- Go (with gofumpt)
-        vim.lsp.enable('gopls')
         vim.lsp.config('gopls', {
+          capabilities = capabilities,
           settings = {
             gopls = { gofumpt = true },
           },
         })
+        vim.lsp.enable('gopls')
 
         -- JSON (with SchemaStore integration)
-        vim.lsp.enable('jsonls')
         vim.lsp.config('jsonls', {
           settings = {
             json = {
@@ -100,9 +108,9 @@ in
             },
           },
         })
+        vim.lsp.enable('jsonls')
 
         -- YAML (with SchemaStore and custom filetypes)
-        vim.lsp.enable('yamlls')
         vim.lsp.config('yamlls', {
           filetypes = { "yaml", "yaml.docker-compose", "taskfile" },
           settings = {
@@ -112,16 +120,20 @@ in
             },
           },
         })
+        vim.lsp.enable('yamlls')
 
         -- Bulk enable generic servers
         local generic_servers = {
+          "bashls",
+          "buf_ls",
           "golangci_lint_ls",
           "pylsp",
-          "bashls",
           "typos_lsp",
-          "buf_ls"
         }
         for _, lsp in ipairs(generic_servers) do
+          vim.lsp.config(lsp, {
+           capabilities = capabilities,
+          })
           vim.lsp.enable(lsp)
         end
 
