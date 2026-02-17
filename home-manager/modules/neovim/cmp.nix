@@ -19,8 +19,12 @@ in
     extraLuaConfig =
       # lua
       ''
-        require("luasnip")
+        local ls = require("luasnip")
         require("luasnip.loaders.from_vscode").lazy_load()
+
+        ls.add_snippets("all", {
+        	ls.parser.parse_snippet("hw", "hello world!"),
+        })
 
         local blink = require("blink.cmp")
 
@@ -29,8 +33,8 @@ in
         		preset = "default",
         		["<C-space>"] = { "show", "fallback" },
         		["<CR>"] = { "accept", "fallback" },
-        		["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
-        		["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+        		["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
+        		["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
         	},
 
         	appearance = {
