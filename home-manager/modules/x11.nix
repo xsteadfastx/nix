@@ -27,7 +27,7 @@ in
       gimp
       pkgs.handbrake
       libmediainfo
-      makemkv
+      pkgs.makemkv
       mediaelch
       mpv
       mqttx
