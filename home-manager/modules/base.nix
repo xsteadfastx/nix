@@ -22,6 +22,7 @@ in
   home.packages = with pkgsUnstable; [
     # systemtools
     appimage-run
+    bandwhich # traffic
     bat
     btop
     eza
