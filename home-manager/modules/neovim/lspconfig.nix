@@ -18,7 +18,7 @@ in
       lua-language-server
       nil
       pkgs.golangci-lint-langserver
-      python312Packages.python-lsp-server
+      python3Packages.python-lsp-server
       typos
       typos-lsp
       vscode-langservers-extracted
