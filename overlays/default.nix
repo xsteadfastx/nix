@@ -1,35 +1,5 @@
 { inputs, ... }:
 _final: prev: {
-  # needed because there is a system gpg-agent and gpg from wrapped gopass mismatch
-  gopass = prev.gopass.overrideAttrs rec {
-    wrapperPath = prev.lib.makeBinPath (
-      [
-        prev.git
-        prev.xclip
-      ]
-      ++ prev.lib.optional prev.stdenv.isLinux prev.wl-clipboard
-    );
-    postFixup = ''
-      wrapProgram $out/bin/gopass \
-      	--prefix PATH : "${wrapperPath}" \
-      	--set GOPASS_NO_REMINDER true
-    '';
-
-    nativeInstallCheckInputs = [
-      prev.versionCheckHook
-      prev.gitMinimal
-      prev.gnupg
-    ];
-  };
-
-  git-credential-gopass = prev.git-credential-gopass.overrideAttrs {
-    nativeInstallCheckInputs = [
-      prev.versionCheckHook
-      prev.gopass
-      prev.gnupg
-    ];
-  };
-
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
   airmtp = inputs.airmtp.packages.${prev.stdenv.hostPlatform.system}.default;
