@@ -87,7 +87,6 @@ in
     go-task
     gopass
     pandoc
-    pkgs.gnupg
     pkgs.tectonic
     qrcp # easy sending files to android
     rclone
