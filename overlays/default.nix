@@ -11,8 +11,8 @@ _final: prev: {
     );
     postFixup = ''
       wrapProgram $out/bin/gopass \
-        --prefix PATH : "${wrapperPath}" \
-        --set GOPASS_NO_REMINDER true
+      	--prefix PATH : "${wrapperPath}" \
+      	--set GOPASS_NO_REMINDER true
     '';
 
     nativeInstallCheckInputs = [
@@ -58,4 +58,8 @@ _final: prev: {
 
   meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
   meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
+
+  chromium = prev.chromium.override {
+    enableWideVine = true;
+  };
 }

@@ -1,7 +1,6 @@
 {
-  pkgs,
-  lib,
   config,
+  lib,
   ...
 }:
 let
@@ -19,8 +18,4 @@ lib.mkIf cfg.x11 {
       "dhdgffkkebhmkfjojejmpbldmpobfkfo;https://clients2.google.com/service/update2/crx" # tampermonkey
     ];
   };
-
-  environment.systemPackages = with pkgs; [
-    (chromium.override { enableWideVine = true; })
-  ];
 }

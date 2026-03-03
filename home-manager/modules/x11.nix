@@ -23,12 +23,13 @@ in
       # quickemu
       arandr
       bumblebee-status
+      chromium
       evince
       gimp
-      pkgs.handbrake
       libmediainfo
-      pkgs.makemkv
       mediaelch
+      meshcore-cli
+      meshcore-web
       mpv
       mqttx
       networkmanagerapplet
@@ -36,17 +37,17 @@ in
       pcmanfm
       peek # gif screen recorder
       pkgs.calibre
+      pkgs.handbrake
+      pkgs.makemkv
+      pkgs.rustdesk
       rawtherapee
       remmina
-      pkgs.rustdesk
       signal-desktop
       slack
       system-config-printer
       tor-browser
       xdotool
       xsaneGimp
-      meshcore-cli
-      meshcore-web
 
       (lib.mkIf cfg.work _1password-cli)
       (lib.mkIf cfg.work _1password-gui)
