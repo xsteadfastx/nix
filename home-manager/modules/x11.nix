@@ -10,6 +10,7 @@ let
 in
 {
   imports = [
+    ./chromium.nix
     ./fonts
     ./ghostty.nix
     ./gtk
@@ -21,15 +22,13 @@ in
     lib.mkIf cfg.x11 [
       # beekeeper-studio # sql
       # quickemu
+
       arandr
       bumblebee-status
-      chromium
       evince
       gimp
       libmediainfo
       mediaelch
-      meshcore-cli
-      meshcore-web
       mpv
       mqttx
       networkmanagerapplet

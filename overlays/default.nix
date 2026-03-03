@@ -56,10 +56,6 @@ _final: prev: {
 
   attic = inputs.attic.packages.${prev.stdenv.hostPlatform.system}.attic;
 
-  meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
-  meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
-
-  chromium = prev.chromium.override {
-    enableWideVine = true;
-  };
+  # meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
+  # meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
 }
