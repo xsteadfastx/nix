@@ -40,7 +40,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.kernelModules = [ "sg" ];
+  boot.kernelModules = [
+    "sg"
+    "thunderbolt"
+    "intel_wmi_thunderbolt"
+  ];
 
   networking.hostName = "troy"; # Define your hostname.
 
@@ -192,6 +196,38 @@
             };
           };
         };
+
+        "work" = {
+          fingerprint = {
+            eDP-1 = eDP1.fingerprint;
+            DP-1 = "00ffffffffffff0009d1218045540000111a010380351e782e4ca5a7554da226105054a56b80d1c0b300a9c08180810081c001010101023a801871382d40582c45000f282100001e000000ff0056344730303138353031390a20000000fd00324c1e5311000a202020202020000000fc0042656e51204c43440a20202020002f";
+            DP-2-2 = "00ffffffffffff0009d101834554000021180104a5351e783ed4a5ab5044a324145054a56b80d1c081c08180a9c0b300810001010101023a801871382d40582c4500dd0c1100001e000000ff004238453032353234534c300a20000000fd00324c1e5311000a202020202020000000fc0042656e5120424c323431300a2001a0020322f14f90050403020111121314060715161f2309070765030c00100083010000023a801871382d40582c4500132a2100001f011d8018711c1620582c2500132a2100009f011d007251d01e206e285500132a2100001e8c0ad08a20e02d10103e9600132a21000018000000000000000000000000000000000000000000eb";
+          };
+
+          config = {
+            eDP-1 = lib.mkMerge [
+              eDP1.config
+              { position = "0x0"; }
+            ];
+
+            DP-2-2 = {
+              enable = true;
+              crtc = 1;
+              position = "1920x0";
+              mode = "1920x1080";
+              rate = "60.00";
+            };
+
+            DP-1 = {
+              enable = true;
+              crtc = 1;
+              position = "3840x0";
+              mode = "1920x1080";
+              rate = "60.00";
+            };
+          };
+
+        };
       };
     };
 
@@ -284,7 +320,11 @@
   };
 
   # https://discourse.nixos.org/t/turn-off-autosuspend-for-usb/58933/3
-  boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+  boot.kernelParams = [
+    "usbcore.autosuspend=-1"
+    "thunderbolt.host_reset=false"
+    "pci=pcie_bus_perf"
+  ];
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
@@ -330,6 +370,9 @@
     min-free = 5 * 1024 * 1024 * 1024; # 5GB
     max-free = 10 * 1024 * 1024 * 1024; # 10GB
   };
+
+  # dell dockingstation
+  services.hardware.bolt.enable = true;
 
   system.stateVersion = "24.11";
 }
