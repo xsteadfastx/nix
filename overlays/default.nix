@@ -28,4 +28,14 @@ _final: prev: {
 
   # meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
   # meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
+
+  yt-dlp = prev.yt-dlp.overrideAttrs (_oldAttrs: rec {
+    version = "2026.03.03";
+    src = prev.fetchFromGitHub {
+      owner = "yt-dlp";
+      repo = "yt-dlp";
+      tag = version;
+      hash = "sha256-BPZzMT1IrZvgva/m5tYMaDYoUaP3VmpmcYeOUOwuoUY=";
+    };
+  });
 }
