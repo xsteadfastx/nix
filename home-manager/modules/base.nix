@@ -50,12 +50,6 @@ in
     # dev
     gcc
 
-    # k8s
-    k9s
-    krew
-    kubectl
-    kubectx
-
     # download stuff
     yt-dlp
     (pkgs.writeShellScriptBin "yt-dlp-album" ''
