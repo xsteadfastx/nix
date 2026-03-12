@@ -324,6 +324,7 @@
     "usbcore.autosuspend=-1"
     "thunderbolt.host_reset=false"
     "pci=pcie_bus_perf"
+    "resume=UUID=08110ec3-5356-48e3-b98c-f5afa622449d" # no battery
   ];
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
@@ -373,6 +374,21 @@
 
   # dell dockingstation
   services.hardware.bolt.enable = true;
+
+  # without battery
+  boot.resumeDevice = "/dev/disk/by-uuid/08110ec3-5356-48e3-b98c-f5afa622449d";
+
+  services.logind = {
+    settings = {
+      Login = {
+        HandlePowerKey = "hibernate";
+        HandleSleepKey = "hibernate";
+        HandleLidSwitch = "hibernate";
+        HandlePowerKeyLongPress = "poweroff";
+        PowerKeyIgnoreInhibited = "yes";
+      };
+    };
+  };
 
   system.stateVersion = "24.11";
 }
