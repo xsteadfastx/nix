@@ -381,11 +381,19 @@
   services.logind = {
     settings = {
       Login = {
-        HandlePowerKey = "hibernate";
-        HandleSleepKey = "hibernate";
         HandleLidSwitch = "hibernate";
+        HandleLidSwitchDocked = "hibernate";
+        HandleLidSwitchExternalPower = "hibernate";
+        HandlePowerKey = "hibernate";
         HandlePowerKeyLongPress = "poweroff";
+        HandleSleepKey = "hibernate";
+        HandleSleepKeyExternalPower = "hibernate";
+        HandleSuspendKey = "hibernate";
+        HandleSuspendKeyExternalPower = "hibernate";
+        LidSwitchIgnoreInhibited = "no";
         PowerKeyIgnoreInhibited = "yes";
+        SleepKeyIgnoreInhibited = "yes";
+        SuspendKeyIgnoreInhibited = "yes";
       };
     };
   };
