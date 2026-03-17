@@ -25,6 +25,7 @@ in
       blame-nvim
       comment-nvim
       csv-vim
+      diffview-nvim
       fidget-nvim
       follow-md-links-nvim
       gitsigns-nvim
@@ -60,33 +61,33 @@ in
 
         -- lualine-nvim
         require("lualine").setup({
-          options = {
-            theme = "dracula-nvim",
-            },
+        	options = {
+        		theme = "dracula-nvim",
+        	},
         })
 
         -- tabline-nvim
-        require("tabline").setup({enable=true})
+        require("tabline").setup({ enable = true })
 
         -- vim-pencil
         vim.g["pencil#wrapModeDefault"] = "soft"
 
         vim.api.nvim_create_autocmd("Filetype", {
-          pattern = "tex,markdown,mkd,vimwiki",
-          callback = function()
-            vim.cmd("call pencil#init()")
-          end,
-          group = vim.api.nvim_create_augroup("pencil", { clear = true })
+        	pattern = "tex,markdown,mkd,vimwiki",
+        	callback = function()
+        		vim.cmd("call pencil#init()")
+        	end,
+        	group = vim.api.nvim_create_augroup("pencil", { clear = true }),
         })
 
         -- csv-vim
         vim.b.csv_arrange_use_all_rows = 1
 
         -- gitsigns-nvim
-        require('gitsigns').setup()
+        require("gitsigns").setup()
 
         -- comment-nvim
-        require('Comment').setup()
+        require("Comment").setup()
 
         -- neoscroll-nvim
         require("neoscroll").setup()
@@ -101,25 +102,25 @@ in
         require("fidget").setup()
 
         -- mini-icons
-        require('mini.icons').setup()
+        require("mini.icons").setup()
 
         -- nvim-cursorline
         require("nvim-cursorline").setup({
-          cursorline = { enable = true, timeout = 500 },
-          cursorword = { enable = true, min_length = 3, hl = { underline = true } },
+        	cursorline = { enable = true, timeout = 500 },
+        	cursorword = { enable = true, min_length = 3, hl = { underline = true } },
         })
 
         -- rainbow-delimiters-nvim
-        require('rainbow-delimiters.setup').setup()
+        require("rainbow-delimiters.setup").setup()
 
         -- indent-blankline
         require("ibl").setup()
 
         -- render-markdown-nvim
-        require('render-markdown').setup()
+        require("render-markdown").setup()
 
         -- blame-nvim
-        require("blame").setup({blame_options={"-w"}})
+        require("blame").setup({ blame_options = { "-w" } })
       '';
   };
 }
