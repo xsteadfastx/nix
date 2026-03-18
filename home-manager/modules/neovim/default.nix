@@ -13,6 +13,7 @@ in
   imports = [
     ./augroups.nix
     ./cmp.nix
+    ./diffview.nix
     ./dracula.nix
     ./formatter.nix
     ./ftplugin.nix
@@ -38,7 +39,7 @@ in
     extraLuaConfig =
       #lua
       ''
-        vim.cmd "set clipboard+=unnamedplus"
+        vim.cmd("set clipboard+=unnamedplus")
         vim.opt.hidden = true
 
         vim.g.netrw_liststyle = 3
@@ -47,7 +48,7 @@ in
 
         vim.opt.swapfile = false
 
-        vim.cmd "filetype indent on"
+        vim.cmd("filetype indent on")
       '';
   };
 }

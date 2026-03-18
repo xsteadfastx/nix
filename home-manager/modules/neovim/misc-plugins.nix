@@ -25,9 +25,9 @@ in
       blame-nvim
       comment-nvim
       csv-vim
-      diffview-nvim
       fidget-nvim
       follow-md-links-nvim
+      git-conflict-nvim
       gitsigns-nvim
       indent-blankline-nvim
       lexima-vim
@@ -121,6 +121,9 @@ in
 
         -- blame-nvim
         require("blame").setup({ blame_options = { "-w" } })
+
+        -- git-conflict-nvim
+        require("git-conflict").setup()
       '';
   };
 }

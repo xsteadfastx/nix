@@ -1,12 +1,11 @@
 { pkgsUnstable, ... }:
 let
-  inherit (pkgsUnstable) git-lfs diffnav delta;
+  inherit (pkgsUnstable) git-lfs delta;
 in
 {
   home.packages = [
-    delta
-    diffnav
     git-lfs
+    delta
   ];
 
   programs.git = {
@@ -41,8 +40,6 @@ in
       mergetool.keepBackup = false;
       mergetool.prompt = false;
       pager.difftool = true;
-      pager.diff = "diffnav";
-      pager.show = "diffnav";
       push.followTags = true;
       rerere.enabled = true;
       sendemail.annotate = "yes";

@@ -12,18 +12,13 @@ in
 {
   programs.neovim = mkIf cfg.neovim {
     plugins = with pkgsUnstable.vimPlugins; [
-      trouble-nvim
+      diffview-nvim
     ];
     extraLuaConfig =
       #lua
       ''
-        require("trouble").setup({
-        	auto_open = false,
-        	auto_close = true,
-        	use_lsp_diagnostic_signs = false,
-        })
-
-        vim.keymap.set("n", "<C-t>", "<cmd>Trouble diagnostics toggle<CR>")
+        vim.keymap.set("n", "<Leader>do", ":DiffviewOpen<CR>")
+        vim.keymap.set("n", "<Leader>dc", ":DiffviewClose<CR>")
       '';
   };
 }
