@@ -11,6 +11,7 @@ in
   imports = [
     ./abcde.nix
     ./aerc
+    ./btop.nix
     ./fish
     ./git.nix
     ./tmux
@@ -24,7 +25,6 @@ in
     appimage-run
     bandwhich # traffic
     bat
-    btop
     eza
     fd
     file
