@@ -46,6 +46,58 @@
     "intel_wmi_thunderbolt"
   ];
 
+  boot.initrd.availableKernelModules = [
+    "dell_wmi"
+    "drm_buddy"
+    "i915"
+    "intel_lpss_pci"
+    "intel_wmi_thunderbolt"
+    "nls_cp437"
+    "nls_iso8859_1"
+    "nvme"
+    "r8152"
+    "r8153_ecm"
+    "thunderbolt"
+    "ttm"
+    "typec_ucsi"
+    "uas"
+    "ucsi_acpi"
+    "usb_storage"
+    "usbhid"
+    "vfat"
+    "video"
+    "wmi"
+    "xhci_pci"
+  ];
+
+  boot.initrd.kernelModules = [ "i915" ];
+
+  boot.kernelParams = [
+    "clearcpuid=514" # no throttling
+    "i915.enable_dc=0"
+    "i915.enable_fbc=0"
+    "i915.enable_guc=3"
+    "i915.enable_psr=0"
+    "i915.modeset=1"
+    "intel_idle.max_cstate=1"
+    "intel_iommu=on,igfx_off"
+    "intel_pstate=passive" # more kernel control
+    "mem_sleep_default=deep"
+    "pci=pcie_bus_perf"
+    "pcie_aspm=off"
+    "processor.ignore_ppc=1" # no throttling
+    "resume=UUID=08110ec3-5356-48e3-b98c-f5afa622449d" # no battery
+    "resume_delay=15"
+    "thunderbolt.host_reset=false"
+    "usbcore.autosuspend=-1" # https://discourse.nixos.org/t/turn-off-autosuspend-for-usb/58933/3
+  ];
+
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
+  hardware.enableRedistributableFirmware = true;
+
+  hardware.cpu.intel.updateMicrocode = true;
+
   networking.hostName = "troy"; # Define your hostname.
 
   # Enable networking
@@ -273,10 +325,13 @@
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
+    brightnessctl
+    dmidecode
+    pciutils
     tmux
+    usbutils
     vim
     wget
-    brightnessctl
   ];
 
   # Needs to be enabled for completions
@@ -304,6 +359,7 @@
   };
 
   # Laptop stuff
+  services.throttled.enable = true;
   services.thermald.enable = true;
   services.power-profiles-daemon.enable = false;
   services.tlp.enable = false;
@@ -318,16 +374,6 @@
       turbo = "auto";
     };
   };
-
-  # https://discourse.nixos.org/t/turn-off-autosuspend-for-usb/58933/3
-  boot.kernelParams = [
-    "usbcore.autosuspend=-1"
-    "thunderbolt.host_reset=false"
-    "pci=pcie_bus_perf"
-    "resume=UUID=08110ec3-5356-48e3-b98c-f5afa622449d" # no battery
-  ];
-
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -397,6 +443,8 @@
       };
     };
   };
+
+  services.fwupd.enable = true; # firmware updates
 
   system.stateVersion = "24.11";
 }
