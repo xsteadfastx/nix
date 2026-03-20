@@ -19,6 +19,7 @@ in
       "mergetool \"nvim\"".cmd =
         "nvim -d -c \"wincmd l\" -c \"norm ]c\" \"$LOCAL\" \"$MERGED\" \"$REMOTE\"";
       "mergetool \"nvim\"".layout = "LOCAL,MERGED,REMOTE";
+      "mergetool \"diffview\"".cmd = "nvim -n -c \"DiffviewOpen\" \"$MERGE\"";
       "url \"git@git.wobcom.de:\"".insteadOf = "https://git.wobcom.de";
 
       alias.graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
@@ -36,7 +37,7 @@ in
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
       interactive.diffFilter = "delta --color-only";
-      merge.tool = "nvim";
+      merge.tool = "diffview";
       mergetool.keepBackup = false;
       mergetool.prompt = false;
       pager.difftool = true;
