@@ -30,12 +30,12 @@ _final: prev: {
   # meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
 
   yt-dlp = prev.yt-dlp.overrideAttrs (_oldAttrs: rec {
-    version = "2026.03.13";
+    version = "2026.03.17";
     src = prev.fetchFromGitHub {
       owner = "yt-dlp";
       repo = "yt-dlp";
       tag = version;
-      hash = "sha256-Sx5otasIqQW8n37cVqGI9j6biwMcEMIboLcyC1dkexk=";
+      hash = "sha256-A4LUCuKCjpVAOJ8jNoYaC3mRCiKH0/wtcsle0YfZyTA=";
     };
   });
 }
