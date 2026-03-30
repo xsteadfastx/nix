@@ -1,5 +1,5 @@
-{ buildGo124Module, fetchFromGitHub, ... }:
-buildGo124Module rec {
+{ buildGo126Module, fetchFromGitHub, ... }:
+buildGo126Module rec {
   pname = "localsend-go";
   version = "1.2.7";
 
