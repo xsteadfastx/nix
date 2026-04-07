@@ -37,10 +37,12 @@ in
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
       interactive.diffFilter = "delta --color-only";
+      merge.ff = false;
       merge.tool = "diffview";
       mergetool.keepBackup = false;
       mergetool.prompt = false;
       pager.difftool = true;
+      pull.ff = true;
       push.followTags = true;
       rerere.enabled = true;
       sendemail.annotate = "yes";
