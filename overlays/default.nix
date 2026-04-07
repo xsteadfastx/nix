@@ -38,4 +38,15 @@ _final: prev: {
       hash = "sha256-A4LUCuKCjpVAOJ8jNoYaC3mRCiKH0/wtcsle0YfZyTA=";
     };
   });
+
+  cliamp = prev.cliamp.overrideAttrs (_oldAttrs: rec {
+    version = "1.34.1";
+    src = prev.fetchFromGitHub {
+      owner = "bjarneo";
+      repo = "cliamp";
+      tag = "v${version}";
+      hash = "sha256-nhgdM0C+QgvTdXLrbo0DNJPVhqaumQgNBd3bmiwDk8M=";
+    };
+    vendorHash = "sha256-sS0tjZoZ81Jwn/KJnJD01fTA4z0HxEYYM89Ta398MP0=";
+  });
 }
