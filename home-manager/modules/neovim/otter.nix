@@ -12,13 +12,10 @@ mkIf cfg.neovim {
   programs.neovim = {
     plugins = with pkgsUnstable.vimPlugins; [
       otter-nvim
-      hmts-nvim
     ];
     extraLuaConfig =
       #lua
       ''
-        require('hmts').setup()
-
         local otter = require('otter')
 
         otter.setup({

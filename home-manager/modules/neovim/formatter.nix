@@ -20,7 +20,7 @@ in
       golines
       hclfmt
       nixfmt
-      nodePackages.prettier
+      prettier
       shfmt
       sql-formatter
       stylua

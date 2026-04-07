@@ -45,8 +45,8 @@ in
         	return orig_util_open_floating_preview(contents, syntax, opts, ...)
         end
 
-        vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border })
-        vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border })
+        -- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border })
+        -- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border })
 
         -- Global LSP attachment callback
         vim.api.nvim_create_autocmd("LspAttach", {
@@ -139,9 +139,12 @@ in
         vim.diagnostic.config({
         	virtual_text = true,
         	signs = true,
-        	update_in_insert = false, -- Only recalculate diagnostics when leaving insert mode
+        	update_in_insert = false,
         	severity_sort = true,
-        	float = { border = border },
+        	float = {
+        		border = border,
+        		source = "always",
+        	},
         })
       '';
   };

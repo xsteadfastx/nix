@@ -17,15 +17,12 @@ in
 
       (nvim-treesitter.withPlugins (
         p: with p; [
-          # Core / Config
           gitcommit
           lua
           nix
-          query # Required for treesitter inspections
+          query
           vim
           vimdoc
-
-          # Web Development
           css
           html
           javascript
@@ -34,8 +31,6 @@ in
           tsx
           typescript
           yaml
-
-          # Programming Languages
           bash
           c
           cpp
@@ -46,8 +41,6 @@ in
           proto
           python
           rust
-
-          # Documentation / Markup
           dockerfile
           markdown
           markdown_inline
@@ -60,39 +53,38 @@ in
       # lua
       ''
         require("treesitter-context").setup({
-            max_lines = 3, -- Keep small to prevent lag on scroll
+            max_lines = 3,
         })
 
         vim.api.nvim_create_autocmd({ "FileType", "BufReadPost" }, {
           callback = function(args)
             local bufnr = args.buf
-            -- Optimization: Don't start for large files
+            local ft = vim.bo[bufnr].filetype
+            if ft == "" or ft == "fzf" then return end
+
+            -- Check file size using modern vim.uv
             local max_filesize = 1024 * 1024
-            local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
+            local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(bufnr))
             if ok and stats and stats.size > max_filesize then
               return
             end
 
-            -- Check if we have a parser for the current language
-            local ft = vim.bo[bufnr].filetype
+            -- Safe check for parser existence to avoid the "assert" error
             local lang = vim.treesitter.language.get_lang(ft) or ft
+            local has_parser = pcall(vim.treesitter.language.inspect, lang)
 
-            -- Try to start the native treesitter highlighting
-            local has_parser, _ = pcall(vim.treesitter.get_parser, bufnr, lang)
             if has_parser then
-              vim.treesitter.start(bufnr, lang)
+              pcall(vim.treesitter.start, bufnr, lang)
             end
           end,
         })
 
         local dracula = require("dracula")
-        dracula.setup({
-          italic_comment = true,
-        })
+        dracula.setup({ italic_comment = true })
         vim.cmd("colorscheme dracula")
 
+        -- Custom Highlighting Groups
         local c = dracula.colors()
-
         vim.cmd("syntax off")
 
         local hls = {
@@ -105,7 +97,6 @@ in
           ["@keyword"]            = { fg = c.pink },
           ["@method"]             = { fg = c.green },
           ["@module"]             = { fg = c.pink },
-          ["@module.go"]           = { fg = c.pink },
           ["@namespace"]          = { fg = c.pink },
           ["@number"]             = { fg = c.purple },
           ["@operator"]           = { fg = c.pink },
@@ -118,9 +109,7 @@ in
           ["@type.builtin"]       = { fg = c.yellow, italic = true },
           ["@variable"]           = { fg = c.fg },
           ["@variable.builtin"]   = { fg = c.cyan, italic = true },
-          ["@variable.go"]         = { fg = c.fg },
           ["@variable.member"]    = { fg = c.cyan },
-          ["@variable.member.go"]  = { fg = c.cyan },
         }
 
         for group, settings in pairs(hls) do
