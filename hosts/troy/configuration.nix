@@ -127,17 +127,32 @@
     LC_TIME = "de_DE.UTF-8";
   };
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix.settings = {
+    auto-optimise-store = true;
+    download-buffer-size = 524288000;
+    max-free = 10 * 1024 * 1024 * 1024; # 10GB
+    min-free = 5 * 1024 * 1024 * 1024; # 5GB
 
-  nix.settings.trusted-users = [
-    "root"
-    "marv"
-  ];
+    substituters = [
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org"
+    ];
 
-  nix.settings.download-buffer-size = 524288000;
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+
+    trusted-users = [
+      "root"
+      "marv"
+    ];
+  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
@@ -410,12 +425,6 @@
     automatic = true;
     dates = "daily";
     options = "--delete-older-than 7d";
-  };
-
-  nix.settings = {
-    auto-optimise-store = true;
-    min-free = 5 * 1024 * 1024 * 1024; # 5GB
-    max-free = 10 * 1024 * 1024 * 1024; # 10GB
   };
 
   # dell dockingstation
