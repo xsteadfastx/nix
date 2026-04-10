@@ -416,7 +416,18 @@
   services.udev.packages = [ pkgs.epkowa ];
 
   # memory save
-  services.earlyoom.enable = true;
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 5;
+    freeSwapThreshold = 5;
+    extraArgs = [
+      # "-g"
+      "--avoid"
+      "^(X|i3.*|sshd|systemd|ghostty|alacritty)$"
+      "--prefer"
+      "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
+    ];
+  };
 
   services.resolved.enable = true;
 
