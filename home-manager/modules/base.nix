@@ -52,13 +52,14 @@ in
     gcc
 
     # download stuff
+    aria2
     yt-dlp
     (pkgs.writeShellScriptBin "yt-dlp-album" ''
       set -euo pipefail
       if [ "$#" -ne 1 ]; then
-        echo "Error: One argument needed (URL)."
-        echo "Usage: yt-dlp-album <URL>"
-        exit 1
+      	echo "Error: One argument needed (URL)."
+      	echo "Usage: yt-dlp-album <URL>"
+      	exit 1
       fi
       ${yt-dlp}/bin/yt-dlp -x --audio-format mp3 --audio-quality 0 -i -o "%(album)s/%(title)s-%(id)s.%(ext)s" --cookies-from-browser chromium $1
     '')
