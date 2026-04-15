@@ -1,8 +1,4 @@
 _: {
-  nix.settings.trusted-users = [
-    "root"
-    "marv"
-  ];
   services.tailscale.enable = true;
   system.stateVersion = "25.05";
   zramSwap = {

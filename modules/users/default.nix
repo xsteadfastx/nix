@@ -3,6 +3,10 @@ let
   sshPubKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsnFFmG7PlPzMcjL/Buoy8P4hFUGOWGKB/UYdzWVVNu marv@xsfx.dev";
 in
 {
+  nix.settings.trusted-users = [
+    "marv"
+  ];
+
   users.users = {
     marv = {
       isNormalUser = true;

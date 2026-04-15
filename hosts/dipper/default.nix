@@ -10,6 +10,8 @@
     ./network.nix
     ./tlsrouter.nix
     inputs.disko.nixosModules.disko
+    inputs.self.nixosModules.base
+    inputs.self.nixosModules.ssh
     inputs.self.nixosModules.tlsrouter
     inputs.self.nixosModules.users
     inputs.srvos.nixosModules.hardware-hetzner-cloud
