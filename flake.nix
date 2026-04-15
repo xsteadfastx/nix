@@ -39,6 +39,7 @@
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
       nixosModules.home-manager = import ./modules/home-manager;
       nixosModules.ssh = import ./modules/ssh;
+      nixosModules.tlsrouter = import ./modules/tlsrouter;
       nixosModules.users = import ./modules/users;
       overlays.default = import ./overlays { inherit inputs; };
     }
@@ -73,6 +74,7 @@
         devShells.default = preCommitGen.devShell;
         formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
+        packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
       }
     );
 }
