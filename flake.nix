@@ -37,6 +37,7 @@
     {
       colmena = import ./hive.nix { inherit inputs lib; };
       colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
+      lib = import ./lib;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
       nixosModules.base = import ./modules/base;
       nixosModules.home-manager = import ./modules/home-manager;

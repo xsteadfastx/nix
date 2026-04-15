@@ -4,6 +4,7 @@
 }:
 {
   imports = [
+    (inputs.self.lib.exporters.mkNodeExporter "100.124.197.13")
     ./configuration.nix
     ./disko.nix
     ./hardware-configuration.nix

@@ -1,0 +1,3 @@
+{
+  exporters = import ./exporters.nix;
+}
