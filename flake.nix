@@ -14,6 +14,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.12.8";
+    nixos-anywhere.url = "github:nix-community/nixos-anywhere";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -24,6 +25,7 @@
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
+    srvos.url = "github:nix-community/srvos";
   };
 
   outputs =
@@ -32,10 +34,12 @@
       inherit (inputs.nixpkgs) lib;
     in
     {
+      colmena = import ./hive.nix { inherit inputs lib; };
       colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
-      colmena = import ./hive.nix { inherit inputs lib; };
-
+      nixosModules.home-manager = import ./modules/home-manager;
+      nixosModules.ssh = import ./modules/ssh;
+      nixosModules.users = import ./modules/users;
       overlays.default = import ./overlays { inherit inputs; };
     }
     // inputs.flake-utils.lib.eachDefaultSystem (
@@ -60,15 +64,14 @@
           extraPackages = [
             inputs.agenix.packages.${system}.default
             inputs.colmena.packages.${system}.colmena
+            inputs.nixos-anywhere.packages.${system}.default
           ];
         };
-
       in
       {
         checks.pre-commit-check = preCommitGen.pre-commit-check;
-        formatter = preCommitGen.formatter;
         devShells.default = preCommitGen.devShell;
-
+        formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
       }
     );

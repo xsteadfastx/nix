@@ -20,7 +20,7 @@
       };
     };
 
-  troy = import ./hosts/troy { inherit inputs; };
-
+  dipper = import ./hosts/dipper { inherit inputs; };
   phil = import ./hosts/phil { inherit inputs; };
+  troy = import ./hosts/troy { inherit inputs; };
 }
