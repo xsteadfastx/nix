@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   ...
 }:
 {
@@ -31,6 +32,7 @@
   troy = {
     deployment.tags = [ "local" ];
     deployment.allowLocalDeployment = true;
+    deployment.targetHost = lib.mkForce null;
     imports = [ ./hosts/troy ];
   };
 }
