@@ -4,6 +4,7 @@
 }:
 {
   meta = {
+    specialArgs = { inherit inputs; };
     nixpkgs = import inputs.nixpkgs {
       system = "x86_64-linux";
     };
@@ -12,15 +13,24 @@
   defaults =
     { config, ... }:
     {
-      config = {
-        _module.args = { inherit inputs; };
-        deployment.targetHost = config.networking.hostName;
-        deployment.targetUser = null;
-        nixpkgs.config.allowUnfree = true;
-      };
+      deployment.targetUser = null;
+      deployment.targetHost = config.networking.hostName;
+      nixpkgs.config.allowUnfree = true;
     };
 
-  dipper = import ./hosts/dipper { inherit inputs; };
-  phil = import ./hosts/phil { inherit inputs; };
-  troy = import ./hosts/troy { inherit inputs; };
+  dipper = {
+    deployment.tags = [ "server" ];
+    imports = [ ./hosts/dipper ];
+  };
+
+  phil = {
+    deployment.tags = [ "server" ];
+    imports = [ ./hosts/phil ];
+  };
+
+  troy = {
+    deployment.tags = [ "local" ];
+    deployment.allowLocalDeployment = true;
+    imports = [ ./hosts/troy ];
+  };
 }
