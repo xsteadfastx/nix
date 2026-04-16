@@ -8,5 +8,6 @@
     inputs.self.nixosModules.base
     inputs.self.nixosModules.ssh
     inputs.self.nixosModules.users
+    inputs.srvos.nixosModules.server
   ];
 }
