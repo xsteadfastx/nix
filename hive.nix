@@ -17,6 +17,8 @@
       deployment.targetUser = null;
       deployment.targetHost = config.networking.hostName;
       nixpkgs.config.allowUnfree = true;
+
+      imports = [ inputs.self.nixosModules.base ];
     };
 
   abed = {
@@ -26,7 +28,6 @@
 
       (inputs.self.lib.exporters.mkNodeExporter "100.113.26.112")
       inputs.disko.nixosModules.disko
-      inputs.self.nixosModules.base
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
       inputs.self.nixosModules.vm-variant
@@ -43,7 +44,6 @@
 
       (inputs.self.lib.exporters.mkNodeExporter "100.124.197.13")
       inputs.disko.nixosModules.disko
-      inputs.self.nixosModules.base
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.tlsrouter
       inputs.self.nixosModules.users
@@ -58,7 +58,6 @@
       ./hosts/phil
 
       inputs.nixos-hardware.nixosModules.raspberry-pi-3
-      inputs.self.nixosModules.base
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
       inputs.srvos.nixosModules.server
@@ -74,7 +73,6 @@
 
       inputs.home-manager.nixosModules.home-manager
       inputs.nixos-hardware.nixosModules.dell-xps-13-7390
-      inputs.self.nixosModules.base
       inputs.self.nixosModules.home-manager
       inputs.self.nixosModules.users
     ];

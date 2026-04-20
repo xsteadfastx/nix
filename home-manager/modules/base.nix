@@ -27,20 +27,11 @@ in
     bandwhich # traffic
     bat
     eza
-    fd
-    file
     fzf
-    gping
-    htop
-    mtr
-    ncdu
-    nmap
     nodejs
     progress
     python3
-    ripgrep
     rlwrap
-    tree
     unzip
     viddy
     vimv

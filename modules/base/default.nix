@@ -1,4 +1,5 @@
-_: {
+{ pkgs, ... }:
+{
   nix.settings = {
     trusted-users = [
       "root"
@@ -17,4 +18,17 @@ _: {
       "flakes"
     ];
   };
+
+  environment.systemPackages = with pkgs; [
+    btop
+    fd
+    file
+    gping
+    htop
+    mtr
+    ncdu
+    nmap
+    ripgrep
+    tree
+  ];
 }
