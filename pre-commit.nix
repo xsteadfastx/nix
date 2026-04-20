@@ -14,7 +14,7 @@
   ];
 
   hooks = {
-    pre-commit-hook-ensure-sops.enable = false;
+    pre-commit-hook-ensure-sops.enable = true;
 
     check-yaml.enable = true;
     convco.enable = true;

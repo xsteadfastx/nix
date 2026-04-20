@@ -44,6 +44,7 @@
       nixosModules.ssh = import ./modules/ssh;
       nixosModules.tlsrouter = import ./modules/tlsrouter;
       nixosModules.users = import ./modules/users;
+      nixosModules.vm-variant = import ./modules/vm-variant;
       overlays.default = import ./overlays { inherit inputs; };
     }
     // inputs.flake-utils.lib.eachDefaultSystem (
@@ -69,6 +70,7 @@
             inputs.agenix.packages.${system}.default
             inputs.colmena.packages.${system}.colmena
             inputs.nixos-anywhere.packages.${system}.default
+            pkgs.sops
           ];
         };
       in
