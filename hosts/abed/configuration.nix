@@ -15,4 +15,9 @@ _: {
     "net.ipv6.conf.all.forwarding" = 1;
     "vm.swappiness" = 100;
   };
+  nix.settings = {
+    min-free = 2 * 1024 * 1024 * 1024;
+    max-free = 5 * 1024 * 1024 * 1024;
+  };
+  nix.gc.options = "--delete-older-than 3d";
 }

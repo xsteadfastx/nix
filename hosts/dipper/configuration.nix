@@ -11,4 +11,9 @@ _: {
   networking.hostName = "dipper";
   security.sudo.wheelNeedsPassword = false;
   boot.loader.grub.enable = true;
+  nix.settings = {
+    min-free = 2 * 1024 * 1024 * 1024;
+    max-free = 5 * 1024 * 1024 * 1024;
+  };
+  nix.gc.options = "--delete-older-than 3d";
 }
