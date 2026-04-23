@@ -18,5 +18,6 @@
     services.cloud-init.enable = false;
     systemd.network.enable = lib.mkForce false;
     users.users.root.initialPassword = "notsafe";
+    nix.settings.min-free = 0;
   };
 }
