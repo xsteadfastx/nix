@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 {
   networking.hostName = "phil";
   security.sudo.wheelNeedsPassword = false;
@@ -14,6 +14,7 @@
   zramSwap.enable = true;
   zramSwap.memoryPercent = 150;
   boot.kernel.sysctl."vm.swappiness" = 100;
+  boot.kernel.sysctl."vm.mmap_rnd_bits" = lib.mkForce 24;
   system.stateVersion = "25.05";
   nix.settings = {
     min-free = 2 * 1024 * 1024 * 1024;
