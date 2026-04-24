@@ -43,6 +43,9 @@
     ncdu
     nmap
     ripgrep
+    tmux
     tree
+    vim
+    wget
   ];
 }
