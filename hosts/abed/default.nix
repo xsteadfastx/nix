@@ -1,5 +1,6 @@
 _: {
   imports = [
+    ./backup.nix
     ./caddy.nix
     ./configuration.nix
     ./disko.nix

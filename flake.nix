@@ -71,6 +71,7 @@
             inputs.colmena.packages.${system}.colmena
             inputs.nixos-anywhere.packages.${system}.default
             pkgs.sops
+            pkgs.ssh-to-age
           ];
         };
       in
