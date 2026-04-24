@@ -16,7 +16,6 @@
     {
       deployment.targetUser = null;
       deployment.targetHost = config.networking.hostName;
-      nixpkgs.config.allowUnfree = true;
 
       imports = [ inputs.self.nixosModules.base ];
     };
