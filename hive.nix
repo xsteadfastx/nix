@@ -36,6 +36,23 @@
     ];
   };
 
+  coltrane = {
+    deployment.tags = [ "local" ];
+    deployment.allowLocalDeployment = true;
+    deployment.targetHost = lib.mkForce null;
+    imports = [
+      ./hosts/coltrane
+
+      inputs.disko.nixosModules.disko
+      inputs.home-manager.nixosModules.home-manager
+      inputs.nixos-hardware.nixosModules.dell-xps-13-9350
+      inputs.self.nixosModules.home-manager
+      inputs.self.nixosModules.ssh
+      inputs.self.nixosModules.users
+      inputs.self.nixosModules.vm-variant
+    ];
+  };
+
   dipper = {
     deployment.tags = [ "server" ];
     imports = [
