@@ -356,4 +356,6 @@
   services.hardware.bolt.enable = true;
 
   services.fwupd.enable = true; # firmware updates
+
+  users.users.root.hashedPassword = "!";
 }
