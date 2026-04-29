@@ -1,4 +1,26 @@
+{ pkgs, ... }:
 {
+  boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.requestEncryptionCredentials = true;
+  environment.systemPackages = [ pkgs.zfs ];
+  networking.hostId = "00000001";
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 100;
+    priority = 100;
+  };
+
+  swapDevices = [
+    {
+      device = "/dev/zvol/zroot/swap";
+      priority = 10;
+    }
+  ];
+
+  boot.kernel.sysctl."vm.swappiness" = 60;
+
   disko.devices = {
     disk = {
       main = {
@@ -8,7 +30,7 @@
           type = "gpt";
           partitions = {
             boot = {
-              size = "940M";
+              size = "1G";
               type = "EF00";
               content = {
                 type = "filesystem";
@@ -17,21 +39,42 @@
                 mountOptions = [ "umask=0077" ];
               };
             };
-            swap = {
-              size = "12G";
-              content = {
-                type = "swap";
-                discardPolicy = "both";
-                resumeDevice = true;
-              };
-            };
-            root = {
+            zfs = {
               size = "100%";
               content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
+                type = "zfs";
+                pool = "zroot";
               };
+            };
+          };
+        };
+      };
+    };
+    zpool = {
+      zroot = {
+        type = "zpool";
+        rootFsOptions = {
+          encryption = "aes-256-gcm";
+          keyformat = "passphrase";
+          keylocation = "prompt";
+          "com.sun:auto-snapshot" = "false";
+        };
+        datasets = {
+          root = {
+            type = "zfs_fs";
+            mountpoint = "/";
+            options.mountpoint = "legacy";
+          };
+          home = {
+            type = "zfs_fs";
+            mountpoint = "/home";
+            options.mountpoint = "legacy";
+          };
+          swap = {
+            type = "zfs_volume";
+            size = "6G";
+            content = {
+              type = "swap";
             };
           };
         };

@@ -1,4 +1,8 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  ...
+}:
 {
   xsfx.kodi = true;
   xsfx.neovim = true;
@@ -22,17 +26,8 @@
 
   networking.firewall.allowedTCPPorts = [ 8080 ];
 
-  # zram
-  zramSwap = {
-    enable = true;
-    algorithm = "zstd";
-    memoryPercent = 100;
-    priority = 10;
-  };
-
-  boot.kernel.sysctl."vm.swappiness" = 100;
-
-  boot.kernelParams = [ "nomodeset" ];
+  hardware.graphics.enable = true;
+  hardware.enableAllFirmware = true;
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -116,15 +111,8 @@
   # Configure console keymap
   console.keyMap = "de";
 
-  # Hidpi
-  # bigger tty fonts
+  # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
-  # services.xserver.dpi = 180;
-  # environment.variables = {
-  #   GDK_SCALE = "2";
-  #   GDK_DPI_SCALE = "0.5";
-  #   _JAVA_OPTIONS = "-Dsun.java2d.uiScale=2";
-  # };
 
   services.autorandr =
     let
@@ -358,4 +346,24 @@
   services.fwupd.enable = true; # firmware updates
 
   users.users.root.hashedPassword = "!";
+
+  services.logind = {
+    settings = {
+      Login = {
+        HandleLidSwitch = "suspend";
+        HandleLidSwitchDocked = "suspend";
+        HandleLidSwitchExternalPower = "suspend";
+        HandlePowerKey = "suspend";
+        HandlePowerKeyLongPress = "poweroff";
+        HandleSleepKey = "suspend";
+        HandleSleepKeyExternalPower = "suspend";
+        HandleSuspendKey = "suspend";
+        HandleSuspendKeyExternalPower = "suspend";
+        LidSwitchIgnoreInhibited = "no";
+        PowerKeyIgnoreInhibited = "yes";
+        SleepKeyIgnoreInhibited = "yes";
+        SuspendKeyIgnoreInhibited = "yes";
+      };
+    };
+  };
 }
