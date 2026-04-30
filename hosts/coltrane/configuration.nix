@@ -32,8 +32,48 @@
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.memtest86.enable = true;
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
+  boot.kernelModules = [ "thunderbolt" ];
+
+  boot.kernelParams = [
+    "intel_iommu=on"
+    "snd_hda_intel.power_save=0"
+    "snd_intel_dspcfg.dsp_driver=1"
+    "snd_usb_audio.power_save=0"
+    "usbcore.autosuspend=-1"
+  ];
+
+  boot.initrd.availableKernelModules = [
+    "nvme"
+    "thunderbolt"
+    "thunderbolt_net"
+    "usbhid"
+    "xhci_pci"
+  ];
+
+  services.pipewire.extraConfig.pipewire."92-realtime" = {
+    "context.properties" = {
+      "default.clock.rate" = 48000;
+      "default.clock.quantum" = 2048;
+      "default.clock.min-quantum" = 1024;
+      "default.clock.max-quantum" = 4096;
+      "mem.allow-mlock" = true;
+    };
+    "context.modules" = [
+      {
+        name = "libpipewire-module-rtkit";
+        args = {
+          "nice.level" = -15;
+          "rt.prio" = 88;
+          "rt.time.soft" = 2000000;
+          "rt.time.hard" = 2000000;
+        };
+      }
+    ];
+  };
 
   hardware.enableRedistributableFirmware = true;
 

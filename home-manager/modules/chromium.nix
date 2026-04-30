@@ -12,6 +12,9 @@ lib.mkIf cfg.x11 {
   programs.chromium = {
     enable = true;
     package = pkgsUnstable.chromium.override { enableWideVine = true; };
+    commandLineArgs = [
+      "--audio-buffer-size=4096"
+    ];
     extensions = [
       { id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"; } # dark reader
       { id = "gfapcejdoghpoidkfodoiiffaaibpaem"; } # dracula
