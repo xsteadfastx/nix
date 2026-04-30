@@ -22,6 +22,9 @@
       "chirpstack.localhost"
       "mqtt.localhost"
     ];
+    "10.202.180.38" = [
+      "primion.service.lsw.de" # fucked up primion
+    ];
   };
 
   networking.firewall.allowedTCPPorts = [ 8080 ];
@@ -83,12 +86,6 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
-
-  networking.hosts = {
-    "10.202.180.38" = [
-      "primion.service.lsw.de" # fucked up primion
-    ];
-  };
 
   # Set your time zone.
   time.timeZone = "Europe/Berlin";
