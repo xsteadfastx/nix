@@ -7,3 +7,4 @@ extend-ignore-re = [
 [default.extend-words]
 mosquitto = "mosquitto"
 therre = "therre"
+hda = "hda"
