@@ -19,7 +19,6 @@ lib.mkIf cfg.x11 {
       ${pkgs.xorg.xsetroot}/bin/xsetroot -solid "#282a36"
       ${pkgs.dunst}/bin/dunst &
       ${pkgs.networkmanagerapplet}/bin/nm-applet &
-      setxkbmap -option "caps:super"
       ${pkgs.blueman}/bin/blueman-applet &
       ${pkgs.autorandr}/bin/autorandr -c
       xset s 60 60

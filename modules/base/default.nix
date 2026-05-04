@@ -33,6 +33,9 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  services.xserver.xkb.options = "caps:escape";
+  console.useXkbConfig = true;
+
   environment.systemPackages = with pkgs; [
     btop
     fd
