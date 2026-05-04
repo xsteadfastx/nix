@@ -38,6 +38,10 @@ in
             i3-msg 'workspace 2, move workspace to output eDP-1'
             [ -n "$RIGHT" ] && i3-msg "workspace 3, move workspace to output $RIGHT"
           '';
+          "disable-dpms" = ''
+            export DISPLAY=:0
+            xset -dpms
+          '';
         };
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
