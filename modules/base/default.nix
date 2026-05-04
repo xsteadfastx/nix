@@ -36,6 +36,8 @@
   services.xserver.xkb.options = "caps:escape";
   console.useXkbConfig = true;
 
+  boot.loader.systemd-boot.configurationLimit = 10;
+
   environment.systemPackages = with pkgs; [
     btop
     fd
