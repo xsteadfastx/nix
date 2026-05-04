@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  pkgsUnstable,
   ...
 }:
 {
@@ -41,13 +42,7 @@
 
   boot.kernelModules = [ "thunderbolt" ];
 
-  boot.kernelParams = [
-    "intel_iommu=on"
-    "snd_hda_intel.power_save=0"
-    "snd_intel_dspcfg.dsp_driver=1"
-    "snd_usb_audio.power_save=0"
-    "usbcore.autosuspend=-1"
-  ];
+  boot.kernelPackages = pkgsUnstable.${pkgs.stdenv.hostPlatform.system}.linuxPackages;
 
   boot.initrd.availableKernelModules = [
     "nvme"
@@ -56,27 +51,6 @@
     "usbhid"
     "xhci_pci"
   ];
-
-  services.pipewire.extraConfig.pipewire."92-realtime" = {
-    "context.properties" = {
-      "default.clock.rate" = 48000;
-      "default.clock.quantum" = 2048;
-      "default.clock.min-quantum" = 1024;
-      "default.clock.max-quantum" = 4096;
-      "mem.allow-mlock" = true;
-    };
-    "context.modules" = [
-      {
-        name = "libpipewire-module-rtkit";
-        args = {
-          "nice.level" = -15;
-          "rt.prio" = 88;
-          "rt.time.soft" = 2000000;
-          "rt.time.hard" = 2000000;
-        };
-      }
-    ];
-  };
 
   hardware.enableRedistributableFirmware = true;
 
@@ -150,101 +124,6 @@
 
   # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
-
-  services.autorandr =
-    let
-      eDP1 = {
-        fingerprint = "00ffffffffffff004d10ad14000000002a1c0104a51d11780ede50a3544c99260f5054000000010101010101010101010101010101014dd000a0f0703e803020350026a510000018a4a600a0f0703e803020350026a510000018000000fe00305239394b804c513133334431000000000002410328011200000b010a20200041";
-        config = {
-          enable = true;
-          crtc = 0;
-          primary = true;
-          mode = "1920x1080";
-          rate = "59.96";
-        };
-      };
-    in
-    {
-      enable = true;
-      profiles = {
-        "mobile" = {
-          fingerprint = {
-            eDP-1 = eDP1.fingerprint;
-          };
-          config = {
-            eDP-1 = lib.mkMerge [
-              eDP1.config
-              { position = "0x0"; }
-            ];
-          };
-        };
-
-        "home" = {
-          fingerprint = {
-            eDP-1 = eDP1.fingerprint;
-            DP-1 = "00ffffffffffff0004210000000000000616010380643d008aee95a3544c99260f5054a54e0001010101010101010101010101010101662150b051001b30407036003f432100001e000000fd0018550f5010000a202020202020000000fc00484454560a20202020202020200000000000000000000000000000000000000131020324745090050403070206011f14131216111520230907038301000066030c00100080011d00bc52d01e20b8285540c48e2100001e011d80d0721c1620102c2580c48e2100009e8c0ad08a20e02d10103e9600138e210000188c0ad090204031200c405500138e210000180000000000000000000000000000000000000083";
-            DP-2-1 = "00ffffffffffff004c2db006343242432114010380301b782a78f1a655489b26125054bfef80714f8100814081809500b300a940950f023a801871382d40582c4500dd0c1100001e000000fd00384b1e5111000a202020202020000000fc00534d42323434300a2020202020000000ff004839585a3830363337330a2020017e02010400023a80d072382d40102c4580dd0c1100001e011d007251d01e206e285500dd0c1100001e011d00bc52d01e20b8285540151e1100001e8c0ad090204031200c405500dd1e110000188c0ad08a20e02d10103e9600dd1e1100001800000000000000000000000000000000000000000000000000000000000000000099";
-          };
-          config = {
-            eDP-1 = lib.mkMerge [
-              eDP1.config
-              { position = "0x0"; }
-            ];
-
-            DP-1 = {
-              enable = true;
-              crtc = 1;
-              position = "3840x0";
-              mode = "1360x768";
-              rate = "60.02";
-            };
-
-            DP-2-1 = {
-              enable = true;
-              crtc = 2;
-              mode = "1920x1080";
-              position = "1920x0";
-              rate = "60.00";
-            };
-          };
-        };
-
-        "work" = {
-          fingerprint = {
-            eDP-1 = eDP1.fingerprint;
-            DP-1 = "00ffffffffffff0009d1218045540000111a010380351e782e4ca5a7554da226105054a56b80d1c0b300a9c08180810081c001010101023a801871382d40582c45000f282100001e000000ff0056344730303138353031390a20000000fd00324c1e5311000a202020202020000000fc0042656e51204c43440a20202020002f";
-            DP-2-2 = "00ffffffffffff0009d101834554000021180104a5351e783ed4a5ab5044a324145054a56b80d1c081c08180a9c0b300810001010101023a801871382d40582c4500dd0c1100001e000000ff004238453032353234534c300a20000000fd00324c1e5311000a202020202020000000fc0042656e5120424c323431300a2001a0020322f14f90050403020111121314060715161f2309070765030c00100083010000023a801871382d40582c4500132a2100001f011d8018711c1620582c2500132a2100009f011d007251d01e206e285500132a2100001e8c0ad08a20e02d10103e9600132a21000018000000000000000000000000000000000000000000eb";
-          };
-
-          config = {
-            eDP-1 = lib.mkMerge [
-              eDP1.config
-              { position = "0x0"; }
-            ];
-
-            DP-2-2 = {
-              enable = true;
-              crtc = 1;
-              position = "1920x0";
-              mode = "1920x1080";
-              rate = "60.00";
-            };
-
-            DP-1 = {
-              enable = true;
-              crtc = 1;
-              position = "3840x0";
-              mode = "1920x1080";
-              rate = "60.00";
-            };
-          };
-
-        };
-      };
-    };
-
-  # Disable autorandr service
-  # systemd.services.autorandr.wantedBy = lib.mkForce [ ];
 
   # Enable CUPS to print documents.
   services.printing = {
