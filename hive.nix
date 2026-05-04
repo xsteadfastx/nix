@@ -5,7 +5,10 @@
 }:
 {
   meta = {
-    specialArgs = { inherit inputs; };
+    specialArgs = {
+      inherit inputs;
+      pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages;
+    };
     nixpkgs = import inputs.nixpkgs {
       system = "x86_64-linux";
     };
