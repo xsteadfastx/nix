@@ -5,6 +5,7 @@ _: {
     "snd_usb_audio.power_save=0"
     "usbcore.autosuspend=-1"
     "threadirqs"
+    "pcie_aspm=off"
   ];
 
   # PipeWire realtime audio
