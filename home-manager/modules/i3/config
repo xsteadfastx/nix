@@ -169,7 +169,8 @@ bar {
         status_command bumblebee-status \
                 -m cpu memory disk nic battery pipewire datetime \
                 -p \
-                        nic.exclude="enp0,veth,vir,docker,lxc,br,lo,cni0,flannel.1,cali,vxlan.calico,w1nd50r" \
+                        nic.exclude="ip6tnl,veth,vir,docker,lxc,br,lo,cni0,flannel.1,cali,vxlan.calico,w1nd50r" \
+                        nic.states="up,unknown,down" \
                         disk.format="{percent:05.02f}%" \
                         memory.format="{percent:05.02f}%" \
                         datetime.format="%T %d/%m/%Y" \
