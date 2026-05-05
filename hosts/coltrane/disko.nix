@@ -13,13 +13,6 @@
     priority = 100;
   };
 
-  swapDevices = [
-    {
-      device = "/dev/zvol/zroot/swap";
-      priority = 10;
-    }
-  ];
-
   boot.kernel.sysctl."vm.swappiness" = 60;
 
   disko.devices = {
@@ -70,13 +63,6 @@
             type = "zfs_fs";
             mountpoint = "/home";
             options.mountpoint = "legacy";
-          };
-          swap = {
-            type = "zfs_volume";
-            size = "6G";
-            content = {
-              type = "swap";
-            };
           };
         };
       };
