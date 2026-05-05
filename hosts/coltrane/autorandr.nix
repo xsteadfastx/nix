@@ -28,6 +28,14 @@ in
       };
 
       "home" = {
+        hooks.preswitch = {
+          "reset-external" = ''
+            export DISPLAY=:0
+            for output in $(xrandr --query | grep " connected" | grep -v "eDP" | awk '{print $1}'); do
+              xrandr --output $output --off 2>/dev/null || true
+            done
+          '';
+        };
         hooks.postswitch = {
           "move-workspaces" = ''
             export DISPLAY=:0
@@ -41,6 +49,7 @@ in
           "disable-dpms" = ''
             export DISPLAY=:0
             xset -dpms
+            xset s 60 60
           '';
         };
         fingerprint = {
