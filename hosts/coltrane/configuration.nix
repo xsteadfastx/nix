@@ -106,6 +106,10 @@
         XSECURELOCK_PASSWORD_PROMPT=time_hex \
         XSECURELOCK_FONT='JetBrainsMono Nerd Font' \
         ${pkgs.xsecurelock}/bin/xsecurelock
+        for output in $(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | awk '{print $1}'); do
+          ${pkgs.xorg.xrandr}/bin/xrandr --output $output --off 2>/dev/null || true
+        done
+        ${pkgs.autorandr}/bin/autorandr --change
       '';
     in
     {
@@ -252,6 +256,10 @@
     dates = "daily";
     options = "--delete-older-than 7d";
   };
+
+  # skip autorandr while screen is locked to prevent xsecurelock from dying on display changes
+  systemd.services.autorandr.serviceConfig.ExecCondition =
+    "${pkgs.bash}/bin/bash -c '! ${pkgs.procps}/bin/pgrep -x xsecurelock'";
 
   # dell dockingstation
   services.hardware.bolt.enable = true;
