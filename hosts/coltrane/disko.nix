@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.forceImportRoot = true;
   boot.zfs.requestEncryptionCredentials = true;
   environment.systemPackages = [ pkgs.zfs ];
   networking.hostId = "00000001";
