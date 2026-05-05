@@ -1,5 +1,28 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 let
+  sharedHooks = {
+    preswitch."reset-external" = ''
+      export DISPLAY=:0
+      for output in $(xrandr --query | grep " connected" | grep -v "eDP" | awk '{print $1}'); do
+        xrandr --output $output --off 2>/dev/null || true
+      done
+    '';
+    postswitch."move-workspaces" = ''
+      export DISPLAY=:0
+      export I3SOCK=$(i3 --get-socketpath)
+      MIDDLE=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -v "eDP-1\|DP-1$\|DP-2$" | grep -E "DP-2-2|DP-2-1|DP-1-1" | head -1)
+      RIGHT=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -E "^DP-1$|^DP-2$" | head -1)
+      [ -n "$MIDDLE" ] && i3-msg "workspace 1, move workspace to output $MIDDLE"
+      i3-msg 'workspace 2, move workspace to output eDP-1'
+      [ -n "$RIGHT" ] && i3-msg "workspace 3, move workspace to output $RIGHT"
+    '';
+    postswitch."disable-dpms" = ''
+      export DISPLAY=:0
+      xset -dpms
+      xset s 60 60
+    '';
+  };
+
   eDP1 = {
     fingerprint = "00ffffffffffff0030e48b070000000000210104a51d1278072ef5a4544c97240d505400000001010101010101010101010101010101f07b80a070b03e453020360020b41000001a000000fd001e78999920010a202020202020000000fe00504637314e803133345755320a000000000002410cb2000100000b410a202001bf70207902002000133ce6248b07000000000017073133345755320a21001d400b08078007b00488428a54cd94974ed20d024554d05fd05f003412782600090200000000000100002200145fd704857f079f002f801f00af044600020005002501095fd7045fd7041e788081000be3058000e60601016a6a39000000000000a390";
     config = {
@@ -12,6 +35,11 @@ let
   };
 in
 {
+  systemd.services.autorandr = {
+    environment.DISPLAY = ":0";
+    serviceConfig.ExecStartPre = "${pkgs.xorg.xrandr}/bin/xrandr --auto";
+  };
+
   services.autorandr = {
     enable = true;
     profiles = {
@@ -28,30 +56,7 @@ in
       };
 
       "home" = {
-        hooks.preswitch = {
-          "reset-external" = ''
-            export DISPLAY=:0
-            for output in $(xrandr --query | grep " connected" | grep -v "eDP" | awk '{print $1}'); do
-              xrandr --output $output --off 2>/dev/null || true
-            done
-          '';
-        };
-        hooks.postswitch = {
-          "move-workspaces" = ''
-            export DISPLAY=:0
-            export I3SOCK=$(i3 --get-socketpath)
-            MIDDLE=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -v "eDP-1\|DP-1$\|DP-2$" | grep -E "DP-2-1|DP-1-1" | head -1)
-            RIGHT=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -E "^DP-1$|^DP-2$" | head -1)
-            [ -n "$MIDDLE" ] && i3-msg "workspace 1, move workspace to output $MIDDLE"
-            i3-msg 'workspace 2, move workspace to output eDP-1'
-            [ -n "$RIGHT" ] && i3-msg "workspace 3, move workspace to output $RIGHT"
-          '';
-          "disable-dpms" = ''
-            export DISPLAY=:0
-            xset -dpms
-            xset s 60 60
-          '';
-        };
+        hooks = sharedHooks;
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
           DP-1 = "00ffffffffffff0004210000000000000616010380643d008aee95a3544c99260f5054a54e0001010101010101010101010101010101662150b051001b30407036003f432100001e000000fd0018550f5010000a202020202020000000fc00484454560a20202020202020200000000000000000000000000000000000000131020324745090050403070206011f14131216111520230907038301000066030c00100080011d00bc52d01e20b8285540c48e2100001e011d80d0721c1620102c2580c48e2100009e8c0ad08a20e02d10103e9600138e210000188c0ad090204031200c405500138e210000180000000000000000000000000000000000000083";
@@ -82,6 +87,7 @@ in
       };
 
       "work" = {
+        hooks = sharedHooks;
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
           DP-1 = "00ffffffffffff0009d1218045540000111a010380351e782e4ca5a7554da226105054a56b80d1c0b300a9c08180810081c001010101023a801871382d40582c45000f282100001e000000ff0056344730303138353031390a20000000fd00324c1e5311000a202020202020000000fc0042656e51204c43440a20202020002f";
