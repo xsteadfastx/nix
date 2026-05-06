@@ -1,11 +1,20 @@
 {
   nixosConfig,
   pkgsUnstable,
+  pkgs,
   lib,
   ...
 }:
 let
   cfg = nixosConfig.xsfx;
+
+  # Rev: 2026-04-30 — run `nixos-rebuild` once, paste the correct hash from the error
+  ecc-src = pkgs.fetchFromGitHub {
+    owner = "affaan-m";
+    repo = "everything-claude-code";
+    rev = "841beea45cb25ba51f29fa45b7e272938d19b80a";
+    hash = "sha256-R1LwfU8w4QJi69so+TG1BMVVH+zf9epsAmZPbw9mnYU=";
+  };
 in
 lib.mkIf cfg.work {
   home.packages = [ pkgsUnstable.claude-code ];
@@ -26,4 +35,9 @@ lib.mkIf cfg.work {
       diffRemoved = "#ff5555";
     };
   };
+
+  home.file.".claude/agents".source = "${ecc-src}/agents";
+  home.file.".claude/commands".source = "${ecc-src}/commands";
+  home.file.".claude/rules".source = "${ecc-src}/rules";
+  home.file.".claude/skills".source = "${ecc-src}/skills";
 }
