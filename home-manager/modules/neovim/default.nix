@@ -12,6 +12,7 @@ in
 {
   imports = [
     ./augroups.nix
+    ./better-escape.nix
     ./cmp.nix
     ./diffview.nix
     ./dracula.nix
