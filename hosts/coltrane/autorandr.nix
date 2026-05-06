@@ -1,19 +1,56 @@
 { lib, pkgs, ... }:
 let
   sharedHooks = {
+    preswitch."reset-external" = ''
+      export DISPLAY=:0
+      export XAUTHORITY=/home/marv/.Xauthority
+      export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath)
+      if [ ! -f /run/user/1000/autorandr-current-ws ]; then
+        ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
+      fi
+      for output in $(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
+        ${pkgs.xorg.xrandr}/bin/xrandr --output $output --off 2>/dev/null || true
+      done
+    '';
     postswitch."move-workspaces" = ''
       export DISPLAY=:0
-      export I3SOCK=$(i3 --get-socketpath)
-      MIDDLE=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -v "eDP-1\|DP-1$\|DP-2$" | grep -E "DP-2-2|DP-2-1|DP-1-1" | head -1)
-      RIGHT=$(xrandr --query | grep " connected" | awk '{print $1}' | grep -E "^DP-1$|^DP-2$" | head -1)
-      [ -n "$MIDDLE" ] && i3-msg "workspace 1, move workspace to output $MIDDLE"
-      i3-msg 'workspace 2, move workspace to output eDP-1'
-      [ -n "$RIGHT" ] && i3-msg "workspace 3, move workspace to output $RIGHT"
+      export XAUTHORITY=/home/marv/.Xauthority
+      export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath)
+      MIDDLE=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | ${pkgs.gawk}/bin/awk '{print $1}' | grep -v "eDP-1\|DP-1$\|DP-2$" | grep -E "DP-2-2|DP-2-1|DP-1-1" | head -1)
+      RIGHT=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | ${pkgs.gawk}/bin/awk '{print $1}' | grep -E "^DP-1$|^DP-2$" | head -1)
+      if [ -f /run/user/1000/autorandr-ws-layout ]; then
+        while IFS=' ' read -r ws out; do
+          ${pkgs.i3}/bin/i3-msg "workspace $ws, move workspace to output $out" 2>/dev/null || true
+        done < /run/user/1000/autorandr-ws-layout
+        rm /run/user/1000/autorandr-ws-layout
+      else
+        if [ -n "$MIDDLE" ]; then
+          ${pkgs.i3}/bin/i3-msg "workspace 1, move workspace to output $MIDDLE"
+          ${pkgs.i3}/bin/i3-msg 'workspace 2, move workspace to output eDP-1'
+          [ -n "$RIGHT" ] && ${pkgs.i3}/bin/i3-msg "workspace 3, move workspace to output $RIGHT"
+        else
+          [ -n "$RIGHT" ] && ${pkgs.i3}/bin/i3-msg "workspace 1, move workspace to output $RIGHT"
+          ${pkgs.i3}/bin/i3-msg 'workspace 2, move workspace to output eDP-1'
+        fi
+      fi
+      if [ -f /run/user/1000/autorandr-visible-ws ]; then
+        while IFS=' ' read -r out ws; do
+          ${pkgs.i3}/bin/i3-msg "workspace $ws" 2>/dev/null || true
+        done < /run/user/1000/autorandr-visible-ws
+        rm /run/user/1000/autorandr-visible-ws
+      fi
+      if [ -f /run/user/1000/autorandr-current-ws ]; then
+        CURRENT_WS=$(cat /run/user/1000/autorandr-current-ws)
+        rm /run/user/1000/autorandr-current-ws
+        sleep 0.3
+        [ -n "$CURRENT_WS" ] && ${pkgs.i3}/bin/i3-msg "workspace $CURRENT_WS"
+      fi
     '';
     postswitch."disable-dpms" = ''
       export DISPLAY=:0
-      xset -dpms
-      xset s 60 60
+      export XAUTHORITY=/home/marv/.Xauthority
+      ${pkgs.xorg.xset}/bin/xset -dpms
+      ${pkgs.xorg.xset}/bin/xset s 60 60
     '';
   };
 
@@ -31,8 +68,18 @@ in
 {
   systemd.services.autorandr = {
     environment.DISPLAY = ":0";
+    environment.XAUTHORITY = "/home/marv/.Xauthority";
     serviceConfig = {
-      ExecStartPre = "${pkgs.xorg.xrandr}/bin/xrandr --auto";
+      User = "marv";
+      ExecStart = lib.mkForce "${pkgs.autorandr}/bin/autorandr --change --default default";
+      ExecStartPre = pkgs.writeShellScript "autorandr-pre" ''
+        export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath 2>/dev/null)
+        ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
+        ${pkgs.xorg.xrandr}/bin/xrandr --auto
+        for output in $(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
+          ${pkgs.xorg.xrandr}/bin/xrandr --output "$output" --off
+        done
+      '';
       # skip hotplug events while locked; lock script runs autorandr after unlock
       ExecCondition = "${pkgs.bash}/bin/bash -c '! ${pkgs.procps}/bin/pgrep -x xsecurelock'";
     };
@@ -88,8 +135,7 @@ in
         hooks = sharedHooks;
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
-          DP-1 = "00ffffffffffff0009d1218045540000111a010380351e782e4ca5a7554da226105054a56b80d1c0b300a9c08180810081c001010101023a801871382d40582c45000f282100001e000000ff0056344730303138353031390a20000000fd00324c1e5311000a202020202020000000fc0042656e51204c43440a20202020002f";
-          DP-2-2 = "00ffffffffffff0009d101834554000021180104a5351e783ed4a5ab5044a324145054a56b80d1c081c08180a9c0b300810001010101023a801871382d40582c4500dd0c1100001e000000ff004238453032353234534c300a20000000fd00324c1e5311000a202020202020000000fc0042656e5120424c323431300a2001a0020322f14f90050403020111121314060715161f2309070765030c00100083010000023a801871382d40582c4500132a2100001f011d8018711c1620582c2500132a2100009f011d007251d01e206e285500132a2100001e8c0ad08a20e02d10103e9600132a21000018000000000000000000000000000000000000000000eb";
+          DP-1 = "00ffffffffffff0009d10183455400002118010380351e782ed4a5ab5044a324145054a56b80d1c081c08180a9c0b300810001010101023a801871382d40582c4500dd0c1100001e000000ff004238453032353234534c300a20000000fd00324c1e5311000a202020202020000000fc0042656e5120424c323431300a2000d7";
         };
 
         config = {
@@ -98,18 +144,10 @@ in
             { position = "0x0"; }
           ];
 
-          DP-2-2 = {
-            enable = true;
-            crtc = 1;
-            position = "1920x0";
-            mode = "1920x1080";
-            rate = "60.00";
-          };
-
           DP-1 = {
             enable = true;
             crtc = 2;
-            position = "3840x0";
+            position = "1920x0";
             mode = "1920x1080";
             rate = "60.00";
           };
