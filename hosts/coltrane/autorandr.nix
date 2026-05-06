@@ -1,12 +1,6 @@
 { lib, pkgs, ... }:
 let
   sharedHooks = {
-    preswitch."reset-external" = ''
-      export DISPLAY=:0
-      for output in $(xrandr --query | grep " connected" | grep -v "eDP" | awk '{print $1}'); do
-        xrandr --output $output --off 2>/dev/null || true
-      done
-    '';
     postswitch."move-workspaces" = ''
       export DISPLAY=:0
       export I3SOCK=$(i3 --get-socketpath)
@@ -37,7 +31,11 @@ in
 {
   systemd.services.autorandr = {
     environment.DISPLAY = ":0";
-    serviceConfig.ExecStartPre = "${pkgs.xorg.xrandr}/bin/xrandr --auto";
+    serviceConfig = {
+      ExecStartPre = "${pkgs.xorg.xrandr}/bin/xrandr --auto";
+      # skip hotplug events while locked; lock script runs autorandr after unlock
+      ExecCondition = "${pkgs.bash}/bin/bash -c '! ${pkgs.procps}/bin/pgrep -x xsecurelock'";
+    };
   };
 
   services.autorandr = {
