@@ -191,6 +191,9 @@ let
   ) { };
 in
 {
+  # The in-tree IPU7 driver (6.12+) only has ISYS; no PSYS was upstreamed.
+  # ipu7-camera-hal requires PSYS for frame processing, so the out-of-tree
+  # driver must load even on 6.12+ kernels (overrides the in-tree modules).
   boot.extraModulePackages = [ ipu7-drivers ];
 
   boot.kernelModules = [ "mei-vsc" ];
