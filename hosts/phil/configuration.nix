@@ -1,6 +1,7 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   networking.hostName = "phil";
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_rpi3;
   security.sudo.wheelNeedsPassword = false;
   nix.settings.trusted-users = [
     "root"
