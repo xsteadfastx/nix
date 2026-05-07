@@ -169,34 +169,6 @@
     usbutils
   ];
 
-  # Lunar Lake RT714 mic uses DMIC3/DMIC4 inputs but the UCM BootSequence is
-  # not executed by PipeWire, leaving the ADC mux at hardware defaults (MIC1/MIC2).
-  # Re-apply after resume too since SoundWire codec registers reset on power cycle.
-  systemd.services.rt714-mic-init = {
-    description = "Initialize Lunar Lake RT714 microphone DMIC routing";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-udev-settle.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = pkgs.writeShellScript "rt714-mic-init" ''
-        for i in $(seq 1 30); do
-          ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire info >/dev/null 2>&1 && break
-          sleep 1
-        done
-        ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU0A Capture Switch' off
-        ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 ADC 22 Mux' 'DMIC3'
-        ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 ADC 23 Mux' 'DMIC4'
-        ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU02 Capture Switch' on
-        ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU02 Capture Volume' 47
-      '';
-    };
-  };
-
-  powerManagement.resumeCommands = ''
-    systemctl restart rt714-mic-init.service
-  '';
-
   # Needs to be enabled for completions
   programs.fish.enable = true;
 
