@@ -5,9 +5,9 @@ _: {
     ./disko.nix
     ./hardware-configuration.nix
     # ./ipu7.nix
-    ./tweaks.nix
-    ./tweaks-audio.nix
-    ./tweaks-isy-hub.nix
+    ./fix-kernel.nix
+    ./fix-audio.nix
+    ./fix-isy-hub.nix
     # ./syncthing.nix
     ./smokeping.nix
   ];
