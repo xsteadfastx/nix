@@ -16,8 +16,12 @@ let
       export DISPLAY=:0
       export XAUTHORITY=/home/marv/.Xauthority
       export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath)
-      MIDDLE=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | ${pkgs.gawk}/bin/awk '{print $1}' | grep -v "eDP-1\|DP-1$\|DP-2$\|DP-1-4$" | grep -E "DP-2-2|DP-2-1|DP-1-1|DP-1-3" | head -1)
-      RIGHT=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | ${pkgs.gawk}/bin/awk '{print $1}' | grep -E "^DP-1$|^DP-2$|^DP-1-4$" | head -1)
+      # Sort external outputs by X position — port-name agnostic
+      SORTED=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "^eDP" | \
+        ${pkgs.gawk}/bin/awk 'match($0, /[0-9]+x[0-9]+\+([0-9]+)\+/, a) {print a[1], $1}' | \
+        sort -n | ${pkgs.gawk}/bin/awk '{print $2}')
+      MIDDLE=$(echo "$SORTED" | sed -n '1p')
+      RIGHT=$(echo "$SORTED" | sed -n '2p')
       if [ -f /run/user/1000/autorandr-ws-layout ]; then
         while IFS=' ' read -r ws out; do
           ${pkgs.i3}/bin/i3-msg "workspace $ws, move workspace to output $out" 2>/dev/null || true
@@ -71,7 +75,7 @@ in
     environment.XAUTHORITY = "/home/marv/.Xauthority";
     serviceConfig = {
       User = "marv";
-      ExecStart = lib.mkForce "${pkgs.autorandr}/bin/autorandr --change --default default";
+      ExecStart = lib.mkForce "${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile";
       ExecStartPre = pkgs.writeShellScript "autorandr-pre" ''
         export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath 2>/dev/null)
         ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
