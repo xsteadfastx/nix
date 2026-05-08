@@ -66,5 +66,17 @@
 
   powerManagement.resumeCommands = ''
     systemctl restart rt714-mic-init.service
+    # ISY USB-C hub (Genesys Logic 05e3:0626) collapses MST topology on suspend.
+    # Unbind/rebind the USB device to trigger DP HPD and restore MST sub-ports.
+    for d in /sys/bus/usb/devices/*/; do
+      vid=$(cat "$d/idVendor" 2>/dev/null)
+      pid=$(cat "$d/idProduct" 2>/dev/null)
+      if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
+        hub=$(basename "$d")
+        echo "$hub" > /sys/bus/usb/drivers/usb/unbind
+        sleep 2
+        echo "$hub" > /sys/bus/usb/drivers/usb/bind
+      fi
+    done
   '';
 }
