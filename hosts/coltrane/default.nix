@@ -7,5 +7,6 @@ _: {
     # ./ipu7.nix
     ./tweaks.nix
     # ./syncthing.nix
+    ./smokeping.nix
   ];
 }

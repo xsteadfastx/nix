@@ -31,11 +31,13 @@
     ];
   };
 
-  # Keep USB/Thunderbolt controllers powered to prevent dropouts
+  # Keep USB/Thunderbolt controllers and ISY hub powered to prevent dropouts
   services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa831", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa833", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa834", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa87d", ATTR{power/control}="on"
+    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="05e3", ATTRS{idProduct}=="0626", ATTR{power/control}="on"
   '';
 
   # Lunar Lake RT714 mic uses DMIC3/DMIC4 inputs but the UCM BootSequence is
@@ -60,6 +62,33 @@
         ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU0E Boost' 2
         ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU02 Capture Switch' on
         ${pkgs.alsa-utils}/bin/amixer -c sofsoundwire cset name='rt714 FU02 Capture Volume' 63
+      '';
+    };
+  };
+
+  systemd.services.isy-hub-mst-init = {
+    description = "Rebind ISY USB-C hub to restore MST topology after boot";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-udev-settle.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "isy-hub-mst-init" ''
+        for i in $(seq 1 20); do
+          HUB=$(for d in /sys/bus/usb/devices/*/; do
+            vid=$(cat "$d/idVendor" 2>/dev/null)
+            pid=$(cat "$d/idProduct" 2>/dev/null)
+            if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
+              basename "$d"
+            fi
+          done)
+          [ -n "$HUB" ] && break
+          sleep 1
+        done
+        if [ -n "$HUB" ]; then
+          echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
+          sleep 2
+          echo "$HUB" > /sys/bus/usb/drivers/usb/bind
+        fi
       '';
     };
   };
