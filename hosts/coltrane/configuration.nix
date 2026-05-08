@@ -249,15 +249,7 @@
     ];
   };
 
-  services.resolved = {
-    enable = true;
-    fallbackDns = [
-      "1.1.1.1"
-      "9.9.9.9"
-      "8.8.8.8"
-      "8.8.4.4"
-    ];
-  };
+  services.resolved.enable = true;
 
   # garbage
   nix.gc = {

@@ -38,6 +38,16 @@
 
   boot.loader.systemd-boot.configurationLimit = 10;
 
+  services.resolved = {
+    enable = lib.mkDefault true;
+    fallbackDns = lib.mkDefault [
+      "1.1.1.1"
+      "9.9.9.9"
+      "8.8.8.8"
+      "8.8.4.4"
+    ];
+  };
+
   environment.systemPackages = with pkgs; [
     btop
     fd
