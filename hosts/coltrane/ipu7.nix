@@ -198,6 +198,9 @@ in
 
   boot.kernelModules = [ "mei-vsc" ];
 
+  # ipu_bridge (in-tree) conflicts with out-of-tree ipu_acpi for ACPI sensor setup
+  boot.blacklistedKernelModules = [ "ipu_bridge" ];
+
   environment.etc."camera".source = "${ipu7x-camera-hal}/etc/camera";
 
   hardware.firmware = with pkgs; [
