@@ -14,8 +14,11 @@
   # The xe driver does not trigger HPD on the hub's DP alt mode at boot time.
   systemd.services.isy-hub-mst-init = {
     description = "Rebind ISY USB-C hub to restore MST topology after boot";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-udev-settle.service" ];
+    wantedBy = [ "graphical.target" ];
+    after = [
+      "systemd-udev-settle.service"
+      "graphical.target"
+    ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "isy-hub-mst-init" ''
@@ -32,8 +35,10 @@
         done
         if [ -n "$HUB" ]; then
           echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
-          sleep 2
+          sleep 3
           echo "$HUB" > /sys/bus/usb/drivers/usb/bind
+          sleep 5
+          ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile
         fi
       '';
     };
