@@ -38,7 +38,12 @@
           sleep 3
           echo "$HUB" > /sys/bus/usb/drivers/usb/bind
           sleep 5
-          ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile
+          XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
+          if [ -n "$XAUTH" ]; then
+            XUSER=$(stat -c '%U' "$XAUTH")
+            runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
+              ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
+          fi
         fi
       '';
     };
