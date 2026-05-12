@@ -58,8 +58,15 @@
       if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
         hub=$(basename "$d")
         echo "$hub" > /sys/bus/usb/drivers/usb/unbind
-        sleep 2
+        sleep 3
         echo "$hub" > /sys/bus/usb/drivers/usb/bind
+        sleep 5
+        XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
+        if [ -n "$XAUTH" ]; then
+          XUSER=$(stat -c '%U' "$XAUTH")
+          runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
+            ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
+        fi
       fi
     done
   '';
