@@ -93,6 +93,18 @@ in
     enable = true;
     profiles = {
       "mobile" = {
+        hooks.postswitch."restore-mst" = ''
+          # Skip during early boot — isy-hub-mst-init handles MST init
+          [ "$(cut -d. -f1 /proc/uptime)" -lt 120 ] && exit 0
+          for d in /sys/bus/usb/devices/*/; do
+            vid=$(cat "$d/idVendor" 2>/dev/null)
+            pid=$(cat "$d/idProduct" 2>/dev/null)
+            if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
+              /run/wrappers/bin/sudo /run/current-system/sw/bin/systemctl start mst-restore.service
+              break
+            fi
+          done
+        '';
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
         };

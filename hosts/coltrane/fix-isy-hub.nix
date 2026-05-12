@@ -49,25 +49,50 @@
     };
   };
 
+  # Oneshot service to rebind ISY hub, callable from user context (autorandr hooks).
+  systemd.services.mst-restore = {
+    description = "Rebind ISY USB-C hub to restore MST topology";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "mst-restore" ''
+        HUB=""
+        for d in /sys/bus/usb/devices/*/; do
+          vid=$(cat "$d/idVendor" 2>/dev/null)
+          pid=$(cat "$d/idProduct" 2>/dev/null)
+          if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
+            HUB=$(basename "$d")
+          fi
+        done
+        [ -z "$HUB" ] && exit 0
+        echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
+        sleep 3
+        echo "$HUB" > /sys/bus/usb/drivers/usb/bind
+      '';
+    };
+  };
+
+  security.sudo.extraRules = [
+    {
+      users = [ "marv" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/systemctl start mst-restore.service";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
+
   # ISY USB-C hub (Genesys Logic 05e3:0626) collapses MST topology on suspend.
   # Unbind/rebind the USB device to trigger DP HPD and restore MST sub-ports.
   powerManagement.resumeCommands = ''
-    for d in /sys/bus/usb/devices/*/; do
-      vid=$(cat "$d/idVendor" 2>/dev/null)
-      pid=$(cat "$d/idProduct" 2>/dev/null)
-      if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
-        hub=$(basename "$d")
-        echo "$hub" > /sys/bus/usb/drivers/usb/unbind
-        sleep 3
-        echo "$hub" > /sys/bus/usb/drivers/usb/bind
-        sleep 5
-        XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
-        if [ -n "$XAUTH" ]; then
-          XUSER=$(stat -c '%U' "$XAUTH")
-          runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
-            ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
-        fi
-      fi
-    done
+    systemctl start mst-restore.service
+    sleep 5
+    XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
+    if [ -n "$XAUTH" ]; then
+      XUSER=$(stat -c '%U' "$XAUTH")
+      runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
+        ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
+    fi
   '';
 }
