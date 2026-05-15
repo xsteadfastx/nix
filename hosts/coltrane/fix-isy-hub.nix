@@ -34,6 +34,10 @@
           sleep 1
         done
         if [ -n "$HUB" ]; then
+          # Skip rebind if MST sub-ports already active (e.g. with xe.enable_dc=0)
+          if ls /sys/class/drm/ 2>/dev/null | grep -q "DP-1-3\|DP-1-4"; then
+            exit 0
+          fi
           echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
           sleep 3
           echo "$HUB" > /sys/bus/usb/drivers/usb/bind
