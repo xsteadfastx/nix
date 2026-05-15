@@ -14,9 +14,9 @@ let
       + ''
         patch -p1 --fuzz=3 < ${blurPatch}
         sed -i \
-          -e 's|#define BLUR|/* #define BLUR */|' \
-          -e 's|/\* #define PIXELATION \*/|#define PIXELATION|' \
-          -e 's|static const int pixelSize = 0|static const int pixelSize = 20|' \
+          -e 's|^#define BLUR$|//#define BLUR|' \
+          -e 's|^//#define PIXELATION$|#define PIXELATION|' \
+          -e 's|pixelSize=0|pixelSize=20|' \
           config.def.h
       '';
   });
