@@ -7,5 +7,6 @@
     "usbcore.autosuspend=-1"
     "threadirqs"
     "pcie_aspm=off"
+    "xe.enable_psr=0"
   ];
 }
