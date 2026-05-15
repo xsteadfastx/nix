@@ -1,20 +1,24 @@
 { pkgs, ... }:
 let
-  slockConfig = pkgs.writeText "slock-config.h" ''
-    static const char *user  = "nobody";
-    static const char *group = "nogroup";
+  blurPatch = pkgs.fetchurl {
+    url = "https://tools.suckless.org/slock/patches/blur-pixelated-screen/slock-blur_pixelated_screen-1.4.diff";
+    hash = "sha256-ByVNA4pzHuFngfE7pbp32pIApOjgJqMKXzZ09jK55C4=";
+  };
 
-    static const char *colorname[NUMCOLS] = {
-      [INIT]   = "#282a36", /* background */
-      [INPUT]  = "#bd93f9", /* purple — typing */
-      [FAILED] = "#ff5555", /* red — wrong password */
-    };
+  slock-pixel = pkgs.slock.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.imlib2 ];
 
-    static int failonclear = 1;
-  '';
-
-  slock-dracula = pkgs.slock.overrideAttrs (old: {
-    postPatch = (old.postPatch or "") + "\ncp ${slockConfig} config.h\n";
+    postPatch =
+      (old.postPatch or "")
+      + "\n"
+      + ''
+        patch -p1 --fuzz=3 < ${blurPatch}
+        sed -i \
+          -e 's|#define BLUR|/* #define BLUR */|' \
+          -e 's|/\* #define PIXELATION \*/|#define PIXELATION|' \
+          -e 's|static const int pixelSize = 0|static const int pixelSize = 20|' \
+          config.def.h
+      '';
   });
 
   lock = pkgs.writeShellScriptBin "lock" ''
@@ -28,7 +32,7 @@ let
 in
 {
   security.wrappers.slock = {
-    source = "${slock-dracula}/bin/slock";
+    source = "${slock-pixel}/bin/slock";
     setuid = true;
     owner = "root";
     group = "root";
