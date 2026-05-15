@@ -8,6 +8,7 @@ _: {
     ./fix-kernel.nix
     ./fix-audio.nix
     ./fix-isy-hub.nix
+    ./slock.nix
     # ./syncthing.nix
     # ./smokeping.nix
   ];

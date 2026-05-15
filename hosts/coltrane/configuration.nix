@@ -99,25 +99,6 @@
     noto-fonts-cjk-sans
   ];
 
-  # locking screen
-  programs.xss-lock =
-    let
-      lock = pkgs.writeShellScriptBin "lock" ''
-        ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
-        ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
-        ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
-        XSECURELOCK_PASSWORD_PROMPT=time_hex \
-        XSECURELOCK_FONT='JetBrainsMono Nerd Font' \
-        ${pkgs.xsecurelock}/bin/xsecurelock
-        ${pkgs.xorg.xrandr}/bin/xrandr --auto
-        ${pkgs.autorandr}/bin/autorandr --change
-      '';
-    in
-    {
-      enable = true;
-      lockerCommand = "${lock}/bin/lock";
-    };
-
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "de";
