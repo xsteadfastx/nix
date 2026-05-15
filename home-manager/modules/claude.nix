@@ -8,12 +8,12 @@
 let
   cfg = nixosConfig.xsfx;
 
-  # Rev: 2026-04-30 — run `nixos-rebuild` once, paste the correct hash from the error
+  # Rev: 2026-05-15 — run `nixos-rebuild` once, paste the correct hash from the error
   ecc-src = pkgs.fetchFromGitHub {
     owner = "affaan-m";
     repo = "everything-claude-code";
-    rev = "841beea45cb25ba51f29fa45b7e272938d19b80a";
-    hash = "sha256-R1LwfU8w4QJi69so+TG1BMVVH+zf9epsAmZPbw9mnYU=";
+    rev = "e8e9df52a6b1cd93d454c6e539b15ee487b166ff";
+    hash = "sha256-fLcrTWDAaJsuDntOrhNoy1YOhn8oE814CElpsrYOWm4=";
   };
 in
 lib.mkIf cfg.work {
