@@ -84,8 +84,6 @@ in
           ${pkgs.xorg.xrandr}/bin/xrandr --output "$output" --off
         done
       '';
-      # skip hotplug events while locked; lock script runs autorandr after unlock
-      ExecCondition = "${pkgs.bash}/bin/bash -c '! ${pkgs.procps}/bin/pgrep -x xsecurelock'";
     };
   };
 
