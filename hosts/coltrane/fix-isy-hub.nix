@@ -1,13 +1,15 @@
 { pkgs, ... }:
 {
-  # Keep USB/Thunderbolt controllers and ISY hub powered to prevent dropouts
+  # Keep USB/Thunderbolt controllers and ISY hub powered to prevent dropouts.
+  # On 0626 re-enumeration after resume, trigger mst-restore (uptime check inside
+  # the service skips this during early boot where isy-hub-mst-init takes over).
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x64a0", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa831", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa833", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa834", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa87d", ATTR{power/control}="on"
-    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="05e3", ATTRS{idProduct}=="0626", ATTR{power/control}="on"
+    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="05e3", ATTRS{idProduct}=="0626", ATTR{power/control}="on", TAG+="systemd", ENV{SYSTEMD_WANTS}="mst-restore.service"
   '';
 
   # Rebind ISY USB-C hub at boot to enumerate MST sub-ports (DP-1-3/DP-1-4).
@@ -59,6 +61,8 @@
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "mst-restore" ''
+        # During early boot isy-hub-mst-init handles MST init
+        [ "$(cut -d. -f1 /proc/uptime)" -lt 120 ] && exit 0
         HUB=""
         for d in /sys/bus/usb/devices/*/; do
           vid=$(cat "$d/idVendor" 2>/dev/null)
@@ -87,11 +91,10 @@
     }
   ];
 
-  # ISY USB-C hub (Genesys Logic 05e3:0626) collapses MST topology on suspend.
-  # Unbind/rebind the USB device to trigger DP HPD and restore MST sub-ports.
+  # mst-restore is triggered by udev when 0626 re-enumerates after resume.
+  # Run autorandr immediately on resume so the session sees the current state;
+  # the DRM hotplug udev rule fires autorandr again once MST is restored.
   powerManagement.resumeCommands = ''
-    systemctl start mst-restore.service
-    sleep 5
     XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
     if [ -n "$XAUTH" ]; then
       XUSER=$(stat -c '%U' "$XAUTH")
