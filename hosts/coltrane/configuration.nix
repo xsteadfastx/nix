@@ -43,6 +43,7 @@
   boot.kernelModules = [ "thunderbolt" ];
 
   boot.kernelPackages = pkgsUnstable.${pkgs.stdenv.hostPlatform.system}.linuxPackages;
+  boot.zfs.package = pkgsUnstable.${pkgs.stdenv.hostPlatform.system}.zfs;
 
   boot.initrd.availableKernelModules = [
     "nvme"
