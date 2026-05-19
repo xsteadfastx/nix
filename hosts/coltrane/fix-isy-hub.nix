@@ -63,6 +63,16 @@
       ExecStart = pkgs.writeShellScript "mst-restore" ''
         # During early boot isy-hub-mst-init handles MST init
         [ "$(cut -d. -f1 /proc/uptime)" -lt 120 ] && exit 0
+        # Cooldown: rebind causes hub to re-enumerate, which would re-trigger
+        # this service via udev. Skip if last run was less than 90 seconds ago.
+        STAMP=/run/mst-restore-last
+        NOW=$(cut -d. -f1 /proc/uptime)
+        if [ -f "$STAMP" ]; then
+          LAST=$(cat "$STAMP")
+          AGE=$((NOW - LAST))
+          [ "$AGE" -lt 90 ] && exit 0
+        fi
+        echo "$NOW" > "$STAMP"
         HUB=""
         for d in /sys/bus/usb/devices/*/; do
           vid=$(cat "$d/idVendor" 2>/dev/null)
