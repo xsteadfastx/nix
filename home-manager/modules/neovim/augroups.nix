@@ -13,6 +13,17 @@ in
     extraLuaConfig =
       #lua
       ''
+        -- Detect external file changes and notify LSP automatically
+        vim.opt.autoread = true
+        vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
+          callback = function()
+            if vim.fn.mode() ~= "c" then
+              vim.cmd("checktime")
+            end
+          end,
+          group = vim.api.nvim_create_augroup("autoread", { clear = true }),
+        })
+
         vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
           pattern = "/dev/shm/gopass.*",
           callback = function()

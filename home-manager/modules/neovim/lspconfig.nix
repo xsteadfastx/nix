@@ -35,6 +35,16 @@ in
         local blink = require("blink.cmp")
         local capabilities = blink.get_lsp_capabilities()
 
+        if capabilities.workspace then
+        	capabilities.workspace.didChangeWatchedFiles = {
+        		dynamicRegistration = true,
+        	}
+        end
+
+        vim.lsp.config("*", {
+        	capabilities = capabilities,
+        })
+
         -- Border
         local border = "single"
 
@@ -92,7 +102,9 @@ in
         vim.lsp.config("gopls", {
         	capabilities = capabilities,
         	settings = {
-        		gopls = { gofumpt = true },
+        		gopls = {
+        			gofumpt = true,
+        		},
         	},
         })
         vim.lsp.enable("gopls")
