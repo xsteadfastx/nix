@@ -20,11 +20,15 @@ lib.mkIf cfg.x11 {
       ${pkgs.dunst}/bin/dunst &
       ${pkgs.networkmanagerapplet}/bin/nm-applet &
       ${pkgs.blueman}/bin/blueman-applet &
+      ${lib.optionalString nixosConfig.services.syncthing.enable ''
+        ${pkgsUnstable.syncthingtray}/bin/syncthingtray --wait &
+      ''}
       ${pkgs.autorandr}/bin/autorandr -c
       xset s 60 60
       ${pkgs.flameshot}/bin/flameshot &
     '')
-  ];
+  ]
+  ++ lib.optional nixosConfig.services.syncthing.enable pkgsUnstable.syncthingtray;
 
   xdg.configFile."dunst/dunstrc".text = ''
     [global]

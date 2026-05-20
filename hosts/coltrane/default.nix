@@ -9,7 +9,7 @@ _: {
     ./fix-audio.nix
     ./fix-isy-hub.nix
     ./slock.nix
-    # ./syncthing.nix
+    ./syncthing.nix
     # ./smokeping.nix
   ];
 }
