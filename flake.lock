@@ -504,7 +504,7 @@
         "lastModified": 1750408997,
         "narHash": "sha256-NtQSV2FbjUBQDQIhDItinvCKzPISTEsTthpDMALhWHo=",
         "ref": "refs/tags/v0.12.8",
-        "rev": "82132e6a33f87b5133d5ce1af0e69b85df686722",
+        "rev": "81341d738633df3574642f5118dd9de829af2a73",
         "revCount": 548,
         "type": "git",
         "url": "ssh://git@git.wobcom.de/smartmetering/kerouac.git"
