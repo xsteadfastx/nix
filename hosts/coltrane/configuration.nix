@@ -82,7 +82,6 @@
 
   nix.settings = {
     auto-optimise-store = true;
-    download-buffer-size = 1073741824; # 1GB
 
     trusted-users = [
       "root"
