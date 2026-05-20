@@ -129,7 +129,6 @@
 
   nix.settings = {
     auto-optimise-store = true;
-    download-buffer-size = 524288000;
     max-free = 10 * 1024 * 1024 * 1024; # 10GB
     min-free = 5 * 1024 * 1024 * 1024; # 5GB
 

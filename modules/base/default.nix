@@ -21,6 +21,7 @@
     ];
 
     auto-optimise-store = true;
+    download-buffer-size = lib.mkDefault 524288000;
     min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);
     max-free = lib.mkDefault (15 * 1024 * 1024 * 1024);
   };
