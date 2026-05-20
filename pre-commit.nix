@@ -14,7 +14,13 @@
   ];
 
   hooks = {
-    pre-commit-hook-ensure-sops.enable = true;
+    pre-commit-hook-ensure-sops = {
+      enable = true;
+      excludes = [
+        "secrets/.+\\.xml"
+        "secrets/.+\\.nix"
+      ];
+    };
 
     check-yaml.enable = true;
     convco.enable = true;
