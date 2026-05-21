@@ -10,14 +10,14 @@ let
     ];
   };
 in
-inputs.nixos-generators.nixosGenerate {
+(inputs.nixpkgs.lib.nixosSystem {
   inherit system pkgs;
-  format = "sd-aarch64";
   modules = [
+    "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ../../hosts/phil
   ];
   specialArgs = {
     lib = pkgs.lib;
     inherit inputs;
   };
-}
+}).config.system.build.sdImage
