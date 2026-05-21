@@ -22,4 +22,5 @@
     max-free = 5 * 1024 * 1024 * 1024;
   };
   nix.gc.options = "--delete-older-than 3d";
+  environment.systemPackages = [ pkgs.usbutils ];
 }
