@@ -132,6 +132,7 @@
     dmidecode
     pciutils
     usbutils
+    xclip
   ];
 
   # Needs to be enabled for completions
