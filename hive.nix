@@ -53,6 +53,7 @@
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
       inputs.self.nixosModules.vm-variant
+      inputs.sops-nix.nixosModules.sops
     ];
   };
 
