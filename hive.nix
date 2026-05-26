@@ -50,7 +50,6 @@
       inputs.home-manager.nixosModules.home-manager
       inputs.nixos-hardware.nixosModules.dell-xps-13-9350
       inputs.self.nixosModules.home-manager
-      inputs.self.nixosModules.lix
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
       inputs.self.nixosModules.vm-variant
