@@ -3,6 +3,7 @@ keys:
   - &admin_mpreuss_ssh age1dm877h7v372h8eg6ke5jrm5vyzvfcl2dhfwqtl7jdlve8jpxrajq9d6ctx
   - &srv_troy age1dtm9he4yvqwnu35ldhrjdek8ja4k2cn6n25myqxm475tmngjkc9q8r55xh
   - &srv_abed age10cfjx8n9vf0x58sj4z7tfq85q55u5r97xan62xe9cv8p2czumu6qs4vvew
+  - &srv_coltrane age1ep7zs53a9jaq2lt98nhyc90zqehrn2cgywly8sp9wdl4xysnhcdqv4gppw
 creation_rules:
   - path_regex: hosts/abed/secrets.yaml
     key_groups:
@@ -10,4 +11,11 @@ creation_rules:
           - *admin_mpreuss
           - *admin_mpreuss_ssh
           - *srv_abed
+          - *srv_coltrane
           - *srv_troy
+  - path_regex: hosts/coltrane/secrets.yaml
+    key_groups:
+      - age:
+          - *admin_mpreuss
+          - *admin_mpreuss_ssh
+          - *srv_coltrane
