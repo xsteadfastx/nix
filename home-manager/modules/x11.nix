@@ -48,8 +48,8 @@ in
       xdotool
       xsaneGimp
 
-      (lib.mkIf cfg.work _1password-cli)
-      (lib.mkIf cfg.work _1password-gui)
+      (lib.mkIf cfg.work pkgs._1password-cli)
+      (lib.mkIf cfg.work pkgs._1password-gui)
     ];
 
   home.sessionVariables.DEFAULT_BROWSER = "chromium";
