@@ -6,6 +6,7 @@
     enable = true;
     openDefaultPorts = true;
     user = "marv";
+    group = "paperless";
     dataDir = "/home/marv/permanent";
     configDir = "/home/marv/.config/syncthing";
   };
