@@ -14,7 +14,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-25.11";
-    kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.12.8";
+    kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.14.3&rev=4c554da5444aa9af6c51a2688578fbfc6a31a3c6";
     nixos-anywhere.url = "github:nix-community/nixos-anywhere";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
