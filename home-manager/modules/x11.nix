@@ -38,7 +38,7 @@ in
       pkgs.calibre
       pkgs.handbrake
       pkgs.makemkv
-      rustdesk
+      rustdesk-flutter
       rawtherapee
       remmina
       signal-desktop
