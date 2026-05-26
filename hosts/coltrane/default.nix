@@ -1,15 +1,18 @@
 _: {
   imports = [
+    # ./ipu7.nix
+    # ./smokeping.nix
     ./autorandr.nix
     ./configuration.nix
     ./disko.nix
-    ./hardware-configuration.nix
-    # ./ipu7.nix
-    ./fix-kernel.nix
     ./fix-audio.nix
     ./fix-isy-hub.nix
+    ./fix-kernel.nix
+    ./hardware-configuration.nix
+    ./paperless.nix
+    ./print.nix
+    ./secrets.nix
     ./slock.nix
     ./syncthing.nix
-    # ./smokeping.nix
   ];
 }

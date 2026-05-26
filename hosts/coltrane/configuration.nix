@@ -108,22 +108,6 @@
   # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
 
-  # Enable CUPS to print documents.
-  services.printing = {
-    enable = true;
-    drivers = [
-      pkgs.brlaser
-      pkgs.brgenml1lpr
-      pkgs.brgenml1cupswrapper
-    ];
-  };
-
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-    nssmdns6 = true;
-  };
-
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
