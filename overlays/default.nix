@@ -19,6 +19,7 @@ _final: prev: {
   imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };
   importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
+  paperless-gpt = prev.callPackage ../pkgs/paperless-gpt/package.nix { };
 
   xsaneGimp = prev.xsane.override { gimpSupport = true; };
 

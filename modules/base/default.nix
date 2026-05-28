@@ -1,5 +1,12 @@
-{ pkgs, lib, ... }:
 {
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
+{
+  nixpkgs.overlays = [ inputs.self.overlays.default ];
+
   nix.settings = {
     trusted-users = [
       "root"
@@ -56,6 +63,7 @@
     htop
     mtr
     ncdu
+    net-tools
     nmap
     ripgrep
     tmux

@@ -3,6 +3,7 @@ _: {
     # ./ipu7.nix
     # ./smokeping.nix
     ./autorandr.nix
+    ./caddy
     ./configuration.nix
     ./disko.nix
     ./fix-audio.nix

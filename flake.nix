@@ -80,6 +80,7 @@
         formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
         packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
+        packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
       }
     );
 }
