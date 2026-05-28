@@ -1,33 +1,5 @@
 { config, pkgs, ... }:
 let
-  fetchTessdataBest =
-    { lang, hash }:
-    pkgs.fetchurl {
-      url = "https://github.com/tesseract-ocr/tessdata_best/raw/4.1.0/${lang}.traineddata";
-      inherit hash;
-    };
-
-  tessdataBest = pkgs.runCommand "tessdata-best" { } ''
-    mkdir $out
-    cp ${
-      fetchTessdataBest {
-        lang = "deu";
-        hash = "sha256-hAczHWqgIp3JJ2hcAaeTj8WmQdGpUk90g4zaxZnw0G4=";
-      }
-    } $out/deu.traineddata
-    cp ${
-      fetchTessdataBest {
-        lang = "eng";
-        hash = "sha256-goCu0Hgv4nJXpo6hD+fvMkyg+Nhb0v0UXRwrVgvLZro=";
-      }
-    } $out/eng.traineddata
-    cp ${
-      fetchTessdataBest {
-        lang = "osd";
-        hash = "sha256-nPXVdvzEdWTxEmWEHlyoOQAefm84/396rPRtFalrAP8=";
-      }
-    } $out/osd.traineddata
-  '';
 
   correspondentPrompt = pkgs.writeText "correspondent_prompt.tmpl" ''
     I will provide you with the content of a document. Your task is to suggest a correspondent that is most relevant to the document.
@@ -116,6 +88,30 @@ let
     install -m 644 ${titlePrompt} $out/title_prompt.tmpl
     install -m 644 ${tagPrompt} $out/tag_prompt.tmpl
   '';
+
+  fetchTessdataBest =
+    { lang, hash }:
+    pkgs.fetchurl {
+      url = "https://github.com/tesseract-ocr/tessdata_best/raw/4.1.0/${lang}.traineddata";
+      inherit hash;
+    };
+
+  tesseractBest = pkgs.tesseract5.override {
+    languages = pkgs.tesseract5.languages // {
+      deu = fetchTessdataBest {
+        lang = "deu";
+        hash = "sha256-hAczHWqgIp3JJ2hcAaeTj8WmQdGpUk90g4zaxZnw0G4=";
+      };
+      eng = fetchTessdataBest {
+        lang = "eng";
+        hash = "sha256-goCu0Hgv4nJXpo6hD+fvMkyg+Nhb0v0UXRwrVgvLZro=";
+      };
+      osd = fetchTessdataBest {
+        lang = "osd";
+        hash = "sha256-nPXVdvzEdWTxEmWEHlyoOQAefm84/396rPRtFalrAP8=";
+      };
+    };
+  };
 in
 {
   users.users.marv.extraGroups = [ "paperless" ];
@@ -125,16 +121,16 @@ in
 
   services.paperless = {
     enable = true;
+    package = pkgs.paperless-ngx.override { tesseract5 = tesseractBest; };
     port = 28981;
     address = "127.0.0.1";
     settings = {
       PAPERLESS_OCR_LANGUAGE = "deu+eng";
       PAPERLESS_OCR_USER_ARGS = builtins.toJSON {
         optimize = 1;
-        clean = "final";
+        clean_final = true;
         deskew = true;
       };
-      TESSDATA_PREFIX = "${tessdataBest}";
       PAPERLESS_TIME_ZONE = "Europe/Berlin";
       PAPERLESS_URL = "https://paperless.local";
       PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
