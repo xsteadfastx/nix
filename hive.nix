@@ -80,6 +80,7 @@
       inputs.nixos-hardware.nixosModules.raspberry-pi-3
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
+      inputs.self.nixosModules.vm-variant
       inputs.srvos.nixosModules.server
     ];
   };

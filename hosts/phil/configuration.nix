@@ -22,5 +22,25 @@
     max-free = 5 * 1024 * 1024 * 1024;
   };
   nix.gc.options = "--delete-older-than 3d";
+
+  services.journald.extraConfig = ''
+    Storage=volatile
+    RuntimeMaxUse=64M
+  '';
+
+  fileSystems."/var/log" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [
+      "size=32M"
+      "mode=0755"
+      "noatime"
+    ];
+  };
+
+  virtualisation.vmVariant = {
+    boot.kernelPackages = lib.mkOverride 10 pkgs.linuxPackages;
+  };
+
   environment.systemPackages = [ pkgs.usbutils ];
 }

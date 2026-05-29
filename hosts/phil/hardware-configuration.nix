@@ -20,7 +20,10 @@
   fileSystems."/" = {
     device = "/dev/disk/by-label/NIXOS_SD"; # this is important!
     fsType = "ext4";
-    options = [ "noatime" ];
+    options = [
+      "noatime"
+      "commit=600"
+    ];
   };
 
   swapDevices = [ ];
