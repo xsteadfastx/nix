@@ -101,17 +101,64 @@ let
       inherit hash;
     };
 
+  betragBackfillScript = pkgs.writeShellScript "paperless-betrag-backfill" ''
+    token=$(cat ${config.sops.secrets."paperless-api-token".path})
+
+    ids=$(${pkgs.curl}/bin/curl -sf \
+      "http://127.0.0.1:28981/api/documents/?correspondent__id=1&page_size=100" \
+      -H "Authorization: Token $token" \
+      | ${pkgs.jq}/bin/jq -r '
+          .results[]
+          | select(
+              (.custom_fields | map(select(.field == 1 and .value != null)) | length) == 0
+            )
+          | .id')
+
+    if [ -z "$ids" ]; then
+      echo "No Amazon documents missing Betrag"
+      exit 0
+    fi
+
+    for id in $ids; do
+      content=$(${pkgs.curl}/bin/curl -sf \
+        "http://127.0.0.1:28981/api/documents/$id/" \
+        -H "Authorization: Token $token" \
+        | ${pkgs.jq}/bin/jq -r '.content')
+
+      amount=$(printf '%s' "$content" \
+        | ${pkgs.gnugrep}/bin/grep -oP 'Summe\s+\K[\d.]+(?=\s+EUR)' \
+        | head -1)
+
+      if [ -z "$amount" ]; then
+        echo "doc $id: no amount found, skipping"
+        continue
+      fi
+
+      formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
+      if ${pkgs.curl}/bin/curl -sf -X PATCH \
+        "http://127.0.0.1:28981/api/documents/$id/" \
+        -H "Authorization: Token $token" \
+        -H "Content-Type: application/json" \
+        -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}" > /dev/null; then
+        echo "doc $id: set Betrag EUR$formatted"
+      else
+        echo "doc $id: PATCH failed"
+        exit 1
+      fi
+    done
+  '';
+
   postConsumeScript = pkgs.writeShellScript "paperless-post-consume" ''
     # only process Amazon documents (correspondent id 1)
     if [ "$DOCUMENT_CORRESPONDENT_ID" != "1" ]; then
       exit 0
     fi
 
-    password=$(cat ${config.sops.secrets."paperless-admin-password".path})
+    token=$(cat ${config.sops.secrets."paperless-api-token".path})
 
     content=$(${pkgs.curl}/bin/curl -sf \
       "http://127.0.0.1:28981/api/documents/$DOCUMENT_ID/" \
-      -u "admin:$password" \
+      -H "Authorization: Token $token" \
       | ${pkgs.jq}/bin/jq -r '.content')
 
     amount=$(printf '%s' "$content" \
@@ -124,7 +171,7 @@ let
 
     ${pkgs.curl}/bin/curl -sf -X PATCH \
       "http://127.0.0.1:28981/api/documents/$DOCUMENT_ID/" \
-      -u "admin:$password" \
+      -H "Authorization: Token $token" \
       -H "Content-Type: application/json" \
       -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$amount\"}]}"
   '';
@@ -212,6 +259,24 @@ in
       WorkingDirectory = "/var/lib/paperless-gpt";
       Restart = "on-failure";
       RestartSec = "5s";
+    };
+  };
+
+  systemd.services.paperless-betrag-backfill = {
+    description = "Backfill Betrag custom field for Amazon documents";
+    after = [ "paperless-web.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = betragBackfillScript;
+      User = "paperless";
+    };
+  };
+
+  systemd.timers.paperless-betrag-backfill = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "15min";
     };
   };
 }

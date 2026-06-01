@@ -3,6 +3,9 @@ _: {
   sops.secrets."paperless-admin-password" = {
     owner = "paperless";
   };
+  sops.secrets."paperless-api-token" = {
+    owner = "paperless";
+  };
   sops.secrets."paperless-gpt-env" = { };
   sops.secrets."local-ca-key" = {
     owner = "caddy";
