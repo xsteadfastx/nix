@@ -1,6 +1,17 @@
-_: {
+{ config, ... }:
+{
   services.caddy = {
     enable = true;
+    globalConfig = ''
+      pki {
+        ca local {
+          root {
+            cert ${./local-ca.crt}
+            key ${config.sops.secrets."local-ca-key".path}
+          }
+        }
+      }
+    '';
     virtualHosts."paperless.local" = {
       extraConfig = ''
         tls internal
