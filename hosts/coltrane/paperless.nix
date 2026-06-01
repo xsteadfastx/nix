@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
 
   correspondentPrompt = pkgs.writeText "correspondent_prompt.tmpl" ''
@@ -119,8 +124,12 @@ in
     "d /var/lib/paperless/consume 0775 paperless paperless - -"
   ];
 
+  services.gotenberg.chromium.disableJavascript = lib.mkForce false;
+  services.gotenberg.extraArgs = lib.mkForce [ "--chromium-allow-list=.*" ];
+
   services.paperless = {
     enable = true;
+    configureTika = true;
     package = pkgs.paperless-ngx.override { tesseract5 = tesseractBest; };
     port = 28981;
     address = "127.0.0.1";
