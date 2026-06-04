@@ -101,56 +101,76 @@ let
       inherit hash;
     };
 
+  extractAmount = pkgs.writeShellScript "paperless-extract-amount" ''
+    correspondent_id=$1
+    content=$2
+
+    case "$correspondent_id" in
+      1)
+        # Amazon: "Summe 109.99 EUR"
+        printf '%s' "$content" \
+          | ${pkgs.gnugrep}/bin/grep -oP 'Summe\s+\K[\d.]+(?=\s+EUR)' \
+          | head -1
+        ;;
+      14)
+        # PayPal: "Gesamtbetrag 12,99 €" or "Gesamtbetrag dieser Transaktion: 26,94 €"
+        printf '%s' "$content" \
+          | ${pkgs.gnugrep}/bin/grep -oP 'Gesamtbetrag(?:\s+dieser\s+Transaktion)?:?\s+\K[\d,]+(?=\s*€)' \
+          | head -1 \
+          | ${pkgs.gnused}/bin/sed 's/,/./'
+        ;;
+    esac
+  '';
+
   betragBackfillScript = pkgs.writeShellScript "paperless-betrag-backfill" ''
     token=$(cat ${config.sops.secrets."paperless-api-token".path})
 
-    ids=$(${pkgs.curl}/bin/curl -sf \
-      "http://127.0.0.1:28981/api/documents/?correspondent__id=1&page_size=100" \
-      -H "Authorization: Token $token" \
-      | ${pkgs.jq}/bin/jq -r '
-          .results[]
-          | select(
-              (.custom_fields | map(select(.field == 1 and .value != null)) | length) == 0
-            )
-          | .id')
-
-    if [ -z "$ids" ]; then
-      echo "No Amazon documents missing Betrag"
-      exit 0
-    fi
-
-    for id in $ids; do
-      content=$(${pkgs.curl}/bin/curl -sf \
-        "http://127.0.0.1:28981/api/documents/$id/" \
+    for correspondent_id in 1 14; do
+      ids=$(${pkgs.curl}/bin/curl -sf \
+        "http://127.0.0.1:28981/api/documents/?correspondent__id=$correspondent_id&page_size=100" \
         -H "Authorization: Token $token" \
-        | ${pkgs.jq}/bin/jq -r '.content')
+        | ${pkgs.jq}/bin/jq -r '
+            .results[]
+            | select(
+                (.custom_fields | map(select(.field == 1 and .value != null)) | length) == 0
+              )
+            | .id')
 
-      amount=$(printf '%s' "$content" \
-        | ${pkgs.gnugrep}/bin/grep -oP 'Summe\s+\K[\d.]+(?=\s+EUR)' \
-        | head -1)
-
-      if [ -z "$amount" ]; then
-        echo "doc $id: no amount found, skipping"
+      if [ -z "$ids" ]; then
+        echo "correspondent $correspondent_id: no documents missing Betrag"
         continue
       fi
 
-      formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
-      if ${pkgs.curl}/bin/curl -sf -X PATCH \
-        "http://127.0.0.1:28981/api/documents/$id/" \
-        -H "Authorization: Token $token" \
-        -H "Content-Type: application/json" \
-        -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}" > /dev/null; then
-        echo "doc $id: set Betrag EUR$formatted"
-      else
-        echo "doc $id: PATCH failed"
-        exit 1
-      fi
+      for id in $ids; do
+        content=$(${pkgs.curl}/bin/curl -sf \
+          "http://127.0.0.1:28981/api/documents/$id/" \
+          -H "Authorization: Token $token" \
+          | ${pkgs.jq}/bin/jq -r '.content')
+
+        amount=$(${extractAmount} "$correspondent_id" "$content")
+
+        if [ -z "$amount" ]; then
+          echo "doc $id: no amount found, skipping"
+          continue
+        fi
+
+        formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
+        if ${pkgs.curl}/bin/curl -sf -X PATCH \
+          "http://127.0.0.1:28981/api/documents/$id/" \
+          -H "Authorization: Token $token" \
+          -H "Content-Type: application/json" \
+          -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}" > /dev/null; then
+          echo "doc $id: set Betrag EUR$formatted"
+        else
+          echo "doc $id: PATCH failed"
+          exit 1
+        fi
+      done
     done
   '';
 
   postConsumeScript = pkgs.writeShellScript "paperless-post-consume" ''
-    # only process Amazon documents (correspondent id 1)
-    if [ "$DOCUMENT_CORRESPONDENT_ID" != "1" ]; then
+    if [ "$DOCUMENT_CORRESPONDENT_ID" != "1" ] && [ "$DOCUMENT_CORRESPONDENT_ID" != "14" ]; then
       exit 0
     fi
 
@@ -161,19 +181,18 @@ let
       -H "Authorization: Token $token" \
       | ${pkgs.jq}/bin/jq -r '.content')
 
-    amount=$(printf '%s' "$content" \
-      | ${pkgs.gnugrep}/bin/grep -oP 'Summe\s+\K[\d.]+(?=\s+EUR)' \
-      | head -1)
+    amount=$(${extractAmount} "$DOCUMENT_CORRESPONDENT_ID" "$content")
 
     if [ -z "$amount" ]; then
       exit 0
     fi
 
+    formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
     ${pkgs.curl}/bin/curl -sf -X PATCH \
       "http://127.0.0.1:28981/api/documents/$DOCUMENT_ID/" \
       -H "Authorization: Token $token" \
       -H "Content-Type: application/json" \
-      -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$amount\"}]}"
+      -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}"
   '';
 
   tesseractBest = pkgs.tesseract5.override {
@@ -205,7 +224,9 @@ in
   services.paperless = {
     enable = true;
     configureTika = true;
-    package = pkgs.paperless-ngx.override { tesseract5 = tesseractBest; };
+    package = (pkgs.paperless-ngx.override { tesseract5 = tesseractBest; }).overrideAttrs (_: {
+      doInstallCheck = false;
+    });
     port = 28981;
     address = "127.0.0.1";
     settings = {
