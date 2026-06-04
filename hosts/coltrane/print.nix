@@ -1,5 +1,8 @@
 { pkgs, ... }:
 {
+  systemd.services.cups-ensure-printers.after = [ "tailscaled.service" "network-online.target" ];
+  systemd.services.cups-ensure-printers.wants = [ "tailscaled.service" "network-online.target" ];
+
   services.printing = {
     enable = true;
     drivers = [
