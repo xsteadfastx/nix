@@ -76,7 +76,6 @@
     deployment.tags = [ "server" ];
     imports = [
       ./hosts/phil
-
       inputs.nixos-hardware.nixosModules.raspberry-pi-3
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users

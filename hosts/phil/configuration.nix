@@ -1,7 +1,18 @@
 { lib, pkgs, ... }:
 {
+  nixpkgs.buildPlatform = "x86_64-linux";
+  nixpkgs.hostPlatform = "aarch64-linux";
+  nixpkgs.overlays = [
+    (_: prev: {
+      # ncdu uses Zig which doesn't cross-compile properly in nixpkgs
+      ncdu = prev.writeShellScriptBin "ncdu" ''
+        echo "ncdu: not available (Zig cross-compilation limitation)" >&2
+        exit 1
+      '';
+    })
+  ];
+
   networking.hostName = "phil";
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_rpi3;
   security.sudo.wheelNeedsPassword = false;
   nix.settings.trusted-users = [
     "root"
