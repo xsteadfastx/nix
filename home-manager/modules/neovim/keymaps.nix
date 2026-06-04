@@ -6,7 +6,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    extraLuaConfig =
+    initLua =
       mkBefore
         # lua
         ''

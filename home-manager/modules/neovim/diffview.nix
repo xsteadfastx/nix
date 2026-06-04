@@ -14,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       diffview-nvim
     ];
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         require("diffview").setup({

@@ -14,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       trouble-nvim
     ];
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         require("trouble").setup({

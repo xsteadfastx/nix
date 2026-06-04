@@ -8,8 +8,8 @@ let
       if [ ! -f /run/user/1000/autorandr-current-ws ]; then
         ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
       fi
-      for output in $(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
-        ${pkgs.xorg.xrandr}/bin/xrandr --output $output --off 2>/dev/null || true
+      for output in $(${pkgs.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
+        ${pkgs.xrandr}/bin/xrandr --output $output --off 2>/dev/null || true
       done
     '';
     postswitch."move-workspaces" = ''
@@ -17,7 +17,7 @@ let
       export XAUTHORITY=/home/marv/.Xauthority
       export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath)
       # Sort external outputs by X position — port-name agnostic
-      SORTED=$(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "^eDP" | \
+      SORTED=$(${pkgs.xrandr}/bin/xrandr --query | grep " connected" | grep -v "^eDP" | \
         ${pkgs.gawk}/bin/awk 'match($0, /[0-9]+x[0-9]+\+([0-9]+)\+/, a) {print a[1], $1}' | \
         sort -n | ${pkgs.gawk}/bin/awk '{print $2}')
       MIDDLE=$(echo "$SORTED" | sed -n '1p')
@@ -53,8 +53,8 @@ let
     postswitch."disable-dpms" = ''
       export DISPLAY=:0
       export XAUTHORITY=/home/marv/.Xauthority
-      ${pkgs.xorg.xset}/bin/xset -dpms
-      ${pkgs.xorg.xset}/bin/xset s 60 60
+      ${pkgs.xset}/bin/xset -dpms
+      ${pkgs.xset}/bin/xset s 60 60
     '';
   };
 
@@ -79,9 +79,9 @@ in
       ExecStartPre = pkgs.writeShellScript "autorandr-pre" ''
         export I3SOCK=$(${pkgs.i3}/bin/i3 --get-socketpath 2>/dev/null)
         ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
-        ${pkgs.xorg.xrandr}/bin/xrandr --auto
-        for output in $(${pkgs.xorg.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
-          ${pkgs.xorg.xrandr}/bin/xrandr --output "$output" --off
+        ${pkgs.xrandr}/bin/xrandr --auto
+        for output in $(${pkgs.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
+          ${pkgs.xrandr}/bin/xrandr --output "$output" --off
         done
       '';
     };

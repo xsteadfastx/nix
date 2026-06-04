@@ -24,7 +24,7 @@ in
       statix
     ];
 
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         require("lint").linters.sqlfluff.args = {

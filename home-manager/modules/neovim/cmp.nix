@@ -16,7 +16,7 @@ in
       luasnip
     ];
 
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         local ls = require("luasnip")

@@ -49,7 +49,7 @@ in
         ]
       ))
     ];
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         require("treesitter-context").setup({

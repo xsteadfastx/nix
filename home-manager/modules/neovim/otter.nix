@@ -13,7 +13,7 @@ mkIf cfg.neovim {
     plugins = with pkgsUnstable.vimPlugins; [
       otter-nvim
     ];
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         local otter = require('otter')

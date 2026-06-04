@@ -14,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       dracula-nvim
     ];
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         require("dracula").setup({

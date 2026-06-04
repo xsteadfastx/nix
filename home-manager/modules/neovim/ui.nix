@@ -10,7 +10,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         local opt = vim.opt -- to set options

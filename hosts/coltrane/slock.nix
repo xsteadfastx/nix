@@ -26,7 +26,7 @@ let
     ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
     ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
     /run/wrappers/bin/slock
-    ${pkgs.xorg.xrandr}/bin/xrandr --auto
+    ${pkgs.xrandr}/bin/xrandr --auto
     ${pkgs.autorandr}/bin/autorandr --change
   '';
 in

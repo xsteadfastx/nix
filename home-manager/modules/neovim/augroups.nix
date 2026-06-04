@@ -10,7 +10,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         -- Detect external file changes and notify LSP automatically

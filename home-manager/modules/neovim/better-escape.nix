@@ -14,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       better-escape-nvim
     ];
-    extraLuaConfig =
+    initLua =
       #lua
       ''
         require("better_escape").setup({})

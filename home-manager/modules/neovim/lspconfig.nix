@@ -29,7 +29,7 @@ in
       blink-cmp
       nvim-lspconfig
     ];
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         local blink = require("blink.cmp")

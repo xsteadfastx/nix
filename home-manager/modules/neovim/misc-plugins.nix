@@ -49,7 +49,7 @@ in
       vim-table-mode
       which-key-nvim
     ];
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         -- nvim-colorizer-lua

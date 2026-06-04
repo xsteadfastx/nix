@@ -20,7 +20,7 @@ in
       fzf
       ripgrep
     ];
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         require("fzf-lua").setup({

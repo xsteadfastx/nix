@@ -47,7 +47,7 @@
 
   services.resolved = {
     enable = lib.mkDefault true;
-    fallbackDns = lib.mkDefault [
+    settings.Resolve.FallbackDNS = lib.mkDefault [
       "1.1.1.1"
       "9.9.9.9"
       "8.8.8.8"

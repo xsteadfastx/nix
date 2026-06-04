@@ -14,7 +14,7 @@ in
     plugins = with pkgsUnstable.vimPlugins; [
       vimwiki
     ];
-    extraLuaConfig =
+    initLua =
       # lua
       ''
         vim.g["vimwiki_list"] = { { path = "~/permanent/vimwiki/", syntax = "markdown", ext = ".md", index = "Home" } }

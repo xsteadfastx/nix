@@ -16,7 +16,7 @@ lib.mkIf cfg.x11 {
     pkgsUnstable.rofi
     (pkgs.writeShellScriptBin "i3auto" ''
       set -e
-      ${pkgs.xorg.xsetroot}/bin/xsetroot -solid "#282a36"
+      ${pkgs.xsetroot}/bin/xsetroot -solid "#282a36"
       ${pkgs.dunst}/bin/dunst &
       ${pkgs.networkmanagerapplet}/bin/nm-applet &
       ${pkgs.blueman}/bin/blueman-applet &

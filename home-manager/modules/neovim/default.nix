@@ -37,7 +37,9 @@ in
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;
-    extraLuaConfig =
+    withRuby = false;
+    withPython3 = false;
+    initLua =
       #lua
       ''
         vim.cmd("set clipboard+=unnamedplus")
