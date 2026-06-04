@@ -32,4 +32,8 @@
   ];
 
   security.pki.certificateFiles = [ ./local-ca.crt ];
+
+  programs.chromium.extraOpts = {
+    CACertificates = builtins.readFile ./local-ca.crt;
+  };
 }
