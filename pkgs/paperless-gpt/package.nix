@@ -3,6 +3,7 @@
   buildNpmPackage,
   fetchFromGitHub,
   lib,
+  nodejs_22,
 }:
 
 let
@@ -17,6 +18,7 @@ let
   webApp = buildNpmPackage {
     pname = "paperless-gpt-web";
     inherit version src;
+    nodejs = nodejs_22;
     sourceRoot = "${src.name}/web-app";
     npmDepsHash = "sha256-7PxH8kS28x8Sv5tD+Kohdv1CakKh8gIA9e9LGcWA960=";
     installPhase = ''
