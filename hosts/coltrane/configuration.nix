@@ -138,6 +138,9 @@
   # Needs to be enabled for completions
   programs.fish.enable = true;
 
+  programs.appimage.enable = true;
+  programs.appimage.binfmt = true;
+
   programs.localsend = {
     enable = true;
     openFirewall = true;
