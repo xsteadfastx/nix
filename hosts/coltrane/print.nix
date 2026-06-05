@@ -1,7 +1,9 @@
 { pkgs, ... }:
 {
-  systemd.services.cups-ensure-printers.after = [ "tailscaled.service" "network-online.target" ];
-  systemd.services.cups-ensure-printers.wants = [ "tailscaled.service" "network-online.target" ];
+  systemd.services.ensure-printers.serviceConfig = {
+    Restart = "on-failure";
+    RestartSec = "30s";
+  };
 
   services.printing = {
     enable = true;
