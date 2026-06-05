@@ -41,9 +41,13 @@
             exit 0
           fi
           echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
-          sleep 3
-          echo "$HUB" > /sys/bus/usb/drivers/usb/bind
           sleep 5
+          echo "$HUB" > /sys/bus/usb/drivers/usb/bind
+          # Poll for MST ports to appear (up to 30s)
+          for i in $(seq 1 30); do
+            ls /sys/class/drm/ 2>/dev/null | grep -q "DP-1-3\|DP-1-4" && break
+            sleep 1
+          done
           XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
           if [ -n "$XAUTH" ]; then
             XUSER=$(stat -c '%U' "$XAUTH")
