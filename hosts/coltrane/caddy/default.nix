@@ -6,8 +6,14 @@
       pki {
         ca local {
           root {
+            format pem_file
             cert ${./local-ca.crt}
             key ${config.sops.secrets."local-ca-key".path}
+          }
+          intermediate {
+            format pem_file
+            cert ${./local-intermediate.crt}
+            key ${config.sops.secrets."local-intermediate-key".path}
           }
         }
       }
@@ -33,7 +39,7 @@
 
   security.pki.certificateFiles = [ ./local-ca.crt ];
 
-  programs.chromium.extraOpts = {
-    CACertificates = builtins.readFile ./local-ca.crt;
+  environment.etc."chromium/policies/managed/local-ca.json".text = builtins.toJSON {
+    CACertificates = [ (builtins.readFile ./local-ca.crt) ];
   };
 }
