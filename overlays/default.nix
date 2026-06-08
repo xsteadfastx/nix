@@ -41,13 +41,13 @@ _final: prev: {
   });
 
   cliamp = prev.cliamp.overrideAttrs (_oldAttrs: rec {
-    version = "1.34.1";
+    version = "1.57.0";
     src = prev.fetchFromGitHub {
       owner = "bjarneo";
       repo = "cliamp";
       tag = "v${version}";
-      hash = "sha256-nhgdM0C+QgvTdXLrbo0DNJPVhqaumQgNBd3bmiwDk8M=";
+      hash = "sha256-tfPtc+YgtmuzdWod6EM0MJSoYLxLnQskuNRQbLRp4g8=";
     };
-    vendorHash = "sha256-sS0tjZoZ81Jwn/KJnJD01fTA4z0HxEYYM89Ta398MP0=";
+    vendorHash = "sha256-A2Ygc1a9e2flZzaNAEXvr8Ui1cE89TxBfUNALmDzIo0=";
   });
 }
