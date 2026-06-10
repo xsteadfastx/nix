@@ -8,7 +8,9 @@ let
       if [ ! -f /run/user/1000/autorandr-current-ws ]; then
         ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
       fi
-      ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
+      if ${pkgs.xrandr}/bin/xrandr --query | grep -q "DP-1-3\|DP-1-4"; then
+        ${pkgs.i3}/bin/i3-msg -t get_workspaces 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
+      fi
       for output in $(${pkgs.xrandr}/bin/xrandr --query | grep " connected" | grep -v "eDP" | ${pkgs.gawk}/bin/awk '{print $1}'); do
         ${pkgs.xrandr}/bin/xrandr --output $output --off 2>/dev/null || true
       done

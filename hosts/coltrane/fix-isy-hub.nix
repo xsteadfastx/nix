@@ -117,6 +117,9 @@
   # Run autorandr immediately on resume so the session sees the current state;
   # the DRM hotplug udev rule fires autorandr again once MST is restored.
   powerManagement.resumeCommands = ''
+    rm -f /run/user/1000/autorandr-ws-layout
+    rm -f /run/user/1000/autorandr-current-ws
+    rm -f /run/user/1000/autorandr-visible-ws
     XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
     if [ -n "$XAUTH" ]; then
       XUSER=$(stat -c '%U' "$XAUTH")
