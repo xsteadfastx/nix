@@ -94,8 +94,18 @@
         fi
         echo "mst-restore: rebinding hub $HUB"
         echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
-        sleep 3
+        sleep 5
         echo "$HUB" > /sys/bus/usb/drivers/usb/bind
+        for i in $(seq 1 30); do
+          ls /sys/class/drm/ 2>/dev/null | grep -q "DP-1-3\|DP-1-4" && break
+          sleep 1
+        done
+        XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
+        if [ -n "$XAUTH" ]; then
+          XUSER=$(stat -c '%U' "$XAUTH")
+          runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
+            ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
+        fi
         echo "mst-restore: done"
       '';
     };
