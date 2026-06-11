@@ -252,6 +252,7 @@ in
   };
 
   systemd.services.paperless-gpt = {
+    enable = false;
     description = "paperless-gpt LLM auto-tagger";
     after = [
       "network.target"
