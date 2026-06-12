@@ -92,6 +92,10 @@
           echo "mst-restore: hub 05e3:0626 not found"
           exit 0
         fi
+        if ls /sys/class/drm/ 2>/dev/null | grep -q "DP-1-3\|DP-1-4"; then
+          echo "mst-restore: MST already active, skipping rebind"
+          exit 0
+        fi
         echo "mst-restore: rebinding hub $HUB"
         echo "$HUB" > /sys/bus/usb/drivers/usb/unbind
         sleep 5
