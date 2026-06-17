@@ -1,8 +1,16 @@
 { pkgs, ... }:
 {
-  systemd.services.ensure-printers.serviceConfig = {
-    Restart = "on-failure";
-    RestartSec = "30s";
+  systemd.services.ensure-printers = {
+    after = [
+      "cups.service"
+      "network-online.target"
+    ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = "30s";
+      StartLimitIntervalSec = 0;
+    };
   };
 
   services.printing = {
