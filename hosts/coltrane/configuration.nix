@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  pkgsUnstable,
   ...
 }:
 {
@@ -43,7 +42,7 @@
   boot.kernelModules = [ "thunderbolt" ];
 
   boot.kernelPackages = pkgs.linuxPackages;
-  boot.zfs.package = pkgsUnstable.${pkgs.stdenv.hostPlatform.system}.zfs;
+  boot.zfs.package = pkgs.zfs;
 
   boot.initrd.availableKernelModules = [
     "nvme"
@@ -187,8 +186,6 @@
     67 # networkmanager shared
   ];
 
-  virtualisation.docker.enable = true;
-
   # bluetooth
   hardware.bluetooth = {
     enable = true;
@@ -233,6 +230,7 @@
   services.fwupd.enable = true; # firmware updates
 
   users.users.root.hashedPassword = "!";
+  users.users.marv.extraGroups = [ "systemd-journal" ];
 
   services.logind = {
     settings = {

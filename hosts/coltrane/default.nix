@@ -10,6 +10,8 @@ _: {
     ./fix-isy-hub.nix
     ./fix-kernel.nix
     ./hardware-configuration.nix
+    ./ollama.nix
+    ./podman.nix
     ./paperless.nix
     ./print.nix
     ./secrets.nix
