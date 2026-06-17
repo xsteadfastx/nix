@@ -7,7 +7,7 @@
   meta = {
     specialArgs = {
       inherit inputs;
-      pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages;
+      pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux;
     };
     nixpkgs = import inputs.nixpkgs {
       system = "x86_64-linux";

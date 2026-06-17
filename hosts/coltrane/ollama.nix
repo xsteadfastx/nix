@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 let
   dockerfile = pkgs.writeText "Dockerfile.ollama-sycl" ''
     ARG OLLAMA_VERSION=0.30.8
@@ -126,7 +126,11 @@ in
     "d %h/.cache/ollama-sycl 0755 - - -"
   ];
 
-  environment.systemPackages = [ pkgs.ollama ];
+  environment.systemPackages = [
+    pkgs.ollama
+    pkgs.opencode
+    pkgsUnstable.pi-coding-agent
+  ];
 
   users.users.marv.extraGroups = [
     "video"
