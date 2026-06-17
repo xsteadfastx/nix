@@ -134,11 +134,5 @@
     rm -f /run/user/1000/autorandr-ws-layout
     rm -f /run/user/1000/autorandr-current-ws
     rm -f /run/user/1000/autorandr-visible-ws
-    XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
-    if [ -n "$XAUTH" ]; then
-      XUSER=$(stat -c '%U' "$XAUTH")
-      runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
-        ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
-    fi
   '';
 }
