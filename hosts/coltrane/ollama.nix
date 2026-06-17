@@ -121,6 +121,11 @@ let
   '';
 in
 {
+  systemd.user.tmpfiles.rules = [
+    "d %h/.local/share/ollama 0755 - - -"
+    "d %h/.cache/ollama-sycl 0755 - - -"
+  ];
+
   environment.systemPackages = [ pkgs.ollama ];
 
   users.users.marv.extraGroups = [
