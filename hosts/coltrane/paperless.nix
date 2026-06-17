@@ -245,12 +245,6 @@ in
     passwordFile = config.sops.secrets."paperless-admin-password".path;
   };
 
-  services.ollama = {
-    enable = true;
-    host = "127.0.0.1";
-    package = pkgs.ollama-vulkan;
-  };
-
   systemd.services.paperless-gpt = {
     enable = false;
     description = "paperless-gpt LLM auto-tagger";
