@@ -115,7 +115,6 @@ let
       -e SYCL_CACHE_PERSISTENT=1 \
       -e SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1 \
       -e UR_L0_USE_IMMEDIATE_COMMANDLISTS=1 \
-      -e OLLAMA_CONTEXT_LENGTH=65536 \
       -e OLLAMA_KEEP_ALIVE=24h \
       ollama-sycl:local
   '';
@@ -128,7 +127,7 @@ in
 
   environment.systemPackages = [
     pkgs.ollama
-    pkgs.opencode
+    pkgsUnstable.opencode
     pkgsUnstable.pi-coding-agent
   ];
 
