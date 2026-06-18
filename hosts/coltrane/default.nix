@@ -5,6 +5,7 @@ _: {
     ./autorandr.nix
     ./caddy
     ./configuration.nix
+    ./crush.nix
     ./disko.nix
     ./fix-audio.nix
     ./fix-isy-hub.nix
