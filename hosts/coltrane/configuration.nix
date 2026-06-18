@@ -41,7 +41,7 @@
 
   boot.kernelModules = [ "thunderbolt" ];
 
-  boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.zfs.package = pkgs.zfs;
 
   boot.initrd.availableKernelModules = [
