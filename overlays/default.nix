@@ -1,12 +1,21 @@
 { inputs, ... }:
-_final: prev: {
+
+# Nix overlay for custom packages
+# Provides overrides and additional packages used by the system.
+# Maintainer: Marvin Preuss <marv@yourdomain.com>
+
+_: prev:
+let
+  system = prev.stdenv.hostPlatform.system;
+in
+{
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
-  airmtp = inputs.airmtp.packages.${prev.stdenv.hostPlatform.system}.default;
-
-  compose2nix = inputs.compose2nix.packages.${prev.stdenv.hostPlatform.system}.default;
+  airmtp = inputs.airmtp.packages.${system}.default;
+  compose2nix = inputs.compose2nix.packages.${system}.default;
 
   bumblebee-status = prev.bumblebee-status.override {
+    # Add the plugins we actually use in this configuration.
     plugins = p: [
       p.cpu
       p.nic
@@ -14,7 +23,7 @@ _final: prev: {
     ];
   };
 
-  quickemu = inputs.quickemu.packages.${prev.stdenv.hostPlatform.system}.default;
+  quickemu = inputs.quickemu.packages.${system}.default;
 
   imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };
@@ -23,14 +32,10 @@ _final: prev: {
 
   xsaneGimp = prev.xsane.override { gimpSupport = true; };
 
-  kerouac = inputs.kerouac.packages.${prev.stdenv.hostPlatform.system}.kerouacLinuxAmd64;
+  kerouac = inputs.kerouac.packages.${system}.kerouacLinuxAmd64;
+  attic = inputs.attic.packages.${system}.attic;
 
-  attic = inputs.attic.packages.${prev.stdenv.hostPlatform.system}.attic;
-
-  # meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
-  # meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
-
-  cliamp = prev.cliamp.overrideAttrs (_oldAttrs: rec {
+  cliamp = prev.cliamp.overrideAttrs (rec {
     version = "1.57.0";
     src = prev.fetchFromGitHub {
       owner = "bjarneo";
@@ -39,5 +44,11 @@ _final: prev: {
       hash = "sha256-tfPtc+YgtmuzdWod6EM0MJSoYLxLnQskuNRQbLRp4g8=";
     };
     vendorHash = "sha256-A2Ygc1a9e2flZzaNAEXvr8Ui1cE89TxBfUNALmDzIo0=";
+    meta = {
+      description = "CLI amp – a simple audio volume controller for the terminal";
+      homepage = "https://github.com/bjarneo/cliamp";
+      license = prev.lib.licenses.mit;
+      maintainers = with prev.lib.maintainers; [ marv ];
+    };
   });
 }
