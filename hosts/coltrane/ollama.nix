@@ -1,5 +1,16 @@
-{ pkgs, pkgsUnstable, ... }:
+{
+  pkgs,
+  pkgsUnstable,
+  config,
+  ...
+}:
 let
+  # Use the NixOS-wrapped podman: its wrapper injects /run/wrappers/bin
+  # (setuid newuidmap/newgidmap) and the rootless helpers (crun, conmon,
+  # fuse-overlayfs, pasta, ...) onto PATH. The raw pkgs.podman lacks this and
+  # fails at cold start with "newuidmap: executable file not found in $PATH".
+  podman = config.virtualisation.podman.package;
+
   dockerfile = pkgs.writeText "Dockerfile.ollama-sycl" ''
     ARG OLLAMA_VERSION=0.30.8
     ARG COMPUTE_RUNTIME_VERSION=26.18.38308.1
@@ -94,16 +105,16 @@ let
   '';
 
   buildScript = pkgs.writeShellScript "build-ollama-sycl" ''
-    if ! ${pkgs.podman}/bin/podman image inspect ollama-sycl:local > /dev/null 2>&1; then
+    if ! ${podman}/bin/podman image inspect ollama-sycl:local > /dev/null 2>&1; then
       echo "Building ollama-sycl:local (~20 min)..."
       ctx=$(mktemp -d)
-      ${pkgs.podman}/bin/podman build -t ollama-sycl:local -f ${dockerfile} "$ctx"
+      ${podman}/bin/podman build -t ollama-sycl:local -f ${dockerfile} "$ctx"
       rmdir "$ctx"
     fi
   '';
 
   runScript = pkgs.writeShellScript "run-ollama-sycl" ''
-    exec ${pkgs.podman}/bin/podman run --rm \
+    exec ${podman}/bin/podman run --rm \
       --pull=never \
       --name ollama \
       --device /dev/dri \
@@ -155,7 +166,7 @@ in
     requires = [ "ollama-sycl-build.service" ];
     serviceConfig = {
       ExecStart = runScript;
-      ExecStop = "${pkgs.podman}/bin/podman stop ollama";
+      ExecStop = "${podman}/bin/podman stop ollama";
       Restart = "on-failure";
       RestartSec = "5s";
     };
