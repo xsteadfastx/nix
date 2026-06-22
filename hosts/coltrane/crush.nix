@@ -1,4 +1,4 @@
-{ pkgsUnstable, ... }:
+{ pkgs, pkgsUnstable, ... }:
 let
   crushConfig = builtins.toJSON {
     providers = {
@@ -88,8 +88,37 @@ let
       };
     };
     lsp = {
-      go.command = "gopls";
-      nix.command = "nil";
+      go = {
+        command = "gopls";
+        filetypes = [
+          "go"
+          "gomod"
+          "gowork"
+          "gotmpl"
+        ];
+        root_markers = [
+          "go.work"
+          "go.mod"
+          ".git"
+        ];
+      };
+      nix = {
+        command = "nil";
+        filetypes = [ "nix" ];
+        root_markers = [
+          "flake.nix"
+          ".git"
+        ];
+      };
+      json = {
+        command = "vscode-json-language-server";
+        args = [ "--stdio" ];
+        filetypes = [
+          "json"
+          "jsonc"
+        ];
+        root_markers = [ ".git" ];
+      };
     };
     options = {
       context_paths = [ "/etc/nixos/configuration.nix" ];
@@ -118,6 +147,9 @@ let
           pkgsUnstable.lib.makeBinPath [
             pkgsUnstable.gopls
             pkgsUnstable.nil
+            # node 24 build in nixpkgs-unstable crashes on launch (ESM/require
+            # bug), so pull the JSON language server from stable nixpkgs.
+            pkgs.vscode-langservers-extracted
           ]
         }
     '';
