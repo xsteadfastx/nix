@@ -43,6 +43,7 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.zfs.package = pkgs.zfs;
+  boot.kernelParams = [ "drm_kms_helper.poll=1" ];
 
   boot.initrd.availableKernelModules = [
     "nvme"
