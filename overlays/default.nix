@@ -30,16 +30,6 @@ _final: prev: {
   # meshcore-cli = prev.callPackage ../pkgs/meshcore-cli/package.nix { };
   # meshcore-web = prev.callPackage ../pkgs/meshcore-web/package.nix { };
 
-  yt-dlp = prev.yt-dlp.overrideAttrs (_oldAttrs: rec {
-    version = "2026.03.17";
-    src = prev.fetchFromGitHub {
-      owner = "yt-dlp";
-      repo = "yt-dlp";
-      tag = version;
-      hash = "sha256-A4LUCuKCjpVAOJ8jNoYaC3mRCiKH0/wtcsle0YfZyTA=";
-    };
-  });
-
   cliamp = prev.cliamp.overrideAttrs (_oldAttrs: rec {
     version = "1.57.0";
     src = prev.fetchFromGitHub {
