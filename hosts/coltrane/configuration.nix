@@ -41,7 +41,8 @@
 
   boot.kernelModules = [ "thunderbolt" ];
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # ZFS-compatible default kernel (linuxPackages_latest outpaces ZFS and breaks the build)
+  boot.kernelPackages = pkgs.linuxPackages;
   boot.zfs.package = pkgs.zfs;
   boot.kernelParams = [ "drm_kms_helper.poll=1" ];
 
