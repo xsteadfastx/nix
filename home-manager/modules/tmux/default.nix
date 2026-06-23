@@ -3,11 +3,15 @@
   home.packages = [
     pkgs.tmux
     pkgs.tmux-xpanes
-    # tmux wrapper for always same session
+    # tmux wrapper: persistent "local" anchor session survives Ghostty crashes;
+    # each window gets its own grouped view that auto-destroys when detached,
+    # so closing a Ghostty leaves no zombie sessions behind.
     (pkgs.writeShellScriptBin "tmx" ''
       set -e
 
-      ${pkgs.tmux}/bin/tmux new-session -t local
+      ${pkgs.tmux}/bin/tmux has-session -t local 2>/dev/null \
+        || ${pkgs.tmux}/bin/tmux new-session -d -s local
+      exec ${pkgs.tmux}/bin/tmux new-session -t local \; set-option destroy-unattached on
     '')
   ];
 
