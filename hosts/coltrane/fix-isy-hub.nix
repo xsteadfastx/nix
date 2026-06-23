@@ -1,15 +1,17 @@
 { pkgs, ... }:
 {
   # Keep USB/Thunderbolt controllers and ISY hub powered to prevent dropouts.
-  # On 0626 re-enumeration after resume, trigger mst-restore (uptime check inside
-  # the service skips this during early boot where isy-hub-mst-init takes over).
+  # NOTE: the 0626 hub no longer auto-triggers mst-restore on re-enumeration.
+  # The USB-hub rebind produces no DP/HPD events (DP runs over the TB/DP-altmode
+  # path, not this USB hub), and firing it on resume destroyed the working MST
+  # topology that autorandr had already detected. Power rules only here now.
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x64a0", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa831", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa833", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa834", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa87d", ATTR{power/control}="on"
-    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="05e3", ATTRS{idProduct}=="0626", ATTR{power/control}="on", TAG+="systemd", ENV{SYSTEMD_WANTS}="mst-restore.service"
+    ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="05e3", ATTRS{idProduct}=="0626", ATTR{power/control}="on"
   '';
 
   # Rebind ISY USB-C hub at boot to enumerate MST sub-ports (DP-1-3/DP-1-4).
