@@ -139,7 +139,6 @@ in
   environment.systemPackages = [
     pkgs.ollama
     pkgsUnstable.opencode
-    pkgsUnstable.pi-coding-agent
   ];
 
   users.users.marv.extraGroups = [

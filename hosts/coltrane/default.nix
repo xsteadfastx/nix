@@ -12,6 +12,7 @@ _: {
     ./fix-kernel.nix
     ./hardware-configuration.nix
     ./ollama.nix
+    ./pi.nix
     ./podman.nix
     ./paperless.nix
     ./print.nix
