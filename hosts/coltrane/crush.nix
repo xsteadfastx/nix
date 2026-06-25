@@ -43,6 +43,18 @@ let
             default_max_tokens = 8192;
           }
           {
+            id = "gemma4:31b";
+            name = "Gemma 4 31B";
+            context_window = 131072;
+            default_max_tokens = 8192;
+          }
+          {
+            id = "qwen3.5:latest";
+            name = "Qwen 3.5";
+            context_window = 131072;
+            default_max_tokens = 8192;
+          }
+          {
             id = "gemma3:27b";
             name = "Gemma 3 27B";
             context_window = 131072;
