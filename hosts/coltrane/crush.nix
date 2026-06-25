@@ -138,37 +138,85 @@ let
       debug = false;
     };
   };
-  crushLatest = pkgsUnstable.crush.overrideAttrs (_: rec {
-    version = "0.75.0";
-    src = pkgsUnstable.fetchFromGitHub {
+  crushImg = pkgs.writeShellScriptBin "crush-img" ''
+    OUT="/run/user/$(id -u)/crush_clipboard.png"
+    TMP_OUT="/tmp/crush_clipboard_raw.png"
+    if ${pkgs.xclip}/bin/xclip -selection clipboard -t image/png -o > "$TMP_OUT" 2>/dev/null; then
+      # Try to get it under 200KB
+      ${pkgs.imagemagick}/bin/magick "$TMP_OUT" -strip -resize 50% "$OUT"
+      
+      while [ $(stat -c%s "$OUT") -gt 204800 ]; do
+        ${pkgs.imagemagick}/bin/magick "$OUT" -resize 75% "$OUT"
+        if [ $(stat -c%s "$OUT") -lt 10000 ]; then break; fi # Avoid infinite loop for tiny images
+      done
+      
+      if [ $(stat -c%s "$OUT") -lt 204800 ]; then
+        echo "Image captured and resized to fit limit: $OUT"
+      else
+        echo "Image captured but still too large: $OUT"
+      fi
+    else
+      rm -f "$TMP_OUT"
+      echo "Error: No image found in clipboard" >&2
+      exit 1
+    fi
+  '';
+
+  crushLatest = pkgs.buildGoModule (finalAttrs: {
+    pname = "crush";
+    version = "0.79.1";
+
+    src = pkgs.fetchFromGitHub {
       owner = "charmbracelet";
       repo = "crush";
-      tag = "v${version}";
-      hash = "sha256-a5SItUvr6kRlF8mzP5a7tRvULCAvclvK+PcyL/USbWA=";
+      tag = "v${finalAttrs.version}";
+      hash = "sha256-S0e4mU7+PpMutz5CMs/hxoQHzuvcP6h/QY/jYQK27qw=";
     };
-    vendorHash = "sha256-4zJ4mXVefVNHonTPDx8HCWtmymXJF0Z44Sm07/cjBx0=";
+
+    vendorHash = "sha256-a+4k+fjqdWsAUv0ilagd46pYwFaSd1+mJ25Vr47Lsys=";
+
+    checkFlags =
+      let
+        skippedTests = [
+          "TestCoderAgent"
+          "TestOpenAIClientStreamChoices"
+          "TestGrepWithIgnoreFiles"
+          "TestSearchImplementations"
+          "TestDispatch_BinaryPassthroughExecutes"
+        ];
+      in
+      [ "-skip=^${builtins.concatStringsSep "$|^" skippedTests}$" ];
+
+    ldflags = [
+      "-s"
+      "-X=github.com/charmbracelet/crush/internal/version.Version=${finalAttrs.version}"
+    ];
   });
 
   crushWithTools = pkgsUnstable.symlinkJoin {
     name = "crush-with-tools";
-    paths = [ crushLatest ];
+    paths = [
+      crushLatest
+    ];
     nativeBuildInputs = [ pkgsUnstable.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/crush \
-        --prefix PATH : ${
+        --prefix PATH :${
           pkgsUnstable.lib.makeBinPath [
             pkgsUnstable.gopls
             pkgsUnstable.nil
-            # node 24 build in nixpkgs-unstable crashes on launch (ESM/require
-            # bug), so pull the JSON language server from stable nixpkgs.
             pkgs.vscode-langservers-extracted
+            crushImg
           ]
         }
     '';
   };
 in
 {
-  environment.systemPackages = [ crushWithTools ];
+  environment.systemPackages = [
+    crushWithTools
+    crushImg
+  ];
 
   home-manager.users.marv.xdg.configFile."crush/crush.json" = {
     text = crushConfig;

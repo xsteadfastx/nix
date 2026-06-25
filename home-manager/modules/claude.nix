@@ -15,6 +15,17 @@ let
     rev = "e8e9df52a6b1cd93d454c6e539b15ee487b166ff";
     hash = "sha256-fLcrTWDAaJsuDntOrhNoy1YOhn8oE814CElpsrYOWm4=";
   };
+
+  customRules = pkgs.runCommand "custom-rules" { } ''
+        mkdir -p $out
+        cp -r ${ecc-src}/rules/* $out/
+        cat <<EOF > $out/visual-context.md
+    # Visual Context Protocol
+    Whenever the user runs the \`crush-img\` command or mentions a "pasted image", "clipboard image", or "screenshot", the assistant MUST immediately attempt to \`view\` the file at /run/user/1000/crush_clipboard.png.
+    Do not wait for the user to explicitly ask what is in the image.
+    Analyze the visual evidence to provide immediate, context-aware feedback or debugging help.
+    EOF
+  '';
 in
 lib.mkIf cfg.work {
   home.packages = [ pkgsUnstable.claude-code ];
@@ -38,6 +49,6 @@ lib.mkIf cfg.work {
 
   home.file.".claude/agents".source = "${ecc-src}/agents";
   home.file.".claude/commands".source = "${ecc-src}/commands";
-  home.file.".claude/rules".source = "${ecc-src}/rules";
+  home.file.".claude/rules".source = customRules;
   home.file.".claude/skills".source = "${ecc-src}/skills";
 }
