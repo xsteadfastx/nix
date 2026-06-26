@@ -20,6 +20,10 @@
     set -g prefix C-a
     bind C-a send-prefix
 
+    # enable extended keys for better compatibility with terminal emulators
+    set -g extended-keys on
+    set -g extended-keys-format csi-u
+
     # start window numbering at 1 for easier switching
     set -g base-index 1
 
