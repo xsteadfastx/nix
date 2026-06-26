@@ -431,12 +431,15 @@ let
       wrapProgram $out/bin/pi \
         --add-flags "--extension ${piPermissionSystem}/lib/pi-permission-system/src/index.ts" \
         --add-flags "--extension ${piBrowserTools}/extensions/browser-tools/index.ts" \
-        --add-flags "--extension ${piMcpAdapter}/src/index.ts"
+        --add-flags "--extension ${piMcpAdapter}/index.ts"
     '';
   };
 in
 {
-  environment.systemPackages = [ piWithExtensions ];
+  environment.systemPackages = [
+    piWithExtensions
+    pkgsUnstable.mcp-nixos
+  ];
 
   # Embedding-only models (bge-m3, nomic-embed-text) from the crush config are
   # intentionally omitted: pi is a chat/coding agent and cannot use embedding
@@ -456,7 +459,12 @@ in
     };
     ".pi/agent/mcp.json" = {
       text = builtins.toJSON {
-        mcpServers = { };
+        mcpServers = {
+          nixos = {
+            command = "mcp-nixos";
+            args = [ ];
+          };
+        };
       };
       force = true;
     };
