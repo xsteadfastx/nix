@@ -7,6 +7,15 @@ _: {
     owner = "paperless";
   };
   sops.secrets."paperless-gpt-env" = { };
+
+  sops.secrets."mcp-grafana-token" = {
+    owner = "marv";
+  };
+
+  sops.secrets."mcp-grafana-url" = {
+    owner = "marv";
+  };
+
   sops.secrets."local-ca-key" = {
     owner = "caddy";
     mode = "0400";

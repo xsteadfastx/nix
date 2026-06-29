@@ -1,4 +1,9 @@
-{ pkgs, pkgsUnstable, ... }:
+{
+  config,
+  pkgs,
+  pkgsUnstable,
+  ...
+}:
 let
   # pi reads custom OpenAI-compatible providers from ~/.pi/agent/models.json.
   # This mirrors the providers/models defined in ./crush.nix so pi and crush
@@ -415,6 +420,16 @@ let
     };
   });
 
+  mcpGrafanaWrapped = pkgs.writeShellScriptBin "mcp-grafana" ''
+    if [ -n "$GRAFANA_URL_FILE" ] && [ -f "$GRAFANA_URL_FILE" ]; then
+      export GRAFANA_URL=$(cat "$GRAFANA_URL_FILE")
+    fi
+    if [ -n "$GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE" ] && [ -f "$GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE" ]; then
+      export GRAFANA_SERVICE_ACCOUNT_TOKEN=$(cat "$GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE")
+    fi
+    exec ${pkgsUnstable.mcp-grafana}/bin/mcp-grafana "$@"
+  '';
+
   # pi only loads extensions from ~/.pi/agent/extensions, .pi/extensions, paths
   # listed in settings.json, and `--extension` flags — never from its own
   # install tree. So bundle the extension by wrapping pi to pass it on every
@@ -425,7 +440,15 @@ let
   # deps and `#src/*` subpath imports resolve against the adjacent node_modules.
   piWithExtensions = pkgsUnstable.symlinkJoin {
     name = "pi-with-extensions";
-    paths = [ piLatest ];
+    paths = [
+      piLatest
+      pkgsUnstable.agent-browser
+      mcpGrafanaWrapped
+      pkgsUnstable.context7-mcp
+      pkgsUnstable.mcp-server-sequential-thinking
+      pkgsUnstable.mcp-nixos
+      pkgsUnstable.mcp-server-git
+    ];
     nativeBuildInputs = [ pkgsUnstable.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/pi \
@@ -438,7 +461,6 @@ in
 {
   environment.systemPackages = [
     piWithExtensions
-    pkgsUnstable.mcp-nixos
   ];
 
   # Embedding-only models (bge-m3, nomic-embed-text) from the crush config are
@@ -462,6 +484,30 @@ in
         mcpServers = {
           nixos = {
             command = "mcp-nixos";
+            args = [ ];
+          };
+          grafana = {
+            command = "mcp-grafana";
+            args = [
+              "--disable-write"
+              "-debug"
+            ];
+            env = {
+              GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
+              GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
+              GRAFANA_ORG_ID = "1";
+            };
+          };
+          git = {
+            command = "mcp-server-git";
+            args = [ ];
+          };
+          context7 = {
+            command = "context7-mcp";
+            args = [ ];
+          };
+          sequential-thinking = {
+            command = "mcp-server-sequential-thinking";
             args = [ ];
           };
         };
