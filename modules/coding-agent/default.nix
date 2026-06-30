@@ -318,8 +318,8 @@ in
       type = lib.types.attrs;
       description = "General agent settings";
       default = {
-        defaultProvider = "ollama-wobcom";
-        defaultModel = "gemma4:31b";
+        defaultProvider = "ollama-local";
+        defaultModel = "glm-5.2:cloud";
         theme = "dracula";
         skills = [ "/home/marv/.claude/skills" ];
       };
