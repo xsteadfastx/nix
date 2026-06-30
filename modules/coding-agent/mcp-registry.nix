@@ -23,5 +23,13 @@
       bin = pkgs.mcp-server-sequential-thinking;
       command = "mcp-server-sequential-thinking";
     };
+    playwright = {
+      bin = pkgs.playwright-mcp;
+      command = "playwright-mcp";
+    };
+    memory = {
+      bin = pkgs.mcp-server-memory;
+      command = "mcp-server-memory";
+    };
   };
 }

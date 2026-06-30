@@ -41,5 +41,7 @@ in
     mcp-grafana
     context7-mcp
     mcp-server-sequential-thinking
+    mcp-server-memory
+    playwright-mcp
     ;
 }
