@@ -24,12 +24,26 @@
       };
     };
     # Drives your already-open Chromium tabs via the Playwright browser
-    # extension (installed in home-manager/modules/chromium.nix). Extension
-    # mode sidesteps Chrome 136's refusal of --remote-debugging-port on the
-    # default profile, so it reuses your logged-in sessions. You attach the
-    # tabs you want automated.
+    # extension (declared in home-manager/modules/chromium.nix; on a
+    # pre-existing profile HM only seeds extensions on first run, so install
+    # it once from the Web Store if it's missing). Extension mode sidesteps
+    # Chrome 136's refusal of --remote-debugging-port on the default profile,
+    # so it reuses your logged-in sessions. You attach the tabs you want
+    # automated.
     playwright = {
-      args = [ "--extension" ];
+      args = [
+        "--extension"
+        "--executable-path"
+        "/home/marv/.nix-profile/bin/chromium"
+      ];
+      env = {
+        # Extension mode launches a Chromium to host the connect page; point
+        # it at the real binary + your existing profile so Chromium's
+        # singleton forwards the connect page into the already-running
+        # instance (your logged-in sessions) instead of opening a fresh
+        # bundled Chromium with no extension installed.
+        PWTEST_EXTENSION_USER_DATA_DIR = "/home/marv/.config/chromium";
+      };
     };
     # Persistent knowledge-graph memory. MEMORY_FILE_PATH must be absolute
     # (a relative path resolves against the read-only nix store) and its
