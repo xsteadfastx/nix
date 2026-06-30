@@ -50,6 +50,7 @@ To add a new MCP server to the agent:
 ### Basic Commands
 - **Rebuild & Switch**: `sudo nixos-rebuild switch`
 - **Verify Flake**: `nix flake check`
+- **Build a host's system closure (no sudo needed)**: `marv` is in `trusted-users`, so build the toplevel directly instead of `nixos-rebuild` (which needs a sudo password / TTY): `nix build .#nixosConfigurations.<host>.config.system.build.toplevel --no-link --print-out-paths` (e.g. `.#coltrane`). This validates eval + builds the full closure (and home-manager generation) without switching. Add `--dry-run` to just check eval + plan.
 - **Format before committing**: Run `nix fmt` before any commit. The pre-commit hook runs `nixfmt` and will reject (and reformat) staged `.nix` files; formatting up front avoids the abort-re-stage loop. Note: the hook fails the commit if any staged file is also dirty with unstaged changes, so format and stage the whole file before committing.
 
 ### Tooling Checklist
