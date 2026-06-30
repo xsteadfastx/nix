@@ -38,6 +38,7 @@
       lib = import ./lib;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
       nixosModules.base = import ./modules/base;
+      nixosModules.coding-agent = import ./modules/coding-agent;
       nixosModules.home-manager = import ./modules/home-manager;
       nixosModules.lix = import ./modules/lix;
       nixosModules.ssh = import ./modules/ssh;
@@ -76,6 +77,7 @@
       in
       {
         checks.pre-commit-check = preCommitGen.pre-commit-check;
+        checks.coding-agent-wrapper = import ./modules/coding-agent/check-wrapper.nix { inherit pkgs; };
         devShells.default = preCommitGen.devShell;
         formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };

@@ -52,6 +52,7 @@
       inputs.disko.nixosModules.disko
       inputs.home-manager.nixosModules.home-manager
       inputs.nixos-hardware.nixosModules.dell-xps-13-9350
+      inputs.self.nixosModules.coding-agent
       inputs.self.nixosModules.home-manager
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users

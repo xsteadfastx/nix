@@ -5,6 +5,7 @@ _: {
     ./autorandr.nix
     ./caddy
     ./configuration.nix
+    ./coding-agent.nix
     ./crush.nix
     ./disko.nix
     ./fix-audio.nix
@@ -12,7 +13,6 @@ _: {
     ./fix-kernel.nix
     ./hardware-configuration.nix
     ./ollama.nix
-    ./pi
     ./podman.nix
     ./paperless.nix
     ./print.nix
