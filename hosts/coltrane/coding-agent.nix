@@ -23,5 +23,22 @@
         GRAFANA_ORG_ID = "1";
       };
     };
+    # Drives your already-open Chromium tabs via the Playwright browser
+    # extension (installed in home-manager/modules/chromium.nix). Extension
+    # mode sidesteps Chrome 136's refusal of --remote-debugging-port on the
+    # default profile, so it reuses your logged-in sessions. You attach the
+    # tabs you want automated.
+    playwright = {
+      args = [ "--extension" ];
+    };
+    # Persistent knowledge-graph memory. MEMORY_FILE_PATH must be absolute
+    # (a relative path resolves against the read-only nix store) and its
+    # parent must already exist (the server uses fs.writeFile, which does
+    # not mkdir). ~/.pi/agent/ is created by this module's home.file entries.
+    memory = {
+      env = {
+        MEMORY_FILE_PATH = "/home/marv/.pi/agent/memory.jsonl";
+      };
+    };
   };
 }

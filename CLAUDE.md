@@ -59,6 +59,8 @@ The agent has the following MCPs configured:
 - `grafana`: (Wrapped) For telemetry and logs.
 - `context7`: For up-to-date library documentation.
 - `sequential-thinking`: For structured problem-solving.
+- `playwright`: Drives already-open Chromium tabs via the Playwright browser extension (extension mode; attach tabs in the extension). Avoids the Chrome 136 `--remote-debugging-port` default-profile restriction.
+- `memory`: Persistent knowledge-graph memory at `~/.pi/agent/memory.jsonl`.
 
 ## 📝 Guidelines for the Agent
 1. **Secret Handling**: NEVER hardcode secrets. Always use the `sops-nix` pattern.

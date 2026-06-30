@@ -22,6 +22,7 @@ lib.mkIf cfg.x11 {
       { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # vimium
       { id = "edibdbjcniadpccecjdfdjjppcpchdlm"; } # i still dont care about cookies
       { id = "dhdgffkkebhmkfjojejmpbldmpobfkfo"; } # tampermonkey
+      { id = "mmlmfjhmonkocbjadbfplnigmagldckm"; } # playwright mcp (extension mode)
     ];
   };
 }
