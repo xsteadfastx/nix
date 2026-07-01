@@ -42,18 +42,17 @@ let
   # auto-loaded) under ~/.claude/skill-library via the router below. Re-run the
   # `agent-sort` skill when the stack changes to re-propose this list.
   dailySkills = [
+    # stack — matched to this repo (git repo, some Go, fish-heavy, configs MCP)
     "git-workflow"
-    "github-ops"
     "golang-patterns"
-    "golang-testing"
     "terminal-ops"
     "coding-standards"
     "mcp-server-patterns"
-    # meta/curation — keep the re-tuning workflow one command away
+    # discipline — high-leverage and stack-agnostic
+    "verification-loop"
+    "search-first"
+    # meta — keep only the re-tuner loaded; the rest live in the library
     "agent-sort"
-    "skill-scout"
-    "skill-stocktake"
-    "configure-ecc"
   ];
 
   # Router that tells the agent the parked library exists and how to pull from it.
