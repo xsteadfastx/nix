@@ -556,7 +556,8 @@ in
       piOffline = pkgs.writeShellScriptBin "pi-offline" ''
         exec ${codingAgentWithExtensions}/bin/pi \
           --provider ollama-local --model qwen2.5-coder:7b \
-          --no-skills --no-context-files --thinking off --offline "$@"
+          --no-skills --no-context-files --thinking off --offline \
+          --exclude-tools web_search "$@"
       '';
     in
     lib.mkIf cfg.enable {
