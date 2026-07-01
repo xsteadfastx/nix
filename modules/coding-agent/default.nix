@@ -179,6 +179,68 @@ in
                   cacheWrite = 0;
                 };
               }
+              {
+                id = "kimi-k2.7-code:cloud";
+                name = "Kimi K2.7 Code";
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "qwen3-coder:480b-cloud";
+                name = "Qwen 3 Coder 480B Cloud";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "qwen3-coder:30b";
+                name = "Qwen 3 Coder 30B";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "gemma4:12b";
+                name = "Gemma 4 12B";
+                reasoning = false;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 131072;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
             ];
           };
           ollama-wobcom = {
@@ -298,6 +360,65 @@ in
               {
                 id = "qwen2.5:7b-instruct";
                 name = "Qwen 2.5 7B Instruct";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 131072;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "qwen3-coder:latest";
+                name = "Qwen 3 Coder";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "gemma4:26b";
+                name = "Gemma 4 26B";
+                reasoning = false;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 131072;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "bge-m3:latest";
+                name = "bge-m3";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 131072;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "nomic-embed-text:latest";
+                name = "nomic-embed-text";
                 reasoning = false;
                 input = [ "text" ];
                 contextWindow = 131072;
