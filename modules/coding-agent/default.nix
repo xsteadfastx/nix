@@ -439,8 +439,8 @@ in
       type = lib.types.attrs;
       description = "General agent settings";
       default = {
-        defaultProvider = "ollama-local";
-        defaultModel = "glm-5.2:cloud";
+        defaultProvider = "ollama-wobcom";
+        defaultModel = "qwen3-coder:latest";
         theme = "dracula";
         skills = [ "/home/marv/.claude/skills" ];
       };
