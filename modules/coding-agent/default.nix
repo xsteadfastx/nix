@@ -185,6 +185,23 @@ in
                 };
               }
               {
+                # Small non-reasoning coder that fully fits the Arc iGPU; the
+                # offline workhorse behind the `pi-offline` wrapper. Native
+                # context is 32768, matching the local ollama server.
+                id = "qwen2.5-coder:7b";
+                name = "Qwen 2.5 Coder 7B";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 32768;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
                 id = "kimi-k2.7-code:cloud";
                 name = "Kimi K2.7 Code";
                 reasoning = true;
@@ -530,6 +547,17 @@ in
             --add-flags "--extension ${buildExts.browserTools}/extensions/browser-tools/index.ts"
         '';
       };
+
+      # Lean local pi for offline use. The normal pi loads ~277 skills +
+      # CLAUDE.md (~33k tokens); on a small local model on the Arc iGPU that is
+      # minutes of prompt processing per turn and pi times out. This skips
+      # skills/context/thinking and targets a small non-reasoning coder model
+      # that fully fits the iGPU, so it answers in seconds with no internet.
+      piOffline = pkgs.writeShellScriptBin "pi-offline" ''
+        exec ${codingAgentWithExtensions}/bin/pi \
+          --provider ollama-local --model qwen2.5-coder:7b \
+          --no-skills --no-context-files --thinking off --offline "$@"
+      '';
     in
     lib.mkIf cfg.enable {
       assertions = [
@@ -543,7 +571,10 @@ in
         }
       ];
 
-      environment.systemPackages = [ codingAgentWithExtensions ];
+      environment.systemPackages = [
+        codingAgentWithExtensions
+        piOffline
+      ];
 
       home-manager.users.${cfg.user}.home.file = {
         ".pi/agent/models.json" = {
