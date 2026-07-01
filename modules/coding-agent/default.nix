@@ -283,7 +283,9 @@ in
               {
                 id = "gemma4:31b";
                 name = "Gemma 4 31B";
-                reasoning = false;
+                # gemma4 family is a reasoning model (thinking capability
+                # confirmed via /api/show); see gemma4:12b above.
+                reasoning = true;
                 input = [
                   "text"
                   "image"
@@ -402,7 +404,9 @@ in
               {
                 id = "gemma4:26b";
                 name = "Gemma 4 26B";
-                reasoning = false;
+                # gemma4 family is a reasoning model (thinking capability
+                # confirmed via /api/show); see gemma4:12b above.
+                reasoning = true;
                 input = [
                   "text"
                   "image"
