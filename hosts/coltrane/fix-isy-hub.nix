@@ -129,12 +129,65 @@
     }
   ];
 
-  # mst-restore is triggered by udev when 0626 re-enumerates after resume.
-  # Run autorandr immediately on resume so the session sees the current state;
-  # the DRM hotplug udev rule fires autorandr again once MST is restored.
+  # Clear stale workspace-layout state so the post-resume autorandr run starts
+  # clean. (This used to claim it ran autorandr on resume — it never did; the
+  # mst-reprobe service below now owns the resume re-apply.)
   powerManagement.resumeCommands = ''
     rm -f /run/user/1000/autorandr-ws-layout
     rm -f /run/user/1000/autorandr-current-ws
     rm -f /run/user/1000/autorandr-visible-ws
   '';
+
+  # After long s2idle, xe relinks its DP connectors ASYNCHRONOUSLY and emits no
+  # HPD event, so the DRM-hotplug udev rule never fires the second autorandr
+  # that applies the external profile — monitors stay dark until autorandr is
+  # run a SECOND time by hand (verified 2026-06-26). This service automates the
+  # manually-verified fix: run `autorandr --change --match-edid` as marv once to
+  # nudge the probe, poll sysfs until an external DP connector reports
+  # 'connected' (xe relink is async, up to ~1 min observed), then run it again
+  # to apply. Poll-until-connected instead of a fixed sleep, since the relink
+  # latency is variable and never logged. Runs as marv with the X session env so
+  # autorandr and its i3 postswitch hooks work; sysfs status is world-readable.
+  systemd.services.mst-reprobe = {
+    description = "Re-probe DP connectors after resume and re-apply autorandr";
+    after = [
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    wantedBy = [
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    environment = {
+      DISPLAY = ":0";
+      XAUTHORITY = "/home/marv/.Xauthority";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      User = "marv";
+      ExecStart = pkgs.writeShellScript "mst-reprobe" ''
+        autorandr="${pkgs.autorandr}/bin/autorandr --change --match-edid"
+        # Run 1: nudge the connector probe.
+        $autorandr || true
+        # Poll for the async xe relink (120 s ceiling = 40 * 3 s).
+        for _ in $(${pkgs.coreutils}/bin/seq 1 40); do
+          for c in /sys/class/drm/card*-DP-*/status; do
+            [ -e "$c" ] || continue
+            if [ "$(${pkgs.coreutils}/bin/cat "$c")" = "connected" ]; then
+              # Run 2: external connector is up — apply the external profile.
+              $autorandr || true
+              exit 0
+            fi
+          done
+          ${pkgs.coreutils}/bin/sleep 3
+        done
+        # Timed out with no external DP (truly mobile): leave the run-1 state.
+        exit 0
+      '';
+    };
+  };
 }
