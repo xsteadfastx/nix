@@ -232,12 +232,21 @@ in
               {
                 id = "gemma4:12b";
                 name = "Gemma 4 12B";
-                reasoning = false;
+                # This build emits a gemma4 thinking channel (RENDERER/PARSER
+                # gemma4); with thinking on it deliberates for hundreds of
+                # tokens before answering. pi must know it's a reasoning model
+                # to parse/display the thinking channel correctly.
+                reasoning = true;
                 input = [
                   "text"
                   "image"
                 ];
-                contextWindow = 131072;
+                # Match the local ollama server's OLLAMA_CONTEXT_LENGTH (32768,
+                # set in hosts/coltrane/ollama.nix). pi only uses this to budget
+                # prompt size; it is NOT sent as num_ctx over the /v1 endpoint,
+                # so advertising 131072 here just lets pi overflow the real 32K
+                # window the server actually serves (silent truncation).
+                contextWindow = 32768;
                 maxTokens = 8192;
                 cost = {
                   input = 0;

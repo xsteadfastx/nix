@@ -39,6 +39,15 @@ To add a new MCP server to the agent:
 - **Approval / token**: `--extension` has **no "accept all tokens" mode** — the extension does a strict equality check against a per-profile token (`PLAYWRIGHT_MCP_EXTENSION_TOKEN`). We use **manual approval** (one click on the connect page per session); no token env is configured. Sending a *wrong* token hard-errors, worse than sending none.
 - **Lifecycle**: A killed `playwright-mcp` server is **not** auto-respawned by pi's MCP reconnect (it only refreshes cached tool metadata). To apply changed args/env, `sudo nixos-rebuild switch` (which regenerates `~/.pi/agent/mcp.json`) and **restart pi** so the server respawns from the new manifest.
 
+### Local ollama (SYCL on the Intel Arc iGPU)
+The local ollama is a hand-built SYCL container (`hosts/coltrane/ollama.nix`) driving the **Intel Arc 140V iGPU** (Lunar Lake) via Level Zero — there is no discrete GPU. Hard-won facts:
+
+- **Shared memory, gated by *free* RAM.** The iGPU has no VRAM; it carves from the 30 GiB system DDR5. Its offload budget is decided **at model load time** from *genuinely-free* RAM (`MemFree`), **not** Linux "available" (which counts reclaimable cache the driver won't touch). During normal desktop use free RAM is ~3–7 GiB.
+- **Flash attention is the lever that makes a 12B fit.** `OLLAMA_FLASH_ATTENTION=1` drops gemma4:12b's full-offload requirement from ~9.9 GiB to ~8.5 GiB (removes the V-cache padding a non-FA load adds) and, given enough free RAM, gets **49/49 layers = 100% GPU**. Verified safe on this SYCL build — output is valid. Without it, or under RAM pressure, the model partially spills to CPU (the "why is it on CPU" symptom — it's circumstantial, not a hard limit).
+- **Context is a server env, not a client setting.** pi talks to ollama over the OpenAI-compat `/v1` endpoint, which has **no `num_ctx` field**, so pi's `contextWindow` is only pi's own prompt budget — it is *not* sent to the server. The real window is `OLLAMA_CONTEXT_LENGTH` in `ollama.nix` (pinned to 32768); keep pi's `contextWindow` equal to it or pi over-packs and the server silently truncates (`n_keep=4`).
+- **`gemma4:*` are reasoning models.** Modelfile has `RENDERER gemma4` + `PARSER gemma4` and a thinking channel; a too-small `num_predict` returns **empty `content`** because generation ends while still in the thinking channel (not a bug). pi's model entry must set `reasoning = true`. For fast interactive local use, send `think:false`.
+- **`nixos-rebuild switch` *does* auto-restart the `systemd.user` ollama service here** (the container is recreated with new `-e` env). No manual `systemctl --user restart` needed — contrary to the usual user-service caveat.
+
 ## 🗺 Hosts
 
 The hosts defined in this repo (`hosts/`):
