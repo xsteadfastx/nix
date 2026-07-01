@@ -9,7 +9,12 @@
 prev:
 let
   system = prev.stdenv.hostPlatform.system;
-  piChannel = inputs.nixpkgs-unstable.legacyPackages.${system};
+  # Import (rather than use legacyPackages) so we can allow claude-code, which
+  # is unfree; the rest of the agent packages are free.
+  piChannel = import inputs.nixpkgs-unstable {
+    inherit system;
+    config.allowUnfree = true;
+  };
 
   # Pin pi to a specific release. overrideAttrs must replace `npmDeps`
   # itself, not just `npmDepsHash`: buildNpmPackage bakes `npmDeps` from the
@@ -36,6 +41,7 @@ in
 
   inherit (piChannel)
     agent-browser
+    claude-code
     mcp-nixos
     mcp-server-git
     mcp-grafana

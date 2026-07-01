@@ -21,6 +21,11 @@ let
   registry = import ./mcp-registry.nix { inherit pkgs; };
 in
 {
+  imports = [
+    ./claude.nix
+    ./skills.nix
+  ];
+
   options.xsfx.codingAgent = {
     enable = lib.mkEnableOption "Enable the Coding Agent environment";
     user = lib.mkOption {
