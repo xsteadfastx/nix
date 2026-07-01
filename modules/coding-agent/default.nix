@@ -553,11 +553,16 @@ in
       # minutes of prompt processing per turn and pi times out. This skips
       # skills/context/thinking and targets a small non-reasoning coder model
       # that fully fits the iGPU, so it answers in seconds with no internet.
+      # Lean local pi for offline use. Beyond skipping skills/context/thinking,
+      # tools are disabled: a 7b coder is too weak to drive the agentic
+      # tool-calling loop and emits raw text-JSON tool calls instead of real
+      # invocations (and a tool-reliable model is too slow on the iGPU). So this
+      # is a reliable offline chat / coding-Q&A assistant, not a file editor.
       piOffline = pkgs.writeShellScriptBin "pi-offline" ''
         exec ${codingAgentWithExtensions}/bin/pi \
           --provider ollama-local --model qwen2.5-coder:7b \
           --no-skills --no-context-files --thinking off --offline \
-          --exclude-tools web_search "$@"
+          --no-tools "$@"
       '';
     in
     lib.mkIf cfg.enable {
