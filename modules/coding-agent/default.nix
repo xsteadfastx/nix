@@ -556,14 +556,14 @@ in
       # Offline agent on the local ollama. qwen3-coder:30b is the only Qwen3
       # coder (a 30B-A3B MoE, ~3.3B active) that actually drives pi's agentic
       # tool loop reliably - smaller coders (qwen2.5-coder:7b) emit raw text-JSON
-      # tool calls instead of real invocations. It is slow on the Arc iGPU but
-      # functional, which is the tradeoff we want offline. --no-skills drops the
-      # ~277 skills (~30k tokens) that otherwise make each turn time out; project
-      # context files stay on since they are cheap and useful for coding.
+      # tool calls instead of real invocations. Slow on the Arc iGPU but
+      # functional, which is the offline tradeoff we want. Skills are already
+      # globally curated to a lean daily set (see skills.nix, ~1k tokens), so we
+      # inherit it instead of stripping - the git/go skills stay available.
       piOffline = pkgs.writeShellScriptBin "pi-offline" ''
         exec ${codingAgentWithExtensions}/bin/pi \
           --provider ollama-local --model qwen3-coder:30b \
-          --no-skills --offline "$@"
+          --offline "$@"
       '';
     in
     lib.mkIf cfg.enable {
