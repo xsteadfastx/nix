@@ -58,5 +58,7 @@ in
     mcp-server-sequential-thinking
     mcp-server-memory
     playwright-mcp
+    github-cli
+    ripgrep
     ;
 }

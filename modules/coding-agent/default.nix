@@ -569,6 +569,8 @@ in
           buildExts.permissionSystem
           buildExts.mcpAdapter
           buildExts.browserTools
+          pkgs.github-cli
+          pkgs.ripgrep
         ]
         ++ lib.filter (x: x != null) (lib.attrValues mcpPackages);
         nativeBuildInputs = [ pkgs.makeWrapper ];
