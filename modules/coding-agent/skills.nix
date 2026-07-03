@@ -23,11 +23,21 @@ let
     hash = "sha256-qTBoRTk+6/RG82QtPuhq/DSKeDXczUkU70Sn23gDFDs=";
   };
 
-  # ECC rules plus our visual-context protocol appended.
+  # Rule sets to install under ~/.claude/rules (the harness auto-loads these
+  # into every prompt). ECC ships 22 language dirs (~280 KB); copying them all
+  # is dead weight and a latent token risk. Keep only what this machine uses.
+  # `common` is mandatory — the other sets link to ../common/*.md.
+  ruleSets = [
+    "common" # language-agnostic base (git, testing, security, code-review, …)
+    "golang" # Go stack
+  ];
+
+  # Selected ECC rule sets plus our visual-context protocol appended.
   customRules = pkgs.runCommand "custom-rules" { } ''
-        mkdir -p $out
-        cp -r ${ecc-src}/rules/* $out/
-        cat <<EOF > $out/visual-context.md
+    mkdir -p $out
+    ${lib.concatMapStringsSep "\n" (r: "cp -r ${ecc-src}/rules/${r} $out/${r}") ruleSets}
+    cp ${ecc-src}/rules/README.md $out/README.md
+    cat <<EOF >$out/visual-context.md
     # Visual Context Protocol
     Whenever the user runs the \`crush-img\` command or mentions a "pasted image", "clipboard image", or "screenshot", the assistant MUST immediately attempt to \`view\` the file at /run/user/1000/crush_clipboard.png.
     Do not wait for the user to explicitly ask what is in the image.
@@ -42,35 +52,57 @@ let
   # auto-loaded) under ~/.claude/skill-library via the router below. Re-run the
   # `agent-sort` skill when the stack changes to re-propose this list.
   dailySkills = [
-    # stack — matched to this repo (git repo, some Go, fish-heavy, configs MCP)
-    "git-workflow"
-    "golang-patterns"
-    "terminal-ops"
-    "coding-standards"
-    "mcp-server-patterns"
-    # discipline — high-leverage and stack-agnostic
-    "verification-loop"
-    "search-first"
-    # meta — keep only the re-tuner loaded; the rest live in the library
-    "agent-sort"
+    # --- STACK (Git & System) ---
+    # Language skills (golang-patterns, python-patterns, …) live in the library
+    # and load on-demand via the router below — this host is Nix/infra-first, so
+    # no language skill is worth the per-turn cost in every session.
+    "git-workflow" # Clean commits, branching strategies and git hygiene
+    "terminal-ops" # Efficient terminal commands and shell operations (fish-heavy)
+    "coding-standards" # Cross-cutting architecture and coding guidelines
+
+    # --- DISCIPLINE & QUALITY (Good code) ---
+    "tdd-workflow" # The quality brake: forces TDD + analysis before coding (ECC-native)
+    "verification-loop" # The automatic quality check after code changes
+
+    # --- RESEARCH & EXPERTISE (Search first, then web) ---
+    # search-first already fans out to a web channel; the web-search *tool* itself
+    # comes from the nix-managed @dreki-gg/pi-browser-tools extension (web_search
+    # via agent-browser, see build-extensions.nix + default.nix) and Claude's
+    # built-in WebSearch — there is no ECC "web-search" skill, so none is listed.
+    "search-first" # Internal guard: prevents reinventing the wheel in your codebase
+
+    # --- META ---
+    "agent-sort" # Keeps the setup clean and proposes optimizations
   ];
 
   # Router that tells the agent the parked library exists and how to pull from it.
   skillLibraryRouter = pkgs.writeText "skill-library-router.md" ''
     ---
     name: skill-library
-    description: Index of ECC skills kept installed but NOT auto-loaded for this repo. Use when a task needs a skill outside the daily git/go/shell set (web, mobile, backend frameworks, databases, domain, media, agent-meta). Full skill bodies live under ~/.claude/skill-library/.
+    description: Index of ECC skills kept installed but NOT auto-loaded for this repo. Use when a task needs a skill outside the daily git/shell set — language idioms (Go, Python, Rust, …), web, mobile, backend frameworks, databases, domain, media, agent-meta. Full skill bodies live under ~/.claude/skill-library/.
     ---
     # Skill Library (on-demand)
 
     Only a small daily set loads automatically. The full ECC catalog lives at
-    `~/.claude/skill-library/<name>/SKILL.md` and is NOT auto-loaded. Read one
-    when its keywords match the task:
+    `~/.claude/skill-library/<name>/SKILL.md` and is NOT auto-loaded. When the
+    task matches one of these, read that exact `<name>/SKILL.md` and follow it.
+    Names in parentheses are the exact skill dirs to read.
 
-    - web/frontend: react, vue, angular, nuxt, next, tailwind, motion, design-system
-    - mobile: swift, flutter, kotlin, android, react-native, ios
-    - backend: django, laravel, spring, fastapi, quarkus, nestjs
-    - databases: postgres, mysql, clickhouse, redis, prisma
+    - languages — read the matching one when writing/reviewing that language:
+      - go: golang-patterns, golang-testing
+      - python: python-patterns, python-testing
+      - rust: rust-patterns, rust-testing
+      - c/c++: cpp-coding-standards, cpp-testing
+      - c#/.net: dotnet-patterns, csharp-testing
+      - java: java-coding-standards, springboot-patterns, quarkus-patterns, jpa-patterns
+      - kotlin: kotlin-patterns, kotlin-coroutines-flows, kotlin-testing
+      - swift: swiftui-patterns, swift-concurrency-6-2, swift-protocol-di-testing
+      - perl: perl-patterns, perl-testing, perl-security
+    - web/frontend: react (react-patterns), vue (vue-patterns), nuxt (nuxt4-patterns), frontend-patterns, motion-patterns, vite-patterns
+    - mobile: swiftui-patterns, dart-flutter-patterns, react-native-patterns, compose-multiplatform-patterns
+    - backend: django-patterns, laravel-patterns, springboot-patterns, fastapi-patterns, quarkus-patterns, nestjs-patterns, backend-patterns
+    - databases/orm: postgres-patterns, mysql-patterns, redis-patterns, prisma-patterns, jpa-patterns
+    - infra/deploy: docker-patterns, kubernetes-patterns, deployment-patterns
     - agent-meta: autonomous-loops, agent-architecture-audit, continuous-learning
     - domain/media: logistics, healthcare, marketing, manim, video, scientific
 
@@ -83,10 +115,39 @@ let
     mkdir -p $out/skill-library
     cp ${skillLibraryRouter} $out/skill-library/SKILL.md
   '';
+
+  # Agents (subagents) that Claude may spawn. Unlike skills there is NO
+  # on-demand router: Claude only sees agents physically in ~/.claude/agents,
+  # and injects every one's name+description into *every* prompt. The full ECC
+  # set is 67 agents (~4k tokens of roster per turn), so curate to a lean,
+  # stack-matched set. The full catalog stays parked (not auto-loaded) under
+  # ~/.claude/agent-library for reference; adding one back means listing it
+  # here and rebuilding (parked agents cannot be spawned).
+  dailyAgents = [
+    # --- STACK (Go) ---
+    "go-reviewer" # Idiomatic Go review: concurrency, error handling, perf
+    "go-build-resolver" # Fix Go build/vet/lint failures with minimal diffs
+
+    # --- REVIEW GATES ---
+    "code-reviewer" # General quality/maintainability review after edits
+    "security-reviewer" # Secrets, injection, OWASP checks before commits
+
+    # --- PLANNING & MAINTENANCE ---
+    "planner" # Implementation planning for complex features/refactors
+    "refactor-cleaner" # Dead-code/duplication cleanup
+    "doc-updater" # Keep docs/codemaps in sync after changes
+  ];
+
+  dailyAgentsDir = pkgs.runCommand "daily-agents" { } ''
+    mkdir -p $out
+    ${lib.concatMapStringsSep "\n" (a: "cp ${ecc-src}/agents/${a}.md $out/${a}.md") dailyAgents}
+  '';
 in
 lib.mkIf cfg.enable {
   home-manager.users.${cfg.user}.home.file = {
-    ".claude/agents".source = "${ecc-src}/agents";
+    # Curated daily agent set; full catalog parked (not auto-loaded) below.
+    ".claude/agents".source = dailyAgentsDir;
+    ".claude/agent-library".source = "${ecc-src}/agents";
     ".claude/commands".source = "${ecc-src}/commands";
     ".claude/rules".source = customRules;
     # Curated daily set (+ skill-library router); full catalog parked below.
