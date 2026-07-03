@@ -202,6 +202,31 @@ in
                 };
               }
               {
+                # Ornith 9B — agentic-coding-tuned (Terminal-Bench/SWE-Bench),
+                # MIT. At ~5.6 GB it fully offloads to the Arc iGPU under normal
+                # desktop RAM pressure (unlike gemma4:12b/qwen3-coder:30b), so
+                # it's the candidate offline agent that both fits AND may drive
+                # pi's tool loop where qwen2.5-coder:7b emits text-JSON. Pull with
+                # `ollama pull ornith:9b`. reasoning = true: the model card says it
+                # "thinks step by step in a reasoning block", so pi must parse the
+                # thinking channel (same as gemma4:12b, else empty content).
+                # contextWindow MUST stay 32768 to match OLLAMA_CONTEXT_LENGTH —
+                # see qwen3-coder:30b warning. (35B variant omitted: ~21 GB won't
+                # fit the iGPU on this 30 GB laptop.)
+                id = "ornith:9b";
+                name = "Ornith 9B";
+                reasoning = true;
+                input = [ "text" ];
+                contextWindow = 32768;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
                 id = "kimi-k2.7-code:cloud";
                 name = "Kimi K2.7 Code";
                 reasoning = true;
