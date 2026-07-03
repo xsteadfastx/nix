@@ -237,7 +237,14 @@ in
                 name = "Qwen 3 Coder 30B";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 262144;
+                # MUST equal ollama's OLLAMA_CONTEXT_LENGTH (32768 in
+                # hosts/coltrane/ollama.nix). The /v1 endpoint has no num_ctx
+                # field, so this is purely pi's prompt budget: set it higher and
+                # pi packs prompts past the server window, forcing llama-server
+                # to build oversized SYCL compute buffers on the shared iGPU —
+                # the Level Zero alloc fails and the SYCL backend abort()s
+                # (SIGABRT), surfacing as a 500 after the session grows.
+                contextWindow = 32768;
                 maxTokens = 8192;
                 cost = {
                   input = 0;
