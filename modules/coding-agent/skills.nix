@@ -65,11 +65,13 @@ let
     "verification-loop" # The automatic quality check after code changes
 
     # --- RESEARCH & EXPERTISE (Search first, then web) ---
-    # search-first already fans out to a web channel; the web-search *tool* itself
-    # comes from the nix-managed @dreki-gg/pi-browser-tools extension (web_search
-    # via agent-browser, see build-extensions.nix + default.nix) and Claude's
-    # built-in WebSearch — there is no ECC "web-search" skill, so none is listed.
-    "search-first" # Internal guard: prevents reinventing the wheel in your codebase
+    # search-first is the generic ECC guard; research-first is our own
+    # host-specific version (repo-authored, see ./skills/research-first.md)
+    # that names the exact channels available here: rg through this repo,
+    # nixpkgs/home-manager option search, the nixos + context7 MCP servers,
+    # and pi's web_search/web_visit. Both load daily — search-first is the
+    # principle, research-first is the playbook for *this* machine.
+    "search-first" # Generic ECC guard: prevents reinventing the wheel
 
     # --- META ---
     "agent-sort" # Keeps the setup clean and proposes optimizations
@@ -109,9 +111,30 @@ let
     To use one: read `~/.claude/skill-library/<name>/SKILL.md`, then follow it.
   '';
 
+  # Custom skills authored in this repo (not from ECC). Each becomes a
+  # <name>/SKILL.md dir under ~/.claude/skills, so they are auto-loaded every
+  # session by both Claude and pi (which reads ~/.claude/skills — see
+  # ./default.nix). Keep these tight and host-specific: anything generic
+  # belongs upstream in ECC and arrives via `dailySkills` instead.
+  customSkills = {
+    research-first = builtins.readFile ./skills/research-first.md;
+  };
+
+  customSkillsDir = pkgs.runCommand "custom-skills" { } ''
+    mkdir -p $out
+    ${lib.concatMapStringsSep "\n" (
+      name:
+      "mkdir -p $out/${name} && cp ${
+        pkgs.writeText "${name}-SKILL.md" customSkills.${name}
+      } $out/${name}/SKILL.md"
+    ) (builtins.attrNames customSkills)}
+  '';
+
   dailySkillsDir = pkgs.runCommand "daily-skills" { } ''
     mkdir -p $out
     ${lib.concatMapStringsSep "\n" (s: "cp -r ${ecc-src}/skills/${s} $out/${s}") dailySkills}
+    # Merge repo-authored skills alongside the ECC daily set.
+    cp -r ${customSkillsDir}/* $out/
     mkdir -p $out/skill-library
     cp ${skillLibraryRouter} $out/skill-library/SKILL.md
   '';
