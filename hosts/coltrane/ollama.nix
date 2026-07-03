@@ -11,8 +11,12 @@ let
   # fails at cold start with "newuidmap: executable file not found in $PATH".
   podman = config.virtualisation.podman.package;
 
+  # Version-tagged image so a bump forces a rebuild (a static tag would not).
+  ollamaVersion = "0.31.1";
+  imageTag = "ollama-sycl:${ollamaVersion}";
+
   dockerfile = pkgs.writeText "Dockerfile.ollama-sycl" ''
-    ARG OLLAMA_VERSION=0.30.8
+    ARG OLLAMA_VERSION=${ollamaVersion}
     ARG COMPUTE_RUNTIME_VERSION=26.18.38308.1
     ARG LEVEL_ZERO_VERSION=1.28.2
     ARG IGC_VERSION=2.34.4
@@ -105,10 +109,10 @@ let
   '';
 
   buildScript = pkgs.writeShellScript "build-ollama-sycl" ''
-    if ! ${podman}/bin/podman image inspect ollama-sycl:local > /dev/null 2>&1; then
-      echo "Building ollama-sycl:local (~20 min)..."
+    if ! ${podman}/bin/podman image inspect ${imageTag} > /dev/null 2>&1; then
+      echo "Building ${imageTag} (~20 min)..."
       ctx=$(mktemp -d)
-      ${podman}/bin/podman build -t ollama-sycl:local -f ${dockerfile} "$ctx"
+      ${podman}/bin/podman build -t ${imageTag} -f ${dockerfile} "$ctx"
       rmdir "$ctx"
     fi
   '';
@@ -129,7 +133,7 @@ let
       -e OLLAMA_KEEP_ALIVE=30m \
       -e OLLAMA_CONTEXT_LENGTH=32768 \
       -e OLLAMA_FLASH_ATTENTION=1 \
-      ollama-sycl:local
+      ${imageTag}
   '';
 in
 {
