@@ -185,9 +185,8 @@ in
                 };
               }
               {
-                # Small non-reasoning coder that fully fits the Arc iGPU; the
-                # offline workhorse behind the `pi-offline` wrapper. Native
-                # context is 32768, matching the local ollama server.
+                # Small non-reasoning coder that fully fits the Arc iGPU.
+                # Native context is 32768, matching the local ollama server.
                 id = "qwen2.5-coder:7b";
                 name = "Qwen 2.5 Coder 7B";
                 reasoning = false;
@@ -582,23 +581,6 @@ in
         '';
       };
 
-      # Lean local pi for offline use. The normal pi loads ~277 skills +
-      # CLAUDE.md (~33k tokens); on a small local model on the Arc iGPU that is
-      # minutes of prompt processing per turn and pi times out. This skips
-      # skills/context/thinking and targets a small non-reasoning coder model
-      # that fully fits the iGPU, so it answers in seconds with no internet.
-      # Offline agent on the local ollama. qwen3-coder:30b is the only Qwen3
-      # coder (a 30B-A3B MoE, ~3.3B active) that actually drives pi's agentic
-      # tool loop reliably - smaller coders (qwen2.5-coder:7b) emit raw text-JSON
-      # tool calls instead of real invocations. Slow on the Arc iGPU but
-      # functional, which is the offline tradeoff we want. Skills are already
-      # globally curated to a lean daily set (see skills.nix, ~1k tokens), so we
-      # inherit it instead of stripping - the git/go skills stay available.
-      piOffline = pkgs.writeShellScriptBin "pi-offline" ''
-        exec ${codingAgentWithExtensions}/bin/pi \
-          --provider ollama-local --model qwen3-coder:30b \
-          --offline "$@"
-      '';
     in
     lib.mkIf cfg.enable {
       assertions = [
@@ -614,7 +596,6 @@ in
 
       environment.systemPackages = [
         codingAgentWithExtensions
-        piOffline
       ];
 
       home-manager.users.${cfg.user}.home.file = {
