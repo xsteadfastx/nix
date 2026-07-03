@@ -9,11 +9,19 @@
 prev:
 let
   system = prev.stdenv.hostPlatform.system;
-  # Import (rather than use legacyPackages) so we can allow claude-code, which
-  # is unfree; the rest of the agent packages are free.
-  piChannel = import inputs.nixpkgs-unstable {
+
+  # The free agent packages: reuse the unstable channel's *already-evaluated*
+  # legacyPackages instead of a second `import`. This shares the eval the flake
+  # already does for nixpkgs-unstable rather than spinning up a fresh nixpkgs.
+  unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+
+  # claude-code is unfree, and legacyPackages is pre-evaluated upstream with
+  # allowUnfree = false (uneditable), so it alone needs a scoped `import`.
+  # allowUnfreePredicate limits the exception to claude-code — not a blanket
+  # allowUnfree over the whole tree.
+  unstableUnfree = import inputs.nixpkgs-unstable {
     inherit system;
-    config.allowUnfree = true;
+    config.allowUnfreePredicate = p: prev.lib.getName p == "claude-code";
   };
 
   # Pin pi to a specific release. overrideAttrs must replace `npmDeps`
@@ -21,7 +29,7 @@ let
   # original src at call time, so only bumping the hash would keep fetching
   # the previous version's lock and fail with a lockfile mismatch.
   piVersion = "0.80.3";
-  piSrc = piChannel.fetchFromGitHub {
+  piSrc = unstable.fetchFromGitHub {
     owner = "earendil-works";
     repo = "pi";
     tag = "v${piVersion}";
@@ -29,19 +37,20 @@ let
   };
 in
 {
-  pi-coding-agent = piChannel.pi-coding-agent.overrideAttrs (_: {
+  pi-coding-agent = unstable.pi-coding-agent.overrideAttrs (_: {
     version = piVersion;
     src = piSrc;
-    npmDeps = piChannel.fetchNpmDeps {
+    npmDeps = unstable.fetchNpmDeps {
       src = piSrc;
       name = "pi-coding-agent-${piVersion}-npm-deps";
       hash = "sha256-geh8LH88OZybFXkR/jDeTdew6TNMdFM6jhCSYKn//dU=";
     };
   });
 
-  inherit (piChannel)
+  inherit (unstableUnfree) claude-code;
+
+  inherit (unstable)
     agent-browser
-    claude-code
     mcp-nixos
     mcp-server-git
     mcp-grafana
