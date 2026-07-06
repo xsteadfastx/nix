@@ -5,7 +5,14 @@
   ...
 }:
 {
-  nixpkgs.overlays = [ inputs.self.overlays.default ];
+  nixpkgs.overlays = [
+    # coding-agent's pinned unstable packages (pi, agent-browser, mcp-*,
+    # claude-code) — applied before overlays.default so those attrs are in
+    # scope. This is the single place the coding-agent overlay is wired in;
+    # overlays.default no longer composes it internally.
+    inputs.self.overlays.coding-agent
+    inputs.self.overlays.default
+  ];
 
   nix.settings = {
     trusted-users = [

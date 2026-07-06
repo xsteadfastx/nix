@@ -7,11 +7,8 @@
 _: prev:
 let
   system = prev.stdenv.hostPlatform.system;
-  # coding-agent runtime packages (pinned/sourced from nixpkgs-unstable).
-  codingAgent = import ./coding-agent.nix { inherit inputs; };
 in
-(codingAgent prev)
-// {
+{
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
   airmtp = inputs.airmtp.packages.${system}.default;

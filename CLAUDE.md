@@ -14,7 +14,7 @@ This repository contains the NixOS configuration for multiple hosts using the **
 - `modules/coding-agent/build-extensions.nix` — hand-assembles the three pi extensions (permission-system, mcp-adapter, browser-tools) from npm tarballs; pinned lockfiles live in `modules/coding-agent/lockfiles/`.
 - `modules/coding-agent/mcp-registry.nix` — maps a logical MCP name to `{ bin, command }` on `pkgs`.
 - `modules/coding-agent/wrapper.nix` — `mkSecretWrapper`, the generic secret-injection wrapper (see Grafana below).
-- `overlays/coding-agent.nix` — sources pi + MCP packages from `nixpkgs-unstable` and pins `pi` to a release; composed by `overlays/default.nix`.
+- `overlays/coding-agent.nix` — sources pi + MCP packages from `nixpkgs-unstable` and pins `pi` to a release. It is a **sibling** of `overlays/default.nix` (personal packages), not nested inside it. Both are applied side-by-side in `modules/base` (`nixpkgs.overlays = [ overlays.coding-agent overlays.default ]`); neither overlay imports the other. `overlays.coding-agent` is also exported for third-party consumers of `nixosModules.coding-agent`.
 - `modules/coding-agent/check-wrapper.nix` — pure `runCommand` test for the secret wrapper, exposed as `checks.x86_64-linux.coding-agent-wrapper`.
 
 ### Pi Agent Extension Pattern
