@@ -511,7 +511,7 @@ in
       description = "General agent settings";
       default = {
         defaultProvider = "ollama-wobcom";
-        defaultModel = "qwen3-coder:latest";
+        defaultModel = "gemma4:31b";
         theme = "dracula";
         skills = [ "/home/marv/.claude/skills" ];
       };
