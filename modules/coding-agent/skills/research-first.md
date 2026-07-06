@@ -26,8 +26,9 @@ code/projects already exist on GitHub**. All three, every time.
    / pkg.go.dev), upstream issues/PRs, blog posts, Stack Overflow. → *tells you
    how the broader community solves this, what the established pattern is, and
    what pitfalls people hit.*
-3. **`gh search` GitHub.** Always do this too — the `gh` CLI is bundled with
-   the coding-agent, so use it. `gh search code <query>` finds real
+3. **`gh search` GitHub.** Always do this too — the `gh` CLI is on your PATH
+   (a sops-reading wrapper on hosts that provision a `gh-token` secret), so
+   use it. `gh search code <query>` finds real
    implementations across public repos; `gh search repos <query>` finds
    maintained projects; `gh search prs`/`gh search issues` surfaces upstream
    discussion and known pitfalls. → *tells you what battle-tested code already

@@ -16,6 +16,10 @@ _: {
     owner = "marv";
   };
 
+  sops.secrets."gh-token" = {
+    owner = "marv";
+  };
+
   sops.secrets."local-ca-key" = {
     owner = "caddy";
     mode = "0400";

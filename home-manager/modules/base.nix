@@ -74,6 +74,7 @@ in
     doggo
     fx
     glab
+    githubCliTokenWrapped
     go-task
     pandoc
     pkgs.tectonic

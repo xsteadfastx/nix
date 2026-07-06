@@ -568,7 +568,11 @@ in
           buildExts.permissionSystem
           buildExts.mcpAdapter
           buildExts.browserTools
-          pkgs.github-cli
+          # NOTE: `gh` is deliberately NOT bundled here. It is the one tool
+          # that needs a host secret (an auth token), so the host provides an
+          # authenticated `gh` on the system PATH; the agent inherits it. The
+          # sops-reading `gh` wrapper lives in overlays/default.nix and is
+          # installed via home-manager/modules/base.nix.
           pkgs.ripgrep
         ]
         ++ lib.filter (x: x != null) (lib.attrValues mcpPackages);

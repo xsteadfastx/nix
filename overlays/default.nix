@@ -9,6 +9,25 @@ let
   system = prev.stdenv.hostPlatform.system;
 in
 {
+  # `gh` wrapper that authenticates from the sops-decrypted token file at
+  # runtime. /run/secrets/gh-token is provisioned by sops-nix only on hosts
+  # that declare sops.secrets."gh-token" (see hosts/coltrane/secrets.nix); on
+  # hosts without it the file is absent, this is a no-op, and `gh` runs as-is
+  # (its own auth, or unauthenticated). Reading the file at exec time keeps
+  # the secret out of the nix store and picks up rotated tokens on the next
+  # call. This is a separate wrapper package (not an override of `github-cli`)
+  # that ships a `bin/gh`; it is added to the user's home.packages
+  # (home-manager/modules/base.nix), so it lands on the shell PATH and the
+  # coding agent inherits it from there. `github-cli` itself is left untouched
+  # (keeping its completions/man pages) and is deliberately not on PATH, so
+  # this wrapper is the only `gh`.
+  githubCliTokenWrapped = prev.writeShellScriptBin "gh" ''
+    if [ -f /run/secrets/gh-token ]; then
+      export GH_TOKEN=$(cat /run/secrets/gh-token)
+    fi
+    exec ${prev.github-cli}/bin/gh "$@"
+  '';
+
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
   airmtp = inputs.airmtp.packages.${system}.default;
