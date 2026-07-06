@@ -19,6 +19,11 @@ let
   buildExts = import ./build-extensions.nix { inherit pkgs; };
   wrapperLib = import ./wrapper.nix { inherit pkgs; };
   registry = import ./mcp-registry.nix { inherit pkgs; };
+  # Plugin packs (superpowers + ponytail) - loaded as pi extensions / Claude plugins
+  # one fetch in plugins.nix, used by both.
+  plugins = import ./plugins.nix { inherit pkgs; };
+  superpowers = plugins.superpowers;
+  ponytail = plugins.ponytail;
 in
 {
   imports = [
@@ -581,7 +586,9 @@ in
           wrapProgram $out/bin/pi \
             --add-flags "--extension ${buildExts.permissionSystem}/lib/pi-permission-system/src/index.ts" \
             --add-flags "--extension ${buildExts.mcpAdapter}/index.ts" \
-            --add-flags "--extension ${buildExts.browserTools}/extensions/browser-tools/index.ts"
+            --add-flags "--extension ${buildExts.browserTools}/extensions/browser-tools/index.ts" \
+            --add-flags "--extension ${superpowers}/.pi/extensions/superpowers.ts" \
+            --add-flags "--extension ${ponytail}/pi-extension/index.js"
         '';
       };
 
@@ -612,7 +619,14 @@ in
           force = true;
         };
         ".pi/agent/settings.json" = {
-          text = builtins.toJSON cfg.settings;
+          # Add ponytail's skills dir to pi's search path; the extension activates
+          # the mode/aliases, but the manifest requires explicit dir registration.
+          text = builtins.toJSON (
+            cfg.settings
+            // {
+              skills = (cfg.settings.skills or [ ]) ++ [ "${ponytail}/skills" ];
+            }
+          );
           force = true;
         };
         ".pi/agent/mcp.json" = {

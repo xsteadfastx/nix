@@ -19,15 +19,27 @@
 let
   cfg = config.xsfx.codingAgent;
 
+  # obra/superpowers + DietrichGebert/ponytail sources, shared with default.nix
+  plugins = import ./plugins.nix { inherit pkgs; };
+  superpowers = plugins.superpowers;
+  ponytail = plugins.ponytail;
+
   # Claude bundled with the shared mcp.json baked in. Same symlinkJoin +
   # wrapProgram pattern the module uses for pi.
+  #
+  # `node` is added to PATH because ponytail's plugin hooks run
+  # `exec node ${CLAUDE_PLUGIN_ROOT}/hooks/*.js` on SessionStart/UserPromptSubmit;
+  # without node resolvable in the hook's environment those hooks error.
+  # (superpowers' hook is a bash polyglot that degrades gracefully, so it needs
+  # nothing extra.)
   wrappedClaude = pkgs.symlinkJoin {
     name = "claude-code-mcp";
     paths = [ pkgs.claude-code ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/claude \
-        --add-flags "--mcp-config=/home/${cfg.user}/.pi/agent/mcp.json"
+        --add-flags "--mcp-config=/home/${cfg.user}/.pi/agent/mcp.json" \
+        --prefix PATH : ${lib.makeBinPath [ pkgs.nodejs ]}
     '';
   };
 in
@@ -37,6 +49,23 @@ lib.mkIf cfg.enable {
   home-manager.users.${cfg.user}.home.file = {
     ".claude/settings.json".text = builtins.toJSON {
       theme = "dracula";
+
+      # superpowers + ponytail as Claude Code plugins via local directory marketplaces.
+      # Marketplace keys match repo marketplace.json (superpowers-dev, ponytail).
+      extraKnownMarketplaces = {
+        superpowers-dev.source = {
+          source = "directory";
+          path = "${superpowers}";
+        };
+        ponytail.source = {
+          source = "directory";
+          path = "${ponytail}";
+        };
+      };
+      enabledPlugins = {
+        "superpowers@superpowers-dev" = true;
+        "ponytail@ponytail" = true;
+      };
     };
 
     ".claude/themes/dracula.json".text = builtins.toJSON {

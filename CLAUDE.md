@@ -14,6 +14,8 @@ This repository contains the NixOS configuration for multiple hosts using the **
 - `modules/coding-agent/build-extensions.nix` — hand-assembles the three pi extensions (permission-system, mcp-adapter, browser-tools) from npm tarballs; pinned lockfiles live in `modules/coding-agent/lockfiles/`.
 - `modules/coding-agent/mcp-registry.nix` — maps a logical MCP name to `{ bin, command }` on `pkgs`.
 - `modules/coding-agent/wrapper.nix` — `mkSecretWrapper`, the generic secret-injection wrapper (see Grafana below).
+- `modules/coding-agent/skills.nix` — the shared ECC asset pack (skills/agents/commands/rules) flattened into `~/.claude/*`, read by both pi and Claude.
+- `modules/coding-agent/plugins.nix` — shared source for upstream plugin packs (superpowers, ponytail), loaded as extensions by pi and plugins by Claude.
 - `overlays/coding-agent.nix` — sources pi + MCP packages from `nixpkgs-unstable` and pins `pi` to a release. It is a **sibling** of `overlays/default.nix` (personal packages), not nested inside it. Both are applied side-by-side in `modules/base` (`nixpkgs.overlays = [ overlays.coding-agent overlays.default ]`); neither overlay imports the other. `overlays.coding-agent` is also exported for third-party consumers of `nixosModules.coding-agent`.
 - `modules/coding-agent/check-wrapper.nix` — pure `runCommand` test for the secret wrapper, exposed as `checks.x86_64-linux.coding-agent-wrapper`.
 
@@ -23,6 +25,13 @@ To add a new MCP server to the agent:
 2. Register the logical name → `{ bin, command }` mapping in `modules/coding-agent/mcp-registry.nix`.
 3. Enable the server per-host under `xsfx.codingAgent.mcpServers.<name>` (e.g. in `hosts/coltrane/coding-agent.nix`), supplying `args`/`env`. A bare `{ }` entry is enough for non-secret servers — the module resolves `bin`/`command` from the registry.
 4. If the server needs secrets, put the sops `*_FILE` paths in `env`. Any env key ending in `_FILE` triggers the secret wrapper automatically (see Grafana below).
+
+### Plugin packs (superpowers + ponytail)
+Two upstream Claude-Code plugin packs: **obra/superpowers** (TDD/debugging/planning)
+and **DietrichGebert/ponytail** (minimalism). Fetched once in `plugins.nix`,
+shared by both agents via native loading (extensions for pi, plugins for Claude).
+Bump: edit `rev`/`hash` in `plugins.nix` and `nixos-rebuild switch`.
+Lifecycle: requires pi/Claude restart to take effect.
 
 ## ⚠️ Known Issues & Critical Workarounds
 

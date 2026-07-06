@@ -61,8 +61,11 @@ let
     "coding-standards" # Cross-cutting architecture and coding guidelines
 
     # --- DISCIPLINE & QUALITY (Good code) ---
-    "tdd-workflow" # The quality brake: forces TDD + analysis before coding (ECC-native)
-    "verification-loop" # The automatic quality check after code changes
+    # NOTE: TDD + verification discipline now comes from obra/superpowers
+    # (test-driven-development, verification-before-completion), loaded as a pi
+    # extension / Claude plugin — see ./superpowers.nix. The ECC equivalents
+    # (tdd-workflow, verification-loop) were dropped here to avoid running two
+    # lineages that preach the same discipline (dulls selection, burns tokens).
 
     # --- RESEARCH & EXPERTISE (Search first, then web) ---
     # search-first is the generic ECC guard; research-first is our own
