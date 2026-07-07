@@ -334,6 +334,25 @@ in
                 };
               }
               {
+                id = "ornith:35b";
+                name = "Ornith 35B";
+                # Default model. 34.7B Q4_K_M, qwen35moe family with native
+                # 262K context and tool-use + thinking capabilities. Full
+                # offload on wobcom (no iGPU constraints there). The same
+                # model is also available locally as ornith:9b for when the
+                # network is down or ollama-wobcom is unreachable.
+                reasoning = true;
+                input = [ "text" ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
                 id = "gemma4:31b";
                 name = "Gemma 4 31B";
                 # gemma4 family is a reasoning model (thinking capability
@@ -343,7 +362,8 @@ in
                   "text"
                   "image"
                 ];
-                contextWindow = 131072;
+                # Gemma 4 native context is 1M tokens; wobcom has no iGPU constraints
+                contextWindow = 1048576;
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -357,7 +377,9 @@ in
                 name = "Qwen 3.5";
                 reasoning = true;
                 input = [ "text" ];
-                contextWindow = 131072;
+                # Native context is 262K (matches Ollama API reports); the local
+                # ollama also serves qwen3.5 with 262K, so this matches there too.
+                contextWindow = 262144;
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -375,7 +397,8 @@ in
                   "text"
                   "image"
                 ];
-                contextWindow = 131072;
+                # Gemma 3 native context is 1M tokens (no iGPU constraints on wobcom)
+                contextWindow = 1048576;
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -464,7 +487,8 @@ in
                   "text"
                   "image"
                 ];
-                contextWindow = 131072;
+                # Gemma 4 native context is 1M tokens; wobcom has no iGPU constraints
+                contextWindow = 1048576;
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -511,7 +535,7 @@ in
       description = "General agent settings";
       default = {
         defaultProvider = "ollama-wobcom";
-        defaultModel = "gemma4:31b";
+        defaultModel = "ornith:35b";
         theme = "dracula";
         skills = [ "/home/marv/.claude/skills" ];
       };
