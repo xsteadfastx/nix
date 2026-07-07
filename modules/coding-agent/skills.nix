@@ -32,17 +32,11 @@ let
     "golang" # Go stack
   ];
 
-  # Selected ECC rule sets plus our visual-context protocol appended.
+  # Selected ECC rule sets.
   customRules = pkgs.runCommand "custom-rules" { } ''
     mkdir -p $out
     ${lib.concatMapStringsSep "\n" (r: "cp -r ${ecc-src}/rules/${r} $out/${r}") ruleSets}
     cp ${ecc-src}/rules/README.md $out/README.md
-    cat <<EOF >$out/visual-context.md
-    # Visual Context Protocol
-    Whenever the user runs the \`crush-img\` command or mentions a "pasted image", "clipboard image", or "screenshot", the assistant MUST immediately attempt to \`view\` the file at /run/user/1000/crush_clipboard.png.
-    Do not wait for the user to explicitly ask what is in the image.
-    Analyze the visual evidence to provide immediate, context-aware feedback or debugging help.
-    EOF
   '';
 
   # Skills loaded every session on this host. The full ECC set is ~277 skills

@@ -362,8 +362,7 @@ in
                   "text"
                   "image"
                 ];
-                # Gemma 4 native context is 1M tokens; wobcom has no iGPU constraints
-                contextWindow = 1048576;
+                contextWindow = 1048576; # Gemma 4 native
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -377,8 +376,6 @@ in
                 name = "Qwen 3.5";
                 reasoning = true;
                 input = [ "text" ];
-                # Native context is 262K (matches Ollama API reports); the local
-                # ollama also serves qwen3.5 with 262K, so this matches there too.
                 contextWindow = 262144;
                 maxTokens = 8192;
                 cost = {
@@ -397,8 +394,7 @@ in
                   "text"
                   "image"
                 ];
-                # Gemma 3 native context is 1M tokens (no iGPU constraints on wobcom)
-                contextWindow = 1048576;
+                contextWindow = 1048576; # Gemma 3 native
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -487,8 +483,7 @@ in
                   "text"
                   "image"
                 ];
-                # Gemma 4 native context is 1M tokens; wobcom has no iGPU constraints
-                contextWindow = 1048576;
+                contextWindow = 1048576; # Gemma 4 native
                 maxTokens = 8192;
                 cost = {
                   input = 0;

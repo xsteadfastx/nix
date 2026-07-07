@@ -6,7 +6,6 @@ _: {
     ./caddy
     ./configuration.nix
     ./coding-agent.nix
-    ./crush.nix
     ./disko.nix
     ./fix-audio.nix
     ./fix-isy-hub.nix
