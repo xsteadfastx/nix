@@ -152,6 +152,16 @@ in
     "render"
   ];
 
+  # :cloud models hold a long-lived connection to ollama.com that suspend/resume
+  # silently kills; ollama keeps using the dead socket (45-60s hang -> 502) until
+  # the process restarts. Re-establish it by restarting the user service on resume.
+  # ponytail: restart is the only lever ollama exposes here. It also drops any
+  # resident local model, but keep_alive(30m) has usually expired across a real
+  # sleep anyway, so there's nothing to lose.
+  powerManagement.resumeCommands = ''
+    ${config.systemd.package}/bin/systemctl -M marv@.host --user restart ollama.service
+  '';
+
   systemd.user.services.ollama-sycl-build = {
     description = "Build ollama-sycl image";
     wantedBy = [ "default.target" ];
