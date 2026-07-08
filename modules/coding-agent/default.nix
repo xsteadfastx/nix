@@ -422,7 +422,7 @@ in
                 name = "Mistral Small 24B";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 131072;
+                contextWindow = 32768; # reported by ollama /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -436,7 +436,7 @@ in
                 name = "Qwen 2.5 14B Instruct";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 131072;
+                contextWindow = 32768; # reported by ollama /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -450,7 +450,7 @@ in
                 name = "Qwen 2.5 7B Instruct";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 131072;
+                contextWindow = 32768; # reported by ollama /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -463,6 +463,23 @@ in
                 id = "qwen3-coder:latest";
                 name = "Qwen 3 Coder";
                 reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144;
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "ornith:9b";
+                name = "Ornith 9B";
+                # Default fallback model. Smaller 9B variant of the qwen35 family,
+                # same thinking + tool-use capabilities as ornith:35b but fits in a
+                # tighter memory budget. Also available locally for offline use.
+                reasoning = true;
                 input = [ "text" ];
                 contextWindow = 262144;
                 maxTokens = 8192;
