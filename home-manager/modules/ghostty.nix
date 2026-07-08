@@ -13,7 +13,7 @@ lib.mkIf cfg.x11 {
   xdg.configFile."ghostty/config".text = ''
     font-family = JetBrainsMono Nerd Font
     font-style = Regular
-    font-size = 15
+    font-size = 14
     shell-integration = fish
     theme = Dracula
     window-decoration = false
