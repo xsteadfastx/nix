@@ -135,6 +135,28 @@ let
       -e OLLAMA_FLASH_ATTENTION=1 \
       ${imageTag}
   '';
+
+  # Root cause: the resume hook used to restart ollama the instant the machine
+  # woke — but Wi-Fi takes ~5s to reconnect, so the new podman container (and its
+  # pasta netns) was created while the host had no route/DNS. That netns then stays
+  # wedged for the container's whole life: cloud chat 502s until ollama is
+  # restarted *again* by hand once Wi-Fi is firmly up. So: wait until the host can
+  # actually reach the internet, THEN restart — the fresh container is born with
+  # working networking. (ollama's own startup call to ollama.com is just
+  # model-recommendations UI noise, non-fatal; the real breakage is the wedged net.)
+  # Detached via systemd-run so sleep-actions tearing down its cgroup won't kill us.
+  # ponytail: capped at 15 min; if never online, restart anyway so local models work.
+  resumeRestart = pkgs.writeShellScript "ollama-resume-restart" ''
+    tries=0
+    while [ $tries -lt 180 ]; do
+      if ${pkgs.curl}/bin/curl --connect-timeout 5 -sS -o /dev/null https://ollama.com/ 2>/dev/null; then
+        break
+      fi
+      ${pkgs.coreutils}/bin/sleep 5
+      tries=$((tries + 1))
+    done
+    exec ${config.systemd.package}/bin/systemctl -M marv@.host --user restart ollama.service
+  '';
 in
 {
   systemd.user.tmpfiles.rules = [
@@ -152,14 +174,11 @@ in
     "render"
   ];
 
-  # :cloud models hold a long-lived connection to ollama.com that suspend/resume
-  # silently kills; ollama keeps using the dead socket (45-60s hang -> 502) until
-  # the process restarts. Re-establish it by restarting the user service on resume.
-  # ponytail: restart is the only lever ollama exposes here. It also drops any
-  # resident local model, but keep_alive(30m) has usually expired across a real
-  # sleep anyway, so there's nothing to lose.
+  # Restart ollama on resume so it gets a fresh container/network — but only
+  # after the host is back online (see resumeRestart). Restarting mid-reconnect
+  # births a wedged pasta netns and is the actual cause of the hand-restart dance.
   powerManagement.resumeCommands = ''
-    ${config.systemd.package}/bin/systemctl -M marv@.host --user restart ollama.service
+    ${config.systemd.package}/bin/systemd-run --no-block --collect ${resumeRestart}
   '';
 
   systemd.user.services.ollama-sycl-build = {
