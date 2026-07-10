@@ -31,5 +31,10 @@
       bin = pkgs.mcp-server-memory;
       command = "mcp-server-memory";
     };
+    # mcp-proxy bridges a remote StreamableHTTP MCP server to stdio.
+    youtrack = {
+      bin = pkgs.mcp-proxy;
+      command = "mcp-proxy";
+    };
   };
 }
