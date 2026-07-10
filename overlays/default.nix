@@ -51,6 +51,22 @@ in
 
   xsaneGimp = prev.xsane.override { gimpSupport = true; };
 
+  # MediaElch 2.12.0 ships a TMDB scraper bug: a query parameter is added
+  # twice (once via getMovieSearchUrl's 3rd arg, once via the UrlParameterMap).
+  # TMDB rejects duplicate params with HTTP 400, surfacing as
+  # "Network Error: Could not load the requested resource".
+  # Upstream fix: Komet/MediaElch commit f68419e (PR #1995, issue #1992).
+  # Remove this override once nixpkgs ships a MediaElch version > 2.12.0.
+  mediaelch = prev.mediaelch.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      (prev.fetchpatch {
+        name = "fix-tmdb-duplicate-query-param.patch";
+        url = "https://github.com/Komet/MediaElch/commit/f68419e746455d3c7eb6d95a4a1da7a6f7a5c505.patch";
+        hash = "sha256-u+ScJDFX2IIpjXV58MCp1uJGx9QU+7cbq+e1qZPMWns=";
+      })
+    ];
+  });
+
   kerouac = inputs.kerouac.packages.${system}.kerouacLinuxAmd64;
   attic = inputs.attic.packages.${system}.attic;
 
