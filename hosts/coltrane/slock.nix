@@ -22,9 +22,13 @@ let
   });
 
   lock = pkgs.writeShellScriptBin "lock" ''
-    ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
-    ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
-    ${pkgs.i3}/bin/i3-msg -t get_workspaces | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
+    # ponytail: 1 i3-msg round-trip, not 3 (was ~1s lid-close delay)
+    ws=$(${pkgs.i3}/bin/i3-msg -t get_workspaces)
+    printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
+    printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
+    printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
+    # ponytail: release logind sleep-lock fd (set via --transfer-sleep-lock) after snapshot written
+    if [ -n "$XSS_SLEEP_LOCK_FD" ]; then eval "exec ''${XSS_SLEEP_LOCK_FD}>&-"; fi
     /run/wrappers/bin/slock
     ${pkgs.xrandr}/bin/xrandr --auto
     ${pkgs.autorandr}/bin/autorandr --change
@@ -40,6 +44,8 @@ in
 
   programs.xss-lock = {
     enable = true;
+    # ponytail: transfer sleep-lock fd to the locker so it gates suspend, not xss-lock
+    extraOptions = [ "--transfer-sleep-lock" ];
     lockerCommand = "${lock}/bin/lock";
   };
 }
