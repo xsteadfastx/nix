@@ -11,6 +11,10 @@
       bin = pkgs.mcp-server-git;
       command = "mcp-server-git";
     };
+    github = {
+      bin = pkgs.github-mcp-server;
+      command = "github-mcp-server";
+    };
     grafana = {
       bin = pkgs.mcp-grafana;
       command = "mcp-grafana";

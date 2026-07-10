@@ -54,6 +54,7 @@ in
     mcp-nixos
     mcp-server-git
     mcp-grafana
+    github-mcp-server
     context7-mcp
     mcp-server-sequential-thinking
     mcp-server-memory

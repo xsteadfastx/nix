@@ -12,6 +12,17 @@
     git = { };
     context7 = { };
     "sequential-thinking" = { };
+    # GitHub's official MCP server (github/github-mcp-server). Reuses the
+    # existing `gh-token` sops secret — a PAT works for both `gh` CLI
+    # (GH_TOKEN) and this server (GITHUB_PERSONAL_ACCESS_TOKEN). Default
+    # toolset covers issues, pull_requests, repos, users + copilot context;
+    # add `--toolsets=default,actions` if CI workflows should be reachable.
+    github = {
+      args = [ "stdio" ];
+      env = {
+        GITHUB_PERSONAL_ACCESS_TOKEN_FILE = config.sops.secrets."gh-token".path;
+      };
+    };
     grafana = {
       args = [
         "--disable-write"
