@@ -30,7 +30,13 @@
         "if [ -n \"\$${fileVar}\" ] && [ -f \"\$${fileVar}\" ]; then export ${realVar}=\$(cat \"\$${fileVar}\"); fi"
       ) fileVars;
       script = pkgs.lib.concatStringsSep "\n" (
-        [ "# Auto-generated MCP Secret Wrapper" ] ++ exportLines ++ [ "exec ${bin}/bin/${command} \"$@\"" ]
+        [ "# Auto-generated MCP Secret Wrapper" ]
+        ++ exportLines
+        ++ [
+          # `eval` so args like "$YOUTRACK_URL" (passed literally by the agent)
+          # are expanded after the export lines above have populated them.
+          "eval exec ${bin}/bin/${command} \"\$@\""
+        ]
       );
     in
     pkgs.writeShellScriptBin command script;
