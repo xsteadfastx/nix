@@ -16,6 +16,16 @@ _: {
     owner = "marv";
   };
 
+  # Permanent YouTrack API token (scope: YouTrack) for the remote MCP server.
+  sops.secrets."mcp-youtrack-token" = {
+    owner = "marv";
+  };
+
+  # YouTrack MCP endpoint URL (<instance>/mcp).
+  sops.secrets."mcp-youtrack-url" = {
+    owner = "marv";
+  };
+
   sops.secrets."gh-token" = {
     owner = "marv";
   };

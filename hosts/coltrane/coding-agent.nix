@@ -54,5 +54,24 @@
         MEMORY_FILE_PATH = "/home/marv/.pi/agent/memory.jsonl";
       };
     };
+    # JetBrains ships a remote MCP server built into YouTrack itself (no
+    # package to install): <instance>/mcp over StreamableHTTP. mcp-proxy
+    # bridges it to stdio so the adapter spawns it like any other server.
+    # The permanent token is injected via API_ACCESS_TOKEN_FILE; the module's
+    # secret wrapper cats it into API_ACCESS_TOKEN, which mcp-proxy sends as
+    # `Authorization: Bearer <token>`. Generate the token in YouTrack
+    # (Profile → Account → Permanent Tokens, scope: YouTrack) and store it in
+    # sops under `mcp-youtrack-token`.
+    youtrack = {
+      args = [
+        "--transport"
+        "streamablehttp"
+        "$YOUTRACK_URL"
+      ];
+      env = {
+        YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
+        API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
+      };
+    };
   };
 }
