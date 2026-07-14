@@ -204,6 +204,7 @@
   services.udev.packages = [ pkgs.epkowa ];
 
   # memory save
+  systemd.oomd.enable = false;
   services.earlyoom = {
     enable = true;
     freeMemThreshold = 5;
