@@ -30,7 +30,19 @@
         "if [ -n \"\$${fileVar}\" ] && [ -f \"\$${fileVar}\" ]; then export ${realVar}=\$(cat \"\$${fileVar}\"); fi"
       ) fileVars;
       script = pkgs.lib.concatStringsSep "\n" (
-        [ "# Auto-generated MCP Secret Wrapper" ]
+        [
+          "# Auto-generated MCP Secret Wrapper"
+          # MCP servers inherit the agent's environment, and the agent may be
+          # launched from a dev shell (direnv + pre-commit) that exports a
+          # PYTHONPATH pinned to a *different* Python than a bundled server's own
+          # interpreter. Inheriting it makes e.g. mcp-proxy import a mismatched
+          # pydantic_core C extension and crash on startup (surfaces as a
+          # JSON-RPC -32000 "failed to reconnect"). Scrub it so every wrapped
+          # server uses its own closure's Python, regardless of launching shell.
+          # PYTHONNOUSERSITE is scrubbed too so a leaked ~/.local/lib can't shadow
+          # the closure either.
+          "unset PYTHONPATH PYTHONHOME PYTHONNOUSERSITE"
+        ]
         ++ exportLines
         ++ [
           # `eval` so args like "$YOUTRACK_URL" (passed literally by the agent)

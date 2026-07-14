@@ -565,8 +565,12 @@ in
 
       # Resolve each MCP server against the registry: the registry is the
       # source of truth for `bin` and `command`; a host only supplies args,
-      # env. Any `*_FILE` env var triggers the secret wrapper automatically
-      # (the sops-nix `_FILE` convention); plain env vars pass through.
+      # env. Every server goes through the wrapper: it scrubs the inherited
+      # Python env (so a bundled-Python server like mcp-nixos uses its own
+      # interpreter regardless of the launching shell — direnv/nix develop
+      # otherwise leaks a mismatched PYTHONPATH and crashes it with -32000)
+      # and injects any `*_FILE` secret (the sops-nix convention). Servers
+      # with no `*_FILE` env keys just get the env scrub — a no-op secret pass.
       resolveServer =
         name: server:
         let
@@ -578,12 +582,10 @@ in
           bin = server.bin or serverDef.bin;
           command = server.command or serverDef.command;
           env = server.env or { };
-          needsWrap = lib.any (k: lib.hasSuffix "_FILE" k) (lib.attrNames env);
         in
         {
           inherit command;
-          bin =
-            if needsWrap && bin != null then wrapperLib.mkSecretWrapper { inherit bin command env; } else bin;
+          bin = if bin != null then wrapperLib.mkSecretWrapper { inherit bin command env; } else bin;
         };
 
       # Resolve each server once; both the package list and the mcp.json
