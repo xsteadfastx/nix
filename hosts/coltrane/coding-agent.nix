@@ -1,4 +1,11 @@
 { config, ... }:
+let
+  # marv's uid, for the tmpfs XDG runtime path used by the playwright MCP env
+  # below. Derived from the user config when a uid is pinned there; falls back
+  # to 1000 (the auto-allocated value on this single-user host) because
+  # isNormalUser leaves `uid` null at eval time.
+  marvUid = if config.users.users.marv.uid != null then config.users.users.marv.uid else 1000;
+in
 {
   xsfx.codingAgent.enable = true;
 
@@ -73,6 +80,25 @@
         # instance (your logged-in sessions) instead of opening a fresh
         # bundled Chromium with no extension installed.
         PWTEST_EXTENSION_USER_DATA_DIR = "/home/marv/.config/chromium";
+
+        # CRITICAL for extension mode on nixpkgs' playwright-mcp: the package's
+        # bin is a wrapper that does
+        #   if [ -z "$PLAYWRIGHT_MCP_USER_DATA_DIR" ]; then
+        #     export PLAYWRIGHT_MCP_ISOLATED=1; fi
+        # Since playwright-mcp 0.0.76 (playwright-core 1.61) the browser-mode
+        # decision checks `isolated` BEFORE `extension`, so a forced
+        # ISOLATED=1 silently wins over `--extension` and launches a throwaway
+        # temp-profile browser (no extension, no logins) instead of bridging to
+        # your running Chromium. (0.0.69 evaluated extension first, so this was
+        # latent.) Setting USER_DATA_DIR non-empty makes the wrapper skip the
+        # ISOLATED=1 export. The value itself is inert in extension mode: the
+        # target browser is your running Chromium via the extension, so
+        # playwright-mcp never launches with this dir and nothing is stored
+        # here. It exists only as a sentinel to defeat the wrapper's `-z` check.
+        # Point it at the tmpfs XDG runtime dir so that in the one edge case it
+        # *would* be used (a fallback persistent launch if the extension never
+        # connects) the profile lives in memory and is auto-cleaned on logout.
+        PLAYWRIGHT_MCP_USER_DATA_DIR = "/run/user/${toString marvUid}/playwright-mcp-profile";
       };
     };
     # Persistent knowledge-graph memory. MEMORY_FILE_PATH must be absolute
