@@ -1,7 +1,7 @@
 {
+  pkgs,
   lib,
   nixosConfig,
-  pkgsUnstable,
   ...
 }:
 let
@@ -11,11 +11,11 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       nvim-lint
     ];
 
-    extraPackages = with pkgsUnstable; [
+    extraPackages = with pkgs.unstable; [
       ansible-lint
       hadolint
       markdownlint-cli

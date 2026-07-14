@@ -2,7 +2,6 @@
   nixosConfig,
   lib,
   pkgs,
-  pkgsUnstable,
   ...
 }:
 let
@@ -18,13 +17,12 @@ in
   ];
 
   home.packages =
-    with pkgsUnstable;
+    with pkgs.unstable;
     lib.mkIf cfg.x11 [
       # beekeeper-studio # sql
       # quickemu
 
       arandr
-      bumblebee-status
       evince
       gimp
       libmediainfo

@@ -1,7 +1,7 @@
 {
+  pkgs,
   lib,
   nixosConfig,
-  pkgsUnstable,
   ...
 }:
 let
@@ -9,9 +9,9 @@ let
 
   inherit (lib) mkIf;
 
-  blame-nvim = pkgsUnstable.vimUtils.buildVimPlugin {
+  blame-nvim = pkgs.unstable.vimUtils.buildVimPlugin {
     name = "blame-nvim";
-    src = pkgsUnstable.fetchFromGitHub {
+    src = pkgs.unstable.fetchFromGitHub {
       owner = "FabijanZulj";
       repo = "blame.nvim";
       rev = "b87b8c820e4cec06fbbd2f946b7b35c45906ee0c";
@@ -21,7 +21,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       blame-nvim
       comment-nvim
       csv-vim

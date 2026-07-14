@@ -1,5 +1,5 @@
 {
-  pkgsUnstable,
+  pkgs,
   nixosConfig,
   lib,
   ...
@@ -10,7 +10,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       blink-cmp
       friendly-snippets
       luasnip

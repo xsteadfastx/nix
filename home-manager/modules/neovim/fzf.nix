@@ -1,5 +1,5 @@
 {
-  pkgsUnstable,
+  pkgs,
   nixosConfig,
   lib,
   ...
@@ -11,11 +11,11 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       fzf-lua
       nvim-web-devicons
     ];
-    extraPackages = with pkgsUnstable; [
+    extraPackages = with pkgs.unstable; [
       fd
       fzf
       ripgrep

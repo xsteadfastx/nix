@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgsUnstable,
   config,
   ...
 }:
@@ -166,7 +165,7 @@ in
 
   environment.systemPackages = [
     pkgs.ollama
-    pkgsUnstable.opencode
+    pkgs.unstable.opencode
   ];
 
   users.users.marv.extraGroups = [

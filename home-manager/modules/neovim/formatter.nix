@@ -1,5 +1,5 @@
 {
-  pkgsUnstable,
+  pkgs,
   nixosConfig,
   lib,
   ...
@@ -11,10 +11,10 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       conform-nvim
     ];
-    extraPackages = with pkgsUnstable; [
+    extraPackages = with pkgs.unstable; [
       black
       clang-tools
       golines

@@ -1,4 +1,4 @@
-{ pkgs, pkgsUnstable, ... }:
+{ pkgs, ... }:
 {
   home.packages = [
     pkgs.tmux
@@ -58,7 +58,7 @@
     # bind r source-file ~/.tmux.conf
 
     # use fish shell
-    set-option -g default-shell ${pkgsUnstable.fish}/bin/fish
+    set-option -g default-shell ${pkgs.unstable.fish}/bin/fish
 
     # mouse
     set -g mouse on

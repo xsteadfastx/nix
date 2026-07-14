@@ -1,10 +1,10 @@
 {
+  pkgs,
   lib,
-  pkgsUnstable,
   ...
 }:
 {
-  home.packages = [ pkgsUnstable.aerc ];
+  home.packages = [ pkgs.unstable.aerc ];
 
   home.file.".config/aerc/accounts.conf" = {
     text = ''

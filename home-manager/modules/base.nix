@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgsUnstable,
   nixosConfig,
   ...
 }:
@@ -21,7 +20,15 @@ in
 
   systemd.user.startServices = "sd-switch";
 
-  home.packages = with pkgsUnstable; [
+  # Package channel convention:
+  #   bare name    -> pkgs.unstable (nixpkgs-unstable + overlays.default)
+  #   pkgs.<name>  -> stable nixpkgs (26.05) + overlays.default; use to PIN a
+  #                   package to the stable channel (e.g. bumblebee-status,
+  #                   gopass, tectonic)
+  # Both channels carry overlays.default, so custom/overridden packages
+  # (bumblebee-status w/ plugins, localsend-go, githubCliTokenWrapped, ...)
+  # resolve either way — the prefix only chooses the channel.
+  home.packages = with pkgs.unstable; [
     # systemtools
     appimage-run
     bandwhich # traffic
@@ -68,7 +75,7 @@ in
     # other tools
     ansible
     babelfish
-    bumblebee-status
+    pkgs.bumblebee-status
     compose2nix
     croc
     doggo

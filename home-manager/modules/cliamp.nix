@@ -1,7 +1,7 @@
-{ pkgsUnstable, pkgs, ... }:
+{ pkgs, ... }:
 let
   inherit (pkgs) writeShellScriptBin;
-  inherit (pkgsUnstable) cliamp gopass;
+  inherit (pkgs.unstable) cliamp gopass;
 in
 {
   home.packages = [

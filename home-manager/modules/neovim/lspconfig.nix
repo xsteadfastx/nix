@@ -1,6 +1,5 @@
 {
   pkgs,
-  pkgsUnstable,
   nixosConfig,
   lib,
   ...
@@ -11,7 +10,7 @@ let
 in
 {
   programs.neovim = mkIf cfg.neovim {
-    extraPackages = with pkgsUnstable; [
+    extraPackages = with pkgs.unstable; [
       bash-language-server
       buf
       gopls
@@ -24,7 +23,7 @@ in
       vscode-langservers-extracted
       yaml-language-server
     ];
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       SchemaStore-nvim
       blink-cmp
       nvim-lspconfig

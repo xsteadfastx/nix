@@ -1,7 +1,7 @@
 {
+  pkgs,
   lib,
   nixosConfig,
-  pkgsUnstable,
   ...
 }:
 let
@@ -32,7 +32,7 @@ in
 
   programs.neovim = mkIf cfg.neovim {
     enable = true;
-    package = pkgsUnstable.neovim-unwrapped;
+    package = pkgs.unstable.neovim-unwrapped;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;

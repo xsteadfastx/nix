@@ -2,7 +2,6 @@
   lib,
   nixosConfig,
   pkgs,
-  pkgsUnstable,
   ...
 }:
 let
@@ -12,8 +11,8 @@ lib.mkIf cfg.x11 {
   xdg.configFile."i3/config".source = ./config;
 
   home.packages = [
-    pkgsUnstable.dunst
-    pkgsUnstable.rofi
+    pkgs.unstable.dunst
+    pkgs.unstable.rofi
     (pkgs.writeShellScriptBin "i3auto" ''
       set -e
       ${pkgs.xsetroot}/bin/xsetroot -solid "#282a36"
@@ -21,14 +20,14 @@ lib.mkIf cfg.x11 {
       ${pkgs.networkmanagerapplet}/bin/nm-applet &
       ${pkgs.blueman}/bin/blueman-applet &
       ${lib.optionalString nixosConfig.services.syncthing.enable ''
-        ${pkgsUnstable.syncthingtray}/bin/syncthingtray --wait &
+        ${pkgs.unstable.syncthingtray}/bin/syncthingtray --wait &
       ''}
       ${pkgs.autorandr}/bin/autorandr -c
       xset s 60 60
       ${pkgs.flameshot}/bin/flameshot &
     '')
   ]
-  ++ lib.optional nixosConfig.services.syncthing.enable pkgsUnstable.syncthingtray;
+  ++ lib.optional nixosConfig.services.syncthing.enable pkgs.unstable.syncthingtray;
 
   xdg.configFile."dunst/dunstrc".text = ''
     [global]

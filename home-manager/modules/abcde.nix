@@ -1,6 +1,9 @@
-{ pkgsUnstable, ... }:
+{
+  pkgs,
+  ...
+}:
 let
-  inherit (pkgsUnstable) abcde;
+  inherit (pkgs.unstable) abcde;
 in
 {
   home.packages = [

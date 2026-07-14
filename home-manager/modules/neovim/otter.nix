@@ -1,5 +1,5 @@
 {
-  pkgsUnstable,
+  pkgs,
   nixosConfig,
   lib,
   ...
@@ -10,7 +10,7 @@ let
 in
 mkIf cfg.neovim {
   programs.neovim = {
-    plugins = with pkgsUnstable.vimPlugins; [
+    plugins = with pkgs.unstable.vimPlugins; [
       otter-nvim
     ];
     initLua =

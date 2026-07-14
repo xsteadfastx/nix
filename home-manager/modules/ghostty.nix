@@ -1,14 +1,14 @@
 {
+  pkgs,
   lib,
   nixosConfig,
-  pkgsUnstable,
   ...
 }:
 let
   cfg = nixosConfig.xsfx;
 in
 lib.mkIf cfg.x11 {
-  home.packages = [ pkgsUnstable.ghostty ];
+  home.packages = [ pkgs.unstable.ghostty ];
 
   xdg.configFile."ghostty/config".text = ''
     font-family = JetBrainsMono Nerd Font

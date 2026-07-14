@@ -1,18 +1,8 @@
 {
   inputs,
   lib,
-  pkgs,
   ...
 }:
-let
-  pkgsUnstable = import inputs.nixpkgs-unstable {
-    system = pkgs.stdenv.hostPlatform.system;
-    config.allowUnfree = true;
-    overlays = [
-      inputs.self.overlays.default
-    ];
-  };
-in
 {
   options.xsfx.kodi = lib.mkEnableOption "enable kodi";
   options.xsfx.neovim = lib.mkEnableOption "enable neovim";
@@ -22,6 +12,6 @@ in
   config = {
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = false; # Put the stuff to .nix-profile
-    home-manager.extraSpecialArgs = { inherit inputs pkgsUnstable; };
+    home-manager.extraSpecialArgs = { inherit inputs; };
   };
 }

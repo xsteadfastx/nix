@@ -1,7 +1,7 @@
 {
+  pkgs,
   lib,
   nixosConfig,
-  pkgsUnstable,
   ...
 }:
 
@@ -11,7 +11,7 @@ in
 lib.mkIf cfg.x11 {
   programs.chromium = {
     enable = true;
-    package = pkgsUnstable.chromium.override { enableWideVine = true; };
+    package = pkgs.unstable.chromium.override { enableWideVine = true; };
     commandLineArgs = [
       "--audio-buffer-size=4096"
     ];

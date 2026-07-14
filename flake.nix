@@ -46,10 +46,6 @@
       nixosModules.users = import ./modules/users;
       nixosModules.vm-variant = import ./modules/vm-variant;
       overlays.default = import ./overlays { inherit inputs; };
-      # Minimal overlay for third parties consuming nixosModules.coding-agent:
-      # surfaces only the agent's unstable packages (pi, agent-browser, mcp-*),
-      # not the personal package set in overlays.default. Wrapped to final:prev
-      # form since ./overlays/coding-agent.nix is a `{inputs}: prev:` function.
       overlays.coding-agent = _: prev: import ./overlays/coding-agent.nix { inherit inputs; } prev;
     }
     // inputs.flake-utils.lib.eachDefaultSystem (

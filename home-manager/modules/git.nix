@@ -1,6 +1,9 @@
-{ pkgsUnstable, ... }:
+{
+  pkgs,
+  ...
+}:
 let
-  inherit (pkgsUnstable) git-lfs delta;
+  inherit (pkgs.unstable) git-lfs delta;
 in
 {
   home.packages = [
@@ -10,7 +13,7 @@ in
 
   programs.git = {
     enable = true;
-    package = pkgsUnstable.git;
+    package = pkgs.unstable.git;
     settings = {
       "filter \"lfs\"".clean = "git-lfs clean -- %f";
       "filter \"lfs\"".process = "git-lfs filter-process";

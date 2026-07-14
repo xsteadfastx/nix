@@ -1,7 +1,7 @@
 {
+  pkgs,
   nixosConfig,
   lib,
-  pkgsUnstable,
   ...
 }:
 let
@@ -48,7 +48,7 @@ lib.mkIf cfg.x11 {
         "extensions.autoDisableScopes" = 0;
         "signon.rememberSignons" = false;
       };
-      extensions.packages = with pkgsUnstable.firefox-addons; [
+      extensions.packages = with pkgs.unstable.firefox-addons; [
         darkreader
         dracula-dark-colorscheme
         greasemonkey

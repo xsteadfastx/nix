@@ -1,8 +1,11 @@
-{ pkgsUnstable, ... }:
+{
+  pkgs,
+  ...
+}:
 {
   home.packages = [
-    pkgsUnstable.fish
-    pkgsUnstable.starship
+    pkgs.unstable.fish
+    pkgs.unstable.starship
   ];
 
   xdg.configFile."fish" = {
@@ -11,11 +14,11 @@
   };
 
   xdg.configFile."fish/functions/fzf_key_bindings.fish".source =
-    "${pkgsUnstable.fzf}/share/fzf/key-bindings.fish";
+    "${pkgs.unstable.fzf}/share/fzf/key-bindings.fish";
 
   # syncs XDG_DATA_DIRS changes (e.g. from direnv) into fish_complete_path
   xdg.configFile."fish/conf.d/completion-sync.fish".source = "${
-    pkgsUnstable.fetchFromGitHub {
+    pkgs.unstable.fetchFromGitHub {
       owner = "iynaix";
       repo = "fish-completion-sync";
       rev = "4f058ad2986727a5f510e757bc82cbbfca4596f0";
