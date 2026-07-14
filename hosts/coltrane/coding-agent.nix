@@ -2,6 +2,14 @@
 {
   xsfx.codingAgent.enable = true;
 
+  xsfx.codingAgent.settings = {
+    autoCompactionEnabled = true;
+    defaultProvider = "ollama-wobcom";
+    defaultModel = "gemma4:31b";
+    theme = "dracula";
+    skills = [ "/home/marv/.claude/skills" ];
+  };
+
   # MCP servers. A bare entry is enough for non-secret servers: the module's
   # registry resolves `bin` and `command` from pkgs. Grafana needs its sops
   # secrets injected — any `*_FILE` env var is auto-translated into the real
