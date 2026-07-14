@@ -616,7 +616,10 @@ in
           # installed via home-manager/modules/base.nix.
           pkgs.ripgrep
         ]
-        ++ lib.filter (x: x != null) (lib.attrValues mcpPackages);
+        # lib.unique: two MCP servers sharing the same binary + identical
+        # `*_FILE` env keys (e.g. the two Grafana instances) produce the SAME
+        # wrapper store path; dedupe so symlinkJoin doesn't see it twice.
+        ++ lib.unique (lib.filter (x: x != null) (lib.attrValues mcpPackages));
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
           wrapProgram $out/bin/pi \

@@ -8,11 +8,21 @@ _: {
   };
   sops.secrets."paperless-gpt-env" = { };
 
+  # grafana-viz-mon MCP (monitoring Grafana instance)
   sops.secrets."mcp-grafana-token" = {
     owner = "marv";
   };
 
   sops.secrets."mcp-grafana-url" = {
+    owner = "marv";
+  };
+
+  # grafana-viz MCP (second Grafana instance)
+  sops.secrets."mcp-grafana-viz-token" = {
+    owner = "marv";
+  };
+
+  sops.secrets."mcp-grafana-viz-url" = {
     owner = "marv";
   };
 

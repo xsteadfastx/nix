@@ -15,7 +15,16 @@
       bin = pkgs.github-mcp-server;
       command = "github-mcp-server";
     };
-    grafana = {
+    # Two Grafana instances, same upstream binary, distinct credentials
+    # (see hosts/coltrane/coding-agent.nix). Each instance's URL + token live
+    # encrypted in sops. Keys are short because FQDNs can't be MCP server keys
+    # (dots are invalid in tool names and the prefixed names would exceed the
+    # 64-char tool-name limit).
+    grafana-viz-mon = {
+      bin = pkgs.mcp-grafana;
+      command = "mcp-grafana";
+    };
+    grafana-viz = {
       bin = pkgs.mcp-grafana;
       command = "mcp-grafana";
     };

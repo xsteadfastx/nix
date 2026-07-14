@@ -23,7 +23,9 @@
         GITHUB_PERSONAL_ACCESS_TOKEN_FILE = config.sops.secrets."gh-token".path;
       };
     };
-    grafana = {
+    # Grafana: two instances, same read-only binary, distinct credentials.
+    # grafana-viz-mon: monitoring Grafana instance (URL/token in sops).
+    grafana-viz-mon = {
       args = [
         "--disable-write"
         "-debug"
@@ -31,6 +33,15 @@
       env = {
         GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
         GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
+        GRAFANA_ORG_ID = "1";
+      };
+    };
+    # grafana-viz: second Grafana instance (URL/token in sops).
+    grafana-viz = {
+      args = [ "--disable-write" ];
+      env = {
+        GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
+        GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
         GRAFANA_ORG_ID = "1";
       };
     };
