@@ -6,11 +6,10 @@
 }:
 {
   nixpkgs.overlays = [
+    # Single overlay that composes both the custom package overrides AND the
     # coding-agent's pinned unstable packages (pi, agent-browser, mcp-*,
-    # claude-code) — applied before overlays.default so those attrs are in
-    # scope. This is the single place the coding-agent overlay is wired in;
-    # overlays.default no longer composes it internally.
-    inputs.self.overlays.coding-agent
+    # claude-code). overlays/default.nix merges overlays/coding-agent.nix and
+    # owns the one nixpkgs-unstable import (exposed as pkgs.unstable).
     inputs.self.overlays.default
   ];
 

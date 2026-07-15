@@ -1,28 +1,16 @@
-{ inputs, ... }:
-
 # Overlay that sources the coding-agent's runtime packages from
 # nixpkgs-unstable so the portable module (modules/coding-agent) can reference
 # them as plain pkgs.* attrs without depending on a pkgsUnstable specialArg.
-# The overlay closes over this flake's inputs, so third parties applying it get
-# the same pinned versions; consumers not applying it fall back to their own
-# nixpkgs.
-prev:
+#
+# All unstable packages come from the single central `pkgs.unstable` instance
+# (allowUnfree) created by overlays/default.nix, reached via the overlay's
+# `final` fixed-point. This file does NOT import nixpkgs-unstable itself — one
+# import for the whole repo, no per-overlay eval. No recursion: pkgs.unstable's
+# import (in overlays/default.nix) does not depend on this overlay's outputs.
+# Requires overlays.default to be applied alongside (modules/base does so).
+final: _prev:
 let
-  system = prev.stdenv.hostPlatform.system;
-
-  # The free agent packages: reuse the unstable channel's *already-evaluated*
-  # legacyPackages instead of a second `import`. This shares the eval the flake
-  # already does for nixpkgs-unstable rather than spinning up a fresh nixpkgs.
-  unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
-
-  # claude-code is unfree, and legacyPackages is pre-evaluated upstream with
-  # allowUnfree = false (uneditable), so it alone needs a scoped `import`.
-  # allowUnfreePredicate limits the exception to claude-code — not a blanket
-  # allowUnfree over the whole tree.
-  unstableUnfree = import inputs.nixpkgs-unstable {
-    inherit system;
-    config.allowUnfreePredicate = p: prev.lib.getName p == "claude-code";
-  };
+  unstable = final.unstable;
 
   # Pin pi to a specific release. overrideAttrs must replace `npmDeps`
   # itself, not just `npmDepsHash`: buildNpmPackage bakes `npmDeps` from the
@@ -47,7 +35,7 @@ in
     };
   });
 
-  inherit (unstableUnfree) claude-code;
+  inherit (unstable) claude-code;
 
   inherit (unstable)
     agent-browser

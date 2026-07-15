@@ -11,7 +11,7 @@ let
   # `unstable` itself — applying it to the unstable import would otherwise
   # recurse forever (unstable.unstable.unstable...).
   packageOverrides =
-    _: prev:
+    final: prev:
     let
       system = prev.stdenv.hostPlatform.system;
     in
@@ -28,11 +28,15 @@ let
       # coding agent inherits it from there. `github-cli` itself is left untouched
       # (keeping its completions/man pages) and is deliberately not on PATH, so
       # this wrapper is the only `gh`.
+      #
+      # Uses `final.github-cli` (not `prev.github-cli`) so it wraps the unstable
+      # `github-cli` set by codingAgent below — both overlays compose into one
+      # here, so `prev` would only see the stable `github-cli`.
       githubCliTokenWrapped = prev.writeShellScriptBin "gh" ''
         if [ -f /run/secrets/gh-token ]; then
           export GH_TOKEN=$(cat /run/secrets/gh-token)
         fi
-        exec ${prev.github-cli}/bin/gh "$@"
+        exec ${final.github-cli}/bin/gh "$@"
       '';
 
       localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
@@ -78,6 +82,15 @@ let
         };
       });
     };
+
+  # Coding-agent's pinned unstable packages (pi, agent-browser, mcp-*, claude-code,
+  # github-cli, ripgrep). Composed here so a single overlay (overlays.default)
+  # wires everything; base.nix applies only overlays.default. It sources all
+  # unstable packages from `final.unstable` (defined below) — the single
+  # nixpkgs-unstable import for the whole repo. No recursion: the unstable
+  # import does NOT apply codingAgent (its overlays list is [packageOverrides]),
+  # so final.unstable never reaches back into codingAgent.
+  codingAgent = import ./coding-agent.nix;
 in
 final: prev:
 (packageOverrides final prev)
@@ -97,3 +110,4 @@ final: prev:
     overlays = [ packageOverrides ];
   };
 }
+// (codingAgent final prev)

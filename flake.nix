@@ -46,7 +46,6 @@
       nixosModules.users = import ./modules/users;
       nixosModules.vm-variant = import ./modules/vm-variant;
       overlays.default = import ./overlays { inherit inputs; };
-      overlays.coding-agent = _: prev: import ./overlays/coding-agent.nix { inherit inputs; } prev;
     }
     // inputs.flake-utils.lib.eachDefaultSystem (
       system:
