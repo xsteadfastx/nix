@@ -37,6 +37,10 @@ in
 
   inherit (unstable) claude-code;
 
+  # Most popular postgres MCP; built from source (not in nixpkgs) against the
+  # unstable python set so its deps match the versions checked in pkgs file.
+  postgres-mcp = unstable.callPackage ../pkgs/postgres-mcp.nix { };
+
   inherit (unstable)
     agent-browser
     mcp-nixos

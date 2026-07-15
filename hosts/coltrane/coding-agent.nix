@@ -1,10 +1,69 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 let
   # marv's uid, for the tmpfs XDG runtime path used by the playwright MCP env
   # below. Derived from the user config when a uid is pinned there; falls back
   # to 1000 (the auto-allocated value on this single-user host) because
   # isNormalUser leaves `uid` null at eval time.
   marvUid = if config.users.users.marv.uid != null then config.users.users.marv.uid else 1000;
+
+  # barletta's postgres is not exposed on the network, so this wrapper opens an
+  # SSH forward to it bound to the MCP's lifetime, then runs postgres-mcp
+  # against it. marv's key auth to barletta is passwordless and inherited from
+  # the agent's env (a systemd unit wouldn't see SSH_AUTH_SOCK). No DB role,
+  # password or sops secret is needed, so the connection string is inlined.
+  #   * We forward barletta's postgres UNIX SOCKET (/run/postgresql/.s.PGSQL.5432)
+  #     into a per-instance temp dir, NOT a fixed TCP port. A fixed local port
+  #     (was 5433) can only be bound by ONE client: with both pi and Claude
+  #     sharing mcp.json, the second one's `ssh -L` hits ExitOnForwardFailure,
+  #     `set -e` aborts the wrapper, postgres-mcp never starts and that client
+  #     dies with `-32000 Connection closed`. A fresh `mktemp -d` socket dir per
+  #     instance lets them run concurrently. It also sidesteps the IPv4/IPv6
+  #     gotcha of the TCP path (barletta resolved `localhost` -> ::1, missing the
+  #     IPv4 trust rule) — the socket hits pg_hba `local all all trust` directly.
+  #   * Connect as `postgres` (superuser), NOT the `readonly` role: `readonly`
+  #     has no data grants on this instance and can't be fixed here — barletta's
+  #     hemingway DB is a read-only REPLICA (secondary of gerwer,
+  #     pg_is_in_recovery=t), so GRANTs can't run on it. The socket's
+  #     `local all all trust` rule grants the whole cluster as any role, so we
+  #     take superuser for full read access across every DB, not just what the
+  #     app-owner role can see. Reads are safe regardless: the replica is
+  #     physically read-only AND `--access-mode restricted` rejects writes at
+  #     parse time.
+  #   * Long/full-scan reads may fail with "canceling statement due to conflict
+  #     with recovery" — a standby replay-conflict artifact (barletta's
+  #     max_standby_streaming_delay / hot_standby_feedback), affecting ANY read
+  #     client on this replica. Tune it on barletta (infrastructure repo), not here.
+  #   * `ssh -f` returns only once the forward is up (ExitOnForwardFailure), so
+  #     postgres-mcp never races a not-yet-bound socket.
+  #   * postgres-mcp runs in the FOREGROUND — NOT backgrounded. A backgrounded
+  #     job in a non-interactive shell has its stdin redirected to /dev/null
+  #     (POSIX async-list rule), which severs the MCP client's stdio so the
+  #     server never receives `initialize` and the client fails with -32000. It
+  #     is not `exec`'d either, so the EXIT trap still fires to close the tunnel
+  #     and remove the socket dir when the MCP exits (client EOF, or SIGTERM
+  #     which the foreground child receives directly).
+  postgresHemingwayBarletta = pkgs.writeShellApplication {
+    name = "postgres-hemingway-barletta";
+    runtimeInputs = [
+      pkgs.openssh
+      pkgs.postgres-mcp
+    ];
+    text = ''
+      CTL="$(mktemp -u)"
+      SOCKDIR="$(mktemp -d)"
+      cleanup() {
+        ssh -S "$CTL" -O exit barletta 2>/dev/null || true
+        rm -rf "$SOCKDIR"
+      }
+      trap cleanup EXIT
+
+      ssh -f -N -M -S "$CTL" -o ExitOnForwardFailure=yes \
+        -L "$SOCKDIR/.s.PGSQL.5432:/run/postgresql/.s.PGSQL.5432" barletta
+
+      postgres-mcp --access-mode restricted \
+        "postgresql://postgres@/hemingway?host=$SOCKDIR"
+    '';
+  };
 in
 {
   xsfx.codingAgent.enable = true;
@@ -109,6 +168,17 @@ in
       env = {
         MEMORY_FILE_PATH = "/home/marv/.pi/agent/memory.jsonl";
       };
+    };
+    # Read-only postgres MCP against barletta's `hemingway` DB. Keyed by
+    # host+DB (like the two grafana instances) since the key prefixes every tool
+    # name and a bare `postgres` wouldn't scale to a second DB. `bin` is the
+    # SSH-tunnel wrapper (postgres isn't exposed on the network); `command` must
+    # match the wrapper's binary name so the adapter execs it. No env/secret:
+    # the wrapper connects passwordlessly via barletta's localhost trust rule
+    # (see the wrapper comment above).
+    "postgres-hemingway-barletta" = {
+      bin = postgresHemingwayBarletta;
+      command = "postgres-hemingway-barletta";
     };
     # JetBrains ships a remote MCP server built into YouTrack itself (no
     # package to install): <instance>/mcp over StreamableHTTP. mcp-proxy
