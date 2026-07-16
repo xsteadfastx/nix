@@ -16,7 +16,7 @@ _: {
     ./paperless.nix
     ./print.nix
     ./secrets.nix
-    ./slock.nix
+    ./lock.nix
     ./syncthing.nix
   ];
 }
