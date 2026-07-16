@@ -36,6 +36,20 @@ _: {
     owner = "marv";
   };
 
+  # Hemingway MCP proxy: deployed Hemingway API URL + Caddy basic-auth creds.
+  # `hemingway mcp` reads these as HEMINGWAY_SERVICES_API / HEMINGWAY_MCP_USERNAME /
+  # HEMINGWAY_MCP_PASSWORD via the hemingway-mcp wrapper (hosts/coltrane/
+  # coding-agent.nix).
+  sops.secrets."mcp-hemingway-url" = {
+    owner = "marv";
+  };
+  sops.secrets."mcp-hemingway-username" = {
+    owner = "marv";
+  };
+  sops.secrets."mcp-hemingway-password" = {
+    owner = "marv";
+  };
+
   sops.secrets."gh-token" = {
     owner = "marv";
   };

@@ -49,5 +49,14 @@
       bin = pkgs.mcp-proxy;
       command = "mcp-proxy";
     };
+    # Hemingway ships its own MCP server (`hemingway mcp`), a stdio proxy that
+    # forwards tool calls to the deployed Hemingway API (Connect-RPC). The work
+    # `hemingway` CLI comes from the flake input overlay (overlays/default.nix);
+    # host config (API URL + Caddy basic-auth creds) is injected via HEMINGWAY_*
+    # `*_FILE` env vars in the host's mcpServers entry.
+    hemingway = {
+      bin = pkgs.hemingway;
+      command = "hemingway";
+    };
   };
 }

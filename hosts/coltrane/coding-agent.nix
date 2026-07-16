@@ -180,6 +180,26 @@ in
       bin = postgresHemingwayBarletta;
       command = "postgres-hemingway-barletta";
     };
+    # Hemingway MCP proxy: `hemingway mcp` runs a stdio MCP server forwarding
+    # tool calls to the deployed Hemingway API (Connect-RPC) behind Caddy basic
+    # auth. The binary is the work `hemingway` CLI (flake input / overlay); it
+    # takes no config file - all three values come from HEMINGWAY_* env vars
+    # (viper prefix HEMINGWAY, "." -> "_"): HEMINGWAY_SERVICES_API (API URL),
+    # HEMINGWAY_MCP_USERNAME + HEMINGWAY_MCP_PASSWORD (basic auth). Each is a
+    # sops secret injected via the standard `*_FILE` convention - the module's
+    # secret wrapper (wrapper.nix) cats each *_FILE into the real var and unsets
+    # the *_FILE var before exec. Unsetting matters here: hemingway's config
+    # has both `mcp.password` and `mcp.password_file` keys, and its
+    # readPasswordFile fatal-exits if both are set, so leaving the *_FILE var
+    # in place (the old wrapper behaviour) would crash it.
+    hemingway = {
+      args = [ "mcp" ];
+      env = {
+        HEMINGWAY_SERVICES_API_FILE = config.sops.secrets."mcp-hemingway-url".path;
+        HEMINGWAY_MCP_USERNAME_FILE = config.sops.secrets."mcp-hemingway-username".path;
+        HEMINGWAY_MCP_PASSWORD_FILE = config.sops.secrets."mcp-hemingway-password".path;
+      };
+    };
     # JetBrains ships a remote MCP server built into YouTrack itself (no
     # package to install): <instance>/mcp over StreamableHTTP. mcp-proxy
     # bridges it to stdio so the adapter spawns it like any other server.
