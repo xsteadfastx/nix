@@ -21,13 +21,22 @@
     }:
     let
       fileVars = pkgs.lib.filter (k: pkgs.lib.hasSuffix "_FILE" k) (pkgs.lib.attrNames env);
+      # For each `*_FILE` env key, export the stripped (real) var from the file
+      # AND unset the `*_FILE` var. Unsetting matters for servers that, like
+      # hemingway, read BOTH the real var and a `<key>_file` config key from the
+      # same env pair (e.g. HEMINGWAY_MCP_PASSWORD and HEMINGWAY_MCP_PASSWORD_FILE):
+      # keeping both set makes the server fatal-exit ("only password or password
+      # file needs to be defined"). For servers that ignore the `*_FILE` var
+      # (grafana, youtrack, github) this is a harmless no-op, so unsetting is a
+      # strict improvement and keeps the `*_FILE` convention uniform across all
+      # servers.
       exportLines = map (
         fileVar:
         let
           realVar = pkgs.lib.removeSuffix "_FILE" fileVar;
         in
         # shell, not nix: $<fileVar> and $(cat ...) stay literal
-        "if [ -n \"\$${fileVar}\" ] && [ -f \"\$${fileVar}\" ]; then export ${realVar}=\$(cat \"\$${fileVar}\"); fi"
+        "if [ -n \"\$${fileVar}\" ] && [ -f \"\$${fileVar}\" ]; then export ${realVar}=\$(cat \"\$${fileVar}\"); unset ${fileVar}; fi"
       ) fileVars;
       script = pkgs.lib.concatStringsSep "\n" (
         [
