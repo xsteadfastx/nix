@@ -46,6 +46,15 @@
   boot.zfs.package = pkgs.zfs;
   boot.kernelParams = [ "drm_kms_helper.poll=1" ];
 
+  # Disable ZFS block cloning (reflink/copy_file_range). ZFS 2.3+ defaults
+  # zfs_bclone_enabled=1, but the clone path can deadlock the txg sync: on
+  # 2026-07-16 a burst of `mv` (copy_file_range, likely a nix-fast-build) hung
+  # in zfs_clone_range -> txg_wait_synced and froze the whole pool (hard
+  # power-off required). Upstream kept this feature off by default for exactly
+  # this bug class (openzfs/zfs #16680). This only stops *new* clones being
+  # created; the deadlocking write path is then never entered.
+  boot.extraModprobeConfig = "options zfs zfs_bclone_enabled=0";
+
   boot.initrd.availableKernelModules = [
     "nvme"
     "thunderbolt"
