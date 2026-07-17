@@ -20,6 +20,10 @@ let
     i3lock=${pkgs.i3lock-color}/bin/i3lock
     # Dracula ring + clock. Idle=comment, verify=cyan, wrong=red, keys=purple/pink.
     opts=(
+      # --composite: without it, i3lock (launched by xss-lock off the X saver)
+      # grabs input but never repaints over the framebuffer, so the live desktop
+      # shows through until a pointer event forces a redraw. Forces a proper draw.
+      --composite
       --clock --indicator --radius=110 --ring-width=8
       --time-str="%H:%M:%S" --date-str="%A, %-d. %B"
       --time-font="JetBrainsMono Nerd Font" --date-font="JetBrainsMono Nerd Font"
