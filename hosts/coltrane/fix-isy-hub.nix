@@ -138,18 +138,25 @@
     rm -f /run/user/1000/autorandr-visible-ws
   '';
 
-  # After long s2idle, xe relinks its DP connectors ASYNCHRONOUSLY and emits no
-  # HPD event, so the DRM-hotplug udev rule never fires the second autorandr
-  # that applies the external profile — monitors stay dark until autorandr is
-  # run a SECOND time by hand (verified 2026-06-26). This service automates the
-  # manually-verified fix: run `autorandr --change --match-edid` as marv once to
-  # nudge the probe, poll sysfs until an external DP connector reports
-  # 'connected' (xe relink is async, up to ~1 min observed), then run it again
-  # to apply. Poll-until-connected instead of a fixed sleep, since the relink
-  # latency is variable and never logged. Runs as marv with the X session env so
-  # autorandr and its i3 postswitch hooks work; sysfs status is world-readable.
+  # DP-MST dies after s2idle resume because xe has not restored the MST topology
+  # manager yet (mst_primary == NULL). Root cause, from the kernel WARN on resume
+  # (drm_WARN_ON(!mgr->mst_state || !mgr->mst_primary) in
+  # drm_dp_mst_topology_queue_probe, called from xe's mst_stream_pre_enable during
+  # an atomic commit): a MODESET issued too early races xe's MST restore and
+  # derails it, so the DP-1-3/DP-1-4 substreams never enumerate — only the base
+  # DP-1 comes up in SST. This is the upstream "Resume DP MST before doing any
+  # kind of modesetting" race. The previous version of this service was the
+  # trigger: it ran `autorandr` ~1 s after resume, ~20 s BEFORE the dock had even
+  # re-enumerated (dock USB re-appears ~+22 s, verified in journald).
+  #
+  # Fix: do NOT modeset on resume. Wait for xe to bring the MST substreams up on
+  # its own, gating on the SUBSTREAM connectors (card0-DP-1-3/-1-4 — note the
+  # two-dash glob, which excludes the base card0-DP-1 that comes up in SST and
+  # used to trigger the apply prematurely), THEN apply the profile exactly once.
+  # eDP is restored by Xorg independently, so waiting costs nothing there.
+  # Runs as marv with the X session env so autorandr's i3 postswitch hooks work.
   systemd.services.mst-reprobe = {
-    description = "Re-probe DP connectors after resume and re-apply autorandr";
+    description = "Apply autorandr after xe restores DP-MST on resume";
     after = [
       "suspend.target"
       "hibernate.target"
@@ -171,21 +178,24 @@
       User = "marv";
       ExecStart = pkgs.writeShellScript "mst-reprobe" ''
         autorandr="${pkgs.autorandr}/bin/autorandr --change --match-edid"
-        # Run 1: nudge the connector probe.
-        $autorandr || true
-        # Poll for the async xe relink (120 s ceiling = 40 * 3 s).
-        for _ in $(${pkgs.coreutils}/bin/seq 1 40); do
-          for c in /sys/class/drm/card*-DP-*/status; do
+        # Wait up to 90 s (30 * 3 s) for an MST SUBSTREAM connector to come up.
+        # Two-dash glob card*-DP-*-* matches card0-DP-1-3/-1-4 but NOT base DP-1.
+        for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
+          for c in /sys/class/drm/card*-DP-*-*/status; do
             [ -e "$c" ] || continue
             if [ "$(${pkgs.coreutils}/bin/cat "$c")" = "connected" ]; then
-              # Run 2: external connector is up — apply the external profile.
+              # MST is up — apply the external profile (home/work). One modeset.
               $autorandr || true
               exit 0
             fi
           done
           ${pkgs.coreutils}/bin/sleep 3
         done
-        # Timed out with no external DP (truly mobile): leave the run-1 state.
+        # No MST substream appeared (truly mobile, or xe failed to restore MST —
+        # if externals are still dead here, xe needs a forceful re-init: driver
+        # rebind or reboot; a resume hook cannot recover a NULL mst_primary).
+        # Apply the mobile default so eDP is sane.
+        $autorandr --default mobile || true
         exit 0
       '';
     };
