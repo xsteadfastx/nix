@@ -16,12 +16,12 @@ let
   # itself, not just `npmDepsHash`: buildNpmPackage bakes `npmDeps` from the
   # original src at call time, so only bumping the hash would keep fetching
   # the previous version's lock and fail with a lockfile mismatch.
-  piVersion = "0.80.7";
+  piVersion = "0.80.10";
   piSrc = unstable.fetchFromGitHub {
     owner = "earendil-works";
     repo = "pi";
     tag = "v${piVersion}";
-    hash = "sha256-s7dD82fugvWRvqL1VTcEwCIR5JI6t7VeFHR9NdMtG00=";
+    hash = "sha256-Vs/ndHYzFyfN4CjPV2zMYblLXe9IuM13UrPJI1VsZEQ=";
   };
 in
 {
@@ -31,7 +31,7 @@ in
     npmDeps = unstable.fetchNpmDeps {
       src = piSrc;
       name = "pi-coding-agent-${piVersion}-npm-deps";
-      hash = "sha256-Bd/NIt3lyQR5Y7P+HksPxMQvJc0AjVfDi1M1bH3/eOg=";
+      hash = "sha256-XGvDNH+eilsgc0Z7ITqbitB/9RVc+WuDfCcr1pibNqk=";
     };
   });
 
