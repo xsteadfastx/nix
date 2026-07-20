@@ -99,6 +99,22 @@ in
         DISABLE_DOWNLOAD_SOURCE_ARCHIVES = true;
       };
 
+      # Minimal-instance trimming: Forgejo enables these subsystems by default,
+      # but this box runs none of them. Turning them off shrinks the attack /
+      # disk-fill surface on a small VM. Matches the common self-hosted pattern.
+      # - actions: no CI runners are registered, so it does nothing but expose
+      #   the Actions API/UI.
+      # - packages: the package registry stores arbitrary blobs on the same
+      #   disk anonymously-reachably (another disk-fill vector like archives).
+      actions.ENABLED = false;
+      packages.ENABLED = false;
+
+      # Not used here; disable to reduce surface further.
+      # - federation: ActivityPub federation (experimental, unused).
+      # - api: hide the /api/swagger interactive docs endpoint.
+      federation.ENABLED = false;
+      api.ENABLE_SWAGGER = false;
+
       session = {
         COOKIE_SECURE = true;
       };
