@@ -1,5 +1,6 @@
 _: {
   imports = [
+    ./anubis.nix
     ./backup.nix
     ./caddy.nix
     ./configuration.nix

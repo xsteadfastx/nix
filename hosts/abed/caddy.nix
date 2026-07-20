@@ -11,11 +11,10 @@
       plugins = [
         "github.com/caddyserver/cache-handler@v0.16.0"
         "github.com/caddyserver/transform-encoder@v0.0.0-20260403095929-3a808ce84ca0"
-        "github.com/daegalus/caddy-anubis@v0.0.0-20250423203506-a2bb6cdfacae"
         "github.com/mholt/caddy-ratelimit@v0.1.0"
         "pkg.jsn.cam/caddy-defender@v0.10.0"
       ];
-      hash = "sha256-24vn4FSpjb4siYn5mwi4dWB3Qst6IBeDhF3ptTJ3GOk=";
+      hash = "sha256-9tiG5n7TSferI03K+hawDB38Y5t6trOQMDZW6zV3lnY=";
     };
 
     globalConfig = ''
@@ -60,7 +59,12 @@
             ranges aliyun vpn aws deepseek githubcopilot gcloud oci azurepubliccloud openai mistral vultr cloudflare digitalocean linode
           }
 
-          reverse_proxy 127.0.0.1:3000
+          # Proxy to Anubis (PoW anti-scraper), which forwards to Forgejo on
+          # :3000 (see hosts/abed/anubis.nix). X-Real-IP so Anubis sees the real
+          # client, not the loopback address.
+          reverse_proxy 127.0.0.1:8923 {
+            header_up X-Real-IP {remote_host}
+          }
         '';
       };
 
