@@ -89,6 +89,16 @@ in
         DISABLE_REGISTRATION = true;
       };
 
+      # Bots were walking every commit SHA of large mirrors (e.g.
+      # prometheus/cadvisor) and hitting /<repo>/archive/<sha>.bundle, making
+      # Forgejo generate + cache a full-repo bundle per request. That filled
+      # the disk (~9.7G under data/repo-archive) and wedged the leveldb queue.
+      # The `dlSourceEnabled` guard on the /archive/* route 404s before any
+      # generation when this is set, killing the storm at the door.
+      repository = {
+        DISABLE_DOWNLOAD_SOURCE_ARCHIVES = true;
+      };
+
       session = {
         COOKIE_SECURE = true;
       };
