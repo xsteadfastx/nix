@@ -55,8 +55,6 @@ let
 
       quickemu = inputs.quickemu.packages.${system}.default;
 
-      hemingway = inputs.hemingway.packages.${system}.hemingway;
-
       imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
       importsony = prev.callPackage ../pkgs/importsony/package.nix { };
       importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };

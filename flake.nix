@@ -12,7 +12,6 @@
     compose2nix.url = "github:aksiksi/compose2nix";
     disko.url = "github:nix-community/disko";
     flake-utils.url = "github:numtide/flake-utils";
-    hemingway.url = "git+ssh://git@git.wobcom.de/smartmetering/hemingway.git?ref=refs/tags/v0.89.13";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.14.3";
