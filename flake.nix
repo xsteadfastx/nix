@@ -5,17 +5,24 @@
     agenix.inputs.home-manager.follows = "home-manager";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
     agenix.url = "github:ryantm/agenix";
+    airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
+    colmena.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena";
     compose2nix.inputs.nixpkgs.follows = "nixpkgs";
     compose2nix.url = "github:aksiksi/compose2nix";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
     flake-utils.url = "github:numtide/flake-utils";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     kerouac.url = "git+ssh://git@git.wobcom.de/smartmetering/kerouac.git?ref=refs/tags/v0.14.3";
+    microvm.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    microvm.url = "github:microvm-nix/microvm.nix";
+    nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
     nixos-anywhere.url = "github:nix-community/nixos-anywhere";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
@@ -24,6 +31,7 @@
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
+    srvos.inputs.nixpkgs.follows = "nixpkgs";
     srvos.url = "github:nix-community/srvos";
   };
 
