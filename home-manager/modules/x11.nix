@@ -16,39 +16,34 @@ in
     ./i3
   ];
 
-  home.packages =
-    with pkgs.unstable;
-    lib.mkIf cfg.x11 [
-      # beekeeper-studio # sql
-      # quickemu
+  home.packages = lib.mkIf cfg.x11 [
+    pkgs.calibre
+    pkgs.handbrake
+    pkgs.makemkv
+    pkgs.unstable.arandr
+    pkgs.unstable.evince
+    pkgs.unstable.gimp
+    pkgs.unstable.libmediainfo
+    pkgs.unstable.mediaelch
+    pkgs.unstable.mpv
+    pkgs.unstable.mqttx
+    pkgs.unstable.networkmanagerapplet
+    pkgs.unstable.pavucontrol
+    pkgs.unstable.pcmanfm
+    pkgs.unstable.peek # gif screen recorder
+    pkgs.unstable.rawtherapee
+    pkgs.unstable.remmina
+    pkgs.unstable.rustdesk-flutter
+    pkgs.unstable.signal-desktop
+    pkgs.unstable.slack
+    pkgs.unstable.system-config-printer
+    pkgs.unstable.tor-browser
+    pkgs.unstable.xdotool
+    pkgs.unstable.xsaneGimp
 
-      arandr
-      evince
-      gimp
-      libmediainfo
-      mediaelch
-      mpv
-      mqttx
-      networkmanagerapplet
-      pavucontrol
-      pcmanfm
-      peek # gif screen recorder
-      pkgs.calibre
-      pkgs.handbrake
-      pkgs.makemkv
-      rustdesk-flutter
-      rawtherapee
-      remmina
-      signal-desktop
-      slack
-      system-config-printer
-      tor-browser
-      xdotool
-      xsaneGimp
-
-      (lib.mkIf cfg.work pkgs._1password-cli)
-      (lib.mkIf cfg.work pkgs._1password-gui)
-    ];
+    (lib.mkIf cfg.work pkgs._1password-cli)
+    (lib.mkIf cfg.work pkgs._1password-gui)
+  ];
 
   home.sessionVariables.DEFAULT_BROWSER = "chromium";
 
