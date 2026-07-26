@@ -22,17 +22,21 @@ let
         sort -n | ${pkgs.gawk}/bin/awk '{print $2}')
       MIDDLE=$(echo "$SORTED" | sed -n '1p')
       RIGHT=$(echo "$SORTED" | sed -n '2p')
+      echo "move-workspaces: SORTED=[$SORTED] MIDDLE=[$MIDDLE] RIGHT=[$RIGHT] snapshot=$([ -f /run/user/1000/autorandr-ws-layout ] && echo yes || echo no)"
       if [ -f /run/user/1000/autorandr-ws-layout ]; then
         while IFS=' ' read -r ws out; do
+          echo "move-workspaces: snapshot ws=$ws -> $out"
           ${pkgs.i3}/bin/i3-msg "workspace $ws, move workspace to output $out" 2>/dev/null || true
         done < /run/user/1000/autorandr-ws-layout
         rm /run/user/1000/autorandr-ws-layout
       else
         if [ -n "$MIDDLE" ]; then
+          echo "move-workspaces: default ws1->$MIDDLE ws2->eDP-1 ws3->$RIGHT"
           ${pkgs.i3}/bin/i3-msg "workspace 1, move workspace to output $MIDDLE"
           ${pkgs.i3}/bin/i3-msg 'workspace 2, move workspace to output eDP-1'
           [ -n "$RIGHT" ] && ${pkgs.i3}/bin/i3-msg "workspace 3, move workspace to output $RIGHT"
         else
+          echo "move-workspaces: single-ext ws1->$RIGHT ws2->eDP-1"
           [ -n "$RIGHT" ] && ${pkgs.i3}/bin/i3-msg "workspace 1, move workspace to output $RIGHT"
           ${pkgs.i3}/bin/i3-msg 'workspace 2, move workspace to output eDP-1'
         fi
@@ -91,18 +95,6 @@ in
     enable = true;
     profiles = {
       "mobile" = {
-        hooks.postswitch."restore-mst" = ''
-          # Skip during early boot — isy-hub-mst-init handles MST init
-          [ "$(cut -d. -f1 /proc/uptime)" -lt 120 ] && exit 0
-          for d in /sys/bus/usb/devices/*/; do
-            vid=$(cat "$d/idVendor" 2>/dev/null)
-            pid=$(cat "$d/idProduct" 2>/dev/null)
-            if [ "$vid" = "05e3" ] && [ "$pid" = "0626" ]; then
-              /run/wrappers/bin/sudo /run/current-system/sw/bin/systemctl start mst-restore.service
-              break
-            fi
-          done
-        '';
         fingerprint = {
           eDP-1 = eDP1.fingerprint;
         };
