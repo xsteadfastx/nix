@@ -49,14 +49,19 @@
       bin = pkgs.mcp-proxy;
       command = "mcp-proxy";
     };
-    # Hemingway ships its own MCP server (`hemingway mcp`), a stdio proxy that
-    # forwards tool calls to the deployed Hemingway API (Connect-RPC). The work
-    # `hemingway` CLI comes from the flake input overlay (overlays/default.nix);
-    # host config (API URL + Caddy basic-auth creds) is injected via HEMINGWAY_*
+    # Hemingway hosts its MCP server in-process at /mcp on the deployed API
+    # (v0.89.17+, StreamableHTTP, behind the same Caddy basic_auth as the API).
+    # mcp-proxy bridges that remote endpoint to stdio. Caddy basic_auth needs an
+    # `Authorization: Basic <base64(user:pass)>` header, which mcp-proxy has no
+    # native option for (only `-H KEY VALUE` or the `API_ACCESS_TOKEN` Bearer
+    # shortcut), so the host provides a bespoke writeShellApplication wrapper
+    # (hemingwayMcp) that builds the header from the HEMINGWAY_* sops secrets
+    # and execs mcp-proxy; the host's mcpServers entry overrides `bin`/`command`
+    # with it. Host config (API URL + basic-auth creds) is injected via HEMINGWAY_*
     # `*_FILE` env vars in the host's mcpServers entry.
     hemingway = {
-      bin = pkgs.hemingway;
-      command = "hemingway";
+      bin = pkgs.mcp-proxy;
+      command = "mcp-proxy";
     };
   };
 }

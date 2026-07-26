@@ -64,6 +64,42 @@ let
         "postgresql://postgres@/hemingway?host=$SOCKDIR"
     '';
   };
+
+  # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
+  # deployed API (StreamableHTTP), behind the same Caddy basic_auth as the rest
+  # of the API. mcp-proxy bridges that remote endpoint to stdio; the wrinkle is
+  # that mcp-proxy has no native basic-auth option (only `-H KEY VALUE` or the
+  # `API_ACCESS_TOKEN` Bearer shortcut), so this wrapper builds the
+  # `Authorization: Basic <base64(user:pass)>` header from the HEMINGWAY_*
+  # secrets and execs mcp-proxy with it.
+  #   * `runtimeInputs` pins coreutils (base64) + mcp-proxy so the wrapper is
+  #     self-contained regardless of the launching shell's PATH (a dev shell
+  #     or bare systemd context may not put coreutils first).
+  #   * The real env vars (HEMINGWAY_SERVICES_API / _USERNAME / _PASSWORD) are
+  #     already exported by the module's secret wrapper (wrapper.nix), which
+  #     cats each *_FILE into the real var and unsets the *_FILE var before
+  #     exec'ing this wrapper. So this wrapper only consumes the real vars.
+  #   * The header is built as a shell variable and passed as a SINGLE argv
+  #     element to mcp-proxy (`-H Authorization "$AUTH"`); doing it inline in an
+  #     mcp.json arg via `$(...)` does NOT work — the module's wrapper eval-execs
+  #     with `eval exec ... "\$@"`, and the nested double-quotes inside the
+  #     command substitution ("$HEMINGWAY_MCP_USERNAME") close the outer
+  #     double-quote during eval's re-parse, splitting `Basic` from the b64 into
+  #     two argv elements and breaking mcp-proxy's arg parsing.
+  #   * The stdio `hemingway mcp` command still exists for local/off-host use but
+  #     is no longer wired into the agent.
+  hemingwayMcp = pkgs.writeShellApplication {
+    name = "hemingway-mcp";
+    runtimeInputs = [
+      pkgs.mcp-proxy
+      pkgs.coreutils
+    ];
+    text = ''
+      set -euo pipefail
+      AUTH="Basic $(printf '%s:%s' "$HEMINGWAY_MCP_USERNAME" "$HEMINGWAY_MCP_PASSWORD" | base64 -w0)"
+      exec mcp-proxy --transport streamablehttp -H Authorization "$AUTH" "$HEMINGWAY_SERVICES_API/mcp"
+    '';
+  };
 in
 {
   xsfx.codingAgent.enable = true;
@@ -180,20 +216,20 @@ in
       bin = postgresHemingwayBarletta;
       command = "postgres-hemingway-barletta";
     };
-    # Hemingway MCP proxy: `hemingway mcp` runs a stdio MCP server forwarding
-    # tool calls to the deployed Hemingway API (Connect-RPC) behind Caddy basic
-    # auth. The binary is the work `hemingway` CLI (flake input / overlay); it
-    # takes no config file - all three values come from HEMINGWAY_* env vars
-    # (viper prefix HEMINGWAY, "." -> "_"): HEMINGWAY_SERVICES_API (API URL),
-    # HEMINGWAY_MCP_USERNAME + HEMINGWAY_MCP_PASSWORD (basic auth). Each is a
-    # sops secret injected via the standard `*_FILE` convention - the module's
-    # secret wrapper (wrapper.nix) cats each *_FILE into the real var and unsets
-    # the *_FILE var before exec. Unsetting matters here: hemingway's config
-    # has both `mcp.password` and `mcp.password_file` keys, and its
-    # readPasswordFile fatal-exits if both are set, so leaving the *_FILE var
-    # in place (the old wrapper behaviour) would crash it.
+    # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
+    # deployed API (StreamableHTTP, behind the same Caddy basic_auth as the
+    # rest of the API). `hemingwayMcp` (bespoke wrapper in the `let` above)
+    # bridges it to stdio via mcp-proxy, building the `Authorization: Basic
+    # <base64(user:pass)>` header from the HEMINGWAY_* creds (mcp-proxy has no
+    # native basic-auth option). The three sops secrets are reused unchanged:
+    # HEMINGWAY_SERVICES_API (API base, e.g. https://api.smartmetering.service
+    # .wobcom.de) -> the wrapper appends /mcp; HEMINGWAY_MCP_USERNAME +
+    # HEMINGWAY_MCP_PASSWORD -> base64'd into the header. The module's secret
+    # wrapper cats each *_FILE into the real var and unsets the *_FILE var
+    # before exec'ing hemingwayMcp, which then reads the real vars.
     hemingway = {
-      args = [ "mcp" ];
+      bin = hemingwayMcp;
+      command = "hemingway-mcp";
       env = {
         HEMINGWAY_SERVICES_API_FILE = config.sops.secrets."mcp-hemingway-url".path;
         HEMINGWAY_MCP_USERNAME_FILE = config.sops.secrets."mcp-hemingway-username".path;
