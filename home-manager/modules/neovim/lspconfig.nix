@@ -13,6 +13,7 @@ in
     extraPackages = with pkgs.unstable; [
       bash-language-server
       buf
+      cook-cli # `cook lsp` — Cooklang language server
       gopls
       lua-language-server
       nil
@@ -130,6 +131,17 @@ in
         	},
         })
         vim.lsp.enable("yamlls")
+
+        -- Cooklang (`cook lsp`, from cookcli). Neovim has no built-in .cook
+        -- filetype, so register it before enabling the server.
+        vim.filetype.add({ extension = { cook = "cook" } })
+        vim.lsp.config("cooklang", {
+        	cmd = { "cook", "lsp" },
+        	filetypes = { "cook" },
+        	root_markers = { ".git" },
+        	capabilities = capabilities,
+        })
+        vim.lsp.enable("cooklang")
 
         -- Bulk enable generic servers
         local generic_servers = {

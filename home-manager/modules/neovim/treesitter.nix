@@ -46,6 +46,7 @@ in
           markdown_inline
           sql
           terraform
+          cooklang
         ]
       ))
     ];
@@ -55,6 +56,10 @@ in
         require("treesitter-context").setup({
             max_lines = 3,
         })
+
+        -- .cook files use filetype "cook" but the parser is named "cooklang";
+        -- map it so the autocmd below resolves the right parser.
+        vim.treesitter.language.register("cooklang", "cook")
 
         vim.api.nvim_create_autocmd({ "FileType", "BufReadPost" }, {
           callback = function(args)
