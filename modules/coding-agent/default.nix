@@ -308,6 +308,24 @@ in
                   cacheWrite = 0;
                 };
               }
+              {
+                # deepseek-v4-flash:0731-cloud — 304B FP8, served via the local
+                # ollama but inference on a cloud backend (no iGPU cap, so the
+                # full 1M context is advertised). thinking capability -> pi must
+                # parse the reasoning channel.
+                id = "deepseek-v4-flash:0731-cloud";
+                name = "DeepSeek V4 Flash";
+                reasoning = true;
+                input = [ "text" ];
+                contextWindow = 1048576; # /api/show
+                maxTokens = 8192;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
             ];
           };
           ollama-wobcom = {
@@ -318,20 +336,66 @@ in
               supportsDeveloperRole = false;
               supportsReasoningEffort = false;
             };
+            # contextWindow values come from ollama /api/tags
+            # (details.context_length). For models that don't report one
+            # (gemma4:26b/31b, gemma3:27b) the family native is used:
+            # gemma4 = 262144 (confirmed via gemma4:12b), gemma3 = 131072.
+            # maxTokens is tiered by context: 32K ctx -> 8192 out,
+            # 131K ctx -> 16384 out, 262K ctx -> 32768 out. Embedding
+            # models keep 8192 (output cap irrelevant for embeddings).
             models = [
               {
                 id = "gpt-oss:120b";
                 name = "GPT-OSS 120B";
                 reasoning = true;
                 input = [ "text" ];
-                contextWindow = 131072;
-                maxTokens = 8192;
+                contextWindow = 131072; # /api/tags
+                maxTokens = 16384;
                 cost = {
                   input = 0;
                   output = 0;
                   cacheRead = 0;
                   cacheWrite = 0;
                 };
+              }
+              {
+                id = "qwen3.6:35b";
+                name = "Qwen 3.6 35B-A3B";
+                # MoE: 35B total / 3B active params, qwen35moe family.
+                # Vision + tools + thinking. Fast inference on wobcom (no iGPU cap).
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+                compat.thinkingFormat = "qwen-chat-template";
+              }
+              {
+                id = "qwen3.6:latest";
+                name = "Qwen 3.6 36B";
+                # qwen35moe, 36B Q4_K_M. Vision + tools + thinking.
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+                compat.thinkingFormat = "qwen-chat-template";
               }
               {
                 id = "ornith:35b";
@@ -343,8 +407,8 @@ in
                 # network is down or ollama-wobcom is unreachable.
                 reasoning = true;
                 input = [ "text" ];
-                contextWindow = 262144;
-                maxTokens = 8192;
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
                 cost = {
                   input = 0;
                   output = 0;
@@ -356,14 +420,82 @@ in
                 id = "gemma4:31b";
                 name = "Gemma 4 31B";
                 # gemma4 family is a reasoning model (thinking capability
-                # confirmed via /api/show); see gemma4:12b above.
+                # confirmed via /api/show); see gemma4:12b in ollama-local.
                 reasoning = true;
                 input = [
                   "text"
                   "image"
                 ];
-                contextWindow = 1048576; # Gemma 4 native
-                maxTokens = 8192;
+                contextWindow = 262144; # gemma4 native (/api/tags on 12b)
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "gemma4:26b";
+                name = "Gemma 4 26B";
+                # gemma4 family is a reasoning model (thinking capability
+                # confirmed via /api/show); see gemma4:12b in ollama-local.
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # gemma4 native (/api/tags on 12b)
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "gemma4:12b";
+                name = "Gemma 4 12B";
+                # gemma4 reasoning model with vision. Same build as the
+                # ollama-local entry but served from wobcom (no iGPU cap,
+                # so full 262K context advertised).
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "qwen3-coder:latest";
+                name = "Qwen 3 Coder";
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+              }
+              {
+                id = "qwen3-coder:30b";
+                name = "Qwen 3 Coder 30B";
+                # Same digest as qwen3-coder:latest; explicit tag alias.
+                reasoning = false;
+                input = [ "text" ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
                 cost = {
                   input = 0;
                   output = 0;
@@ -374,10 +506,14 @@ in
               {
                 id = "qwen3.5:latest";
                 name = "Qwen 3.5";
+                # qwen35, 9.7B. /api/tags reports vision capability.
                 reasoning = true;
-                input = [ "text" ];
-                contextWindow = 262144;
-                maxTokens = 8192;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
                 cost = {
                   input = 0;
                   output = 0;
@@ -387,15 +523,15 @@ in
                 compat.thinkingFormat = "qwen-chat-template";
               }
               {
-                id = "gemma3:27b";
-                name = "Gemma 3 27B";
-                reasoning = false;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 1048576; # Gemma 3 native
-                maxTokens = 8192;
+                id = "ornith:9b";
+                name = "Ornith 9B";
+                # Smaller 9B variant of the qwen35 family, same thinking +
+                # tool-use capabilities as ornith:35b but fits a tighter
+                # memory budget. Also available locally for offline use.
+                reasoning = true;
+                input = [ "text" ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
                 cost = {
                   input = 0;
                   output = 0;
@@ -404,12 +540,15 @@ in
                 };
               }
               {
-                id = "deepseek-r1:32b";
-                name = "DeepSeek R1 32B";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 131072;
-                maxTokens = 8192;
+                id = "gemma3:27b";
+                name = "Gemma 3 27B";
+                reasoning = false;
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 131072; # gemma3 native
+                maxTokens = 16384;
                 cost = {
                   input = 0;
                   output = 0;
@@ -422,7 +561,7 @@ in
                 name = "Mistral Small 24B";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 32768; # reported by ollama /api/tags
+                contextWindow = 32768; # /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -436,7 +575,7 @@ in
                 name = "Qwen 2.5 14B Instruct";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 32768; # reported by ollama /api/tags
+                contextWindow = 32768; # /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -450,57 +589,7 @@ in
                 name = "Qwen 2.5 7B Instruct";
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 32768; # reported by ollama /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3-coder:latest";
-                name = "Qwen 3 Coder";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 262144;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "ornith:9b";
-                name = "Ornith 9B";
-                # Default fallback model. Smaller 9B variant of the qwen35 family,
-                # same thinking + tool-use capabilities as ornith:35b but fits in a
-                # tighter memory budget. Also available locally for offline use.
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 262144;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "gemma4:26b";
-                name = "Gemma 4 26B";
-                # gemma4 family is a reasoning model (thinking capability
-                # confirmed via /api/show); see gemma4:12b above.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 1048576; # Gemma 4 native
+                contextWindow = 32768; # /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -512,9 +601,11 @@ in
               {
                 id = "bge-m3:latest";
                 name = "bge-m3";
+                # Embedding-only model (capability: embedding); kept for
+                # tooling that may request it, not a chat/completion model.
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 131072;
+                contextWindow = 8192; # /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
@@ -526,9 +617,10 @@ in
               {
                 id = "nomic-embed-text:latest";
                 name = "nomic-embed-text";
+                # Embedding-only model (capability: embedding).
                 reasoning = false;
                 input = [ "text" ];
-                contextWindow = 131072;
+                contextWindow = 2048; # /api/tags
                 maxTokens = 8192;
                 cost = {
                   input = 0;
