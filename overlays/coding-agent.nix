@@ -16,12 +16,15 @@ let
   # itself, not just `npmDepsHash`: buildNpmPackage bakes `npmDeps` from the
   # original src at call time, so only bumping the hash would keep fetching
   # the previous version's lock and fail with a lockfile mismatch.
-  piVersion = "0.80.10";
+  # nixpkgs-unstable's pi-coding-agent (0.83.0) is older than the release we
+  # want; pinning from GitHub keeps the bundled pi-permission-system
+  # (peerDeps >=0.79.0) satisfied.
+  piVersion = "0.84.1";
   piSrc = unstable.fetchFromGitHub {
     owner = "earendil-works";
     repo = "pi";
     tag = "v${piVersion}";
-    hash = "sha256-Vs/ndHYzFyfN4CjPV2zMYblLXe9IuM13UrPJI1VsZEQ=";
+    hash = "sha256-lg+I4S/aAjazjhGZU567ow+rksoNiqOqjHl//TjAMes=";
   };
 in
 {
@@ -31,7 +34,13 @@ in
     npmDeps = unstable.fetchNpmDeps {
       src = piSrc;
       name = "pi-coding-agent-${piVersion}-npm-deps";
-      hash = "sha256-XGvDNH+eilsgc0Z7ITqbitB/9RVc+WuDfCcr1pibNqk=";
+      hash = "sha256-tufyZQRPAUeDtiq0UQodbKA/Y9xUAvNT8K+NWFjkeME=";
+    };
+    # nixpkgs's modelData hash is for pi-ai-0.83.0.tgz; the URL follows
+    # finalAttrs.version, so it must be re-pinned for the new version.
+    modelData = unstable.fetchurl {
+      url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${piVersion}.tgz";
+      hash = "sha256-araJGJ58s95c2xJjEqPmDorDX+XuXxtj0A9xHIpDDHM=";
     };
   });
 
