@@ -19,7 +19,7 @@ in
   home.packages = lib.mkIf cfg.x11 [
     pkgs.calibre
     pkgs.handbrake
-    pkgs.makemkv
+    # pkgs.unstable.makemkv
     pkgs.unstable.arandr
     pkgs.unstable.evince
     pkgs.unstable.gimp
