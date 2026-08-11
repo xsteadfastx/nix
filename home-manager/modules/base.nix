@@ -1,12 +1,7 @@
 {
   pkgs,
-  nixosConfig,
-  lib,
   ...
 }:
-let
-  cfg = nixosConfig.xsfx;
-in
 {
   imports = [
     ./abcde.nix
@@ -109,9 +104,6 @@ in
 
     # music
     unstable.picard
-
-    # work
-    (lib.mkIf cfg.work kerouac)
 
     # caching
     attic

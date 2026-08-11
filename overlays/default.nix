@@ -62,7 +62,6 @@ let
 
       xsaneGimp = prev.xsane.override { gimpSupport = true; };
 
-      kerouac = inputs.kerouac.packages.${system}.kerouacLinuxAmd64;
       attic = inputs.attic.packages.${system}.attic;
 
       cliamp = prev.cliamp.overrideAttrs (rec {
