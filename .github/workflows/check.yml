@@ -13,3 +13,13 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v14
       - run: nix flake check
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [abed, coltrane, dipper, phil, troy]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - run: nix build .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
