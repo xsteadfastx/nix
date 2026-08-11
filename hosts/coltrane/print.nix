@@ -41,6 +41,7 @@
   systemd.services.cups-update-remote-printer = {
     description = "Ensure remote Brother HL-L2340D lpadmin entry exists";
     after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
     serviceConfig.Type = "oneshot";
     script = ''
       ${pkgs.cups}/bin/lpadmin -m everywhere -o PageSize=A4 \
