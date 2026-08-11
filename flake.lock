@@ -1283,17 +1283,17 @@
         "pre-commit-hooks": "pre-commit-hooks_3"
       },
       "locked": {
-        "lastModified": 1776942203,
-        "narHash": "sha256-9FGD3PlZf+4JzHKUnyxwhMTzRzQrHZa0re6IIsnThdo=",
+        "lastModified": 1786369489,
+        "narHash": "sha256-2eDqDN9dBymHneHDYPNwaSw8kF2VttcIUdRVanlD7yI=",
         "ref": "refs/heads/main",
-        "rev": "c108652ec9a97bb59cfd7f38adf5bf7881e8b372",
-        "revCount": 15,
+        "rev": "b75e636d048ef5326d4ecccf22129f8e9b85aad3",
+        "revCount": 19,
         "type": "git",
-        "url": "ssh://git@git.wobcom.de/smartmetering/pre-commit-nix.git"
+        "url": "https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@git.wobcom.de/smartmetering/pre-commit-nix.git"
+        "url": "https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git"
       }
     },
     "quickemu": {

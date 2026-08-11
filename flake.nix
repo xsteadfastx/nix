@@ -26,7 +26,7 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-    pre-commit.url = "git+ssh://git@git.wobcom.de/smartmetering/pre-commit-nix.git";
+    pre-commit.url = "git+https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
