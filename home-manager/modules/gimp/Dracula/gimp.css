@@ -65,7 +65,7 @@
 @define-color border            #44475a;
 
 /* Color for canvas, where images are shown */
-@define-color canva #282a36;
+@define-color canvas #282a36;
 
 /* Default color value for slider elements in the interface */
 @define-color slider #7e57b5;
@@ -529,7 +529,7 @@ toolbutton button {
   
   GimpDisplayShell grid {
   
-      background-color: @canva;
+      background-color: @canvas;
   
       
   } 
