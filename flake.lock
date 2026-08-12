@@ -756,8 +756,7 @@
       "inputs": {
         "flake-compat": "flake-compat_4",
         "nixpkgs": [
-          "pre-commit",
-          "nixpkgs"
+          "nixpkgs-unstable"
         ]
       },
       "locked": {

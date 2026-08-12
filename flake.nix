@@ -26,6 +26,7 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     pre-commit.url = "git+https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git";
+    pre-commit.inputs.pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs-unstable";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
