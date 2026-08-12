@@ -25,7 +25,10 @@
     };
 
   abed = {
-    deployment.tags = [ "server" ];
+    deployment.tags = [
+      "server"
+      "vm"
+    ];
     imports = [
       ./hosts/abed
 
@@ -60,7 +63,10 @@
   };
 
   dipper = {
-    deployment.tags = [ "server" ];
+    deployment.tags = [
+      "server"
+      "vm"
+    ];
     imports = [
       ./hosts/dipper
 
@@ -75,7 +81,10 @@
   };
 
   phil = {
-    deployment.tags = [ "server" ];
+    deployment.tags = [
+      "server"
+      "raspberrypi"
+    ];
     imports = [
       ./hosts/phil
       inputs.nixos-hardware.nixosModules.raspberry-pi-3
