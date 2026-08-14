@@ -32,6 +32,10 @@
       bin = pkgs.context7-mcp;
       command = "context7-mcp";
     };
+    confluence = {
+      bin = pkgs.mcp-atlassian;
+      command = "mcp-atlassian";
+    };
     "sequential-thinking" = {
       bin = pkgs.mcp-server-sequential-thinking;
       command = "mcp-server-sequential-thinking";

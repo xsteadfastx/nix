@@ -248,6 +248,17 @@ in
         HEMINGWAY_MCP_PASSWORD_FILE = config.sops.secrets."mcp-hemingway-password".path;
       };
     };
+    # Confluence MCP (sooperset/mcp-atlassian) against the self-hosted Data
+    # Center instance at https://confluence.service.wobcom.de. Data Center auth
+    # is a personal access token (CONFLUENCE_PERSONAL_TOKEN), not email+API
+    # token. Locked read-only via `--read-only` (disables all write tools).
+    confluence = {
+      args = [ "--read-only" ];
+      env = {
+        CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
+        CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
+      };
+    };
     # JetBrains ships a remote MCP server built into YouTrack itself (no
     # package to install): <instance>/mcp over StreamableHTTP. mcp-proxy
     # bridges it to stdio so the adapter spawns it like any other server.

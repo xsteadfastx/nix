@@ -50,6 +50,13 @@ in
   # unstable python set so its deps match the versions checked in pkgs file.
   postgres-mcp = unstable.callPackage ../pkgs/postgres-mcp.nix { };
 
+  # Confluence/Jira MCP (sooperset/mcp-atlassian) + its hard dep
+  # markdown-to-confluence (hunyadi/md2conf); both built from source (not in
+  # nixpkgs) against the unstable python set.
+  mcp-atlassian = unstable.callPackage ../pkgs/mcp-atlassian.nix {
+    markdown-to-confluence = unstable.callPackage ../pkgs/markdown-to-confluence.nix { };
+  };
+
   inherit (unstable)
     agent-browser
     mcp-nixos

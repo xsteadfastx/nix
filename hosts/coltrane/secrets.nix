@@ -52,6 +52,17 @@ _: {
     owner = "marv";
   };
 
+  # Confluence MCP (sooperset/mcp-atlassian): self-hosted Data Center instance
+  # at https://confluence.service.wobcom.de. Data Center auth uses a personal
+  # access token (CONFLUENCE_PERSONAL_TOKEN), not email+API-token. Generate it
+  # in Confluence (Profile → Personal Access Tokens) and store in sops.
+  sops.secrets."mcp-confluence-url" = {
+    owner = "marv";
+  };
+  sops.secrets."mcp-confluence-token" = {
+    owner = "marv";
+  };
+
   sops.secrets."gh-token" = {
     owner = "marv";
   };
