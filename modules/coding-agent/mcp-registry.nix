@@ -48,6 +48,12 @@
       bin = pkgs.mcp-server-memory;
       command = "mcp-server-memory";
     };
+    # Official Redis MCP (redis/mcp-redis). Patched read-only (write tools
+    # removed — see pkgs/redis-mcp-readonly.patch).
+    redis = {
+      bin = pkgs.redis-mcp-server;
+      command = "redis-mcp-server";
+    };
     # mcp-proxy bridges a remote StreamableHTTP MCP server to stdio.
     youtrack = {
       bin = pkgs.mcp-proxy;

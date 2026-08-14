@@ -57,6 +57,12 @@ in
     markdown-to-confluence = unstable.callPackage ../pkgs/markdown-to-confluence.nix { };
   };
 
+  # Official Redis MCP (redis/mcp-redis) + its hard dep redis-entraid; both
+  # built from source (not in nixpkgs) against the unstable python set.
+  redis-mcp-server = unstable.callPackage ../pkgs/redis-mcp.nix {
+    redis-entraid = unstable.callPackage ../pkgs/redis-entraid.nix { };
+  };
+
   inherit (unstable)
     agent-browser
     mcp-nixos

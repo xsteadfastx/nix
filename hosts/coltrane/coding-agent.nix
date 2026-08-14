@@ -65,6 +65,57 @@ let
       '';
     };
 
+  # Read-only Redis MCP over an SSH-forwarded TCP port. kirchart's Redis is
+  # bound to 127.0.0.1:6379 (not network-exposed), so we forward that port into
+  # a per-instance random local port, then run redis-mcp-server against it. marv's
+  # key auth is passwordless and inherited from the agent's env (a systemd unit
+  # wouldn't see SSH_AUTH_SOCK). No password/secret needed — the connection is
+  # inlined.
+  #   * Per-instance RANDOM local port, NOT a fixed one. A fixed local port can
+  #     only be bound by ONE client: with pi and Claude sharing mcp.json, the
+  #     second `ssh -L` hits ExitOnForwardFailure and the wrapper aborts. A
+  #     random port (20000-39999) makes collision ~0.005%; on the rare miss we
+  #     retry up to 20 times with fresh ports.
+  #   * redis-mcp-server has NO unix-socket support (only TCP host/port), so we
+  #     forward TCP even though kirchart's Redis also listens on a unix socket.
+  #   * `ssh -f` returns only once the forward is up (ExitOnForwardFailure), so
+  #     redis-mcp-server never races a not-yet-bound port.
+  #   * redis-mcp-server runs in the FOREGROUND (NOT backgrounded — a
+  #     backgrounded job in a non-interactive shell has stdin redirected to
+  #     /dev/null, severing MCP stdio; and NOT `exec`'d, so the EXIT trap still
+  #     closes the tunnel when the MCP exits).
+  #   * Read-only: the redis-mcp-server package is patched to drop all write
+  #     tools (see pkgs/redis-mcp-readonly.patch).
+  redisForward =
+    host:
+    pkgs.writeShellApplication {
+      name = "redis-${host}";
+      runtimeInputs = [
+        pkgs.openssh
+        pkgs.redis-mcp-server
+      ];
+      text = ''
+        CTL="$(mktemp -u)"
+        cleanup() {
+          ssh -S "$CTL" -O exit ${host} 2>/dev/null || true
+        }
+        trap cleanup EXIT
+
+        PORT=""
+        for _ in $(seq 1 20); do
+          P=$(( (RANDOM % 20000) + 20000 ))
+          if ssh -f -N -M -S "$CTL" -o ExitOnForwardFailure=yes \
+              -L "127.0.0.1:$P:127.0.0.1:6379" ${host} 2>/dev/null; then
+            PORT=$P
+            break
+          fi
+        done
+        [ -n "$PORT" ] || { echo "could not bind a local port" >&2; exit 1; }
+
+        redis-mcp-server --host 127.0.0.1 --port "$PORT"
+      '';
+    };
+
   # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
   # deployed API (StreamableHTTP), behind the same Caddy basic_auth as the rest
   # of the API. mcp-proxy bridges that remote endpoint to stdio; the wrinkle is
@@ -227,6 +278,16 @@ in
     "postgres-chirpns-kirchart" = {
       bin = postgresForward "kirchart" "chirpns";
       command = "postgres-chirpns-kirchart";
+    };
+    # Read-only Redis MCP against kirchart's Redis (127.0.0.1:6379, no
+    # password). `bin` is the SSH-tunnel wrapper (Redis isn't network-exposed);
+    # `command` must match the wrapper's binary name so the adapter execs it.
+    # No env/secret: the wrapper connects passwordlessly via the forwarded port.
+    # Read-only: write tools are patched out of redis-mcp-server
+    # (pkgs/redis-mcp-readonly.patch).
+    redis-kirchart = {
+      bin = redisForward "kirchart";
+      command = "redis-kirchart";
     };
     # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
     # deployed API (StreamableHTTP, behind the same Caddy basic_auth as the

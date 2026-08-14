@@ -1,0 +1,41 @@
+diff --git a/src/common/server.py b/src/common/server.py
+index 9eec034..5723ca4 100644
+--- a/src/common/server.py
++++ b/src/common/server.py
+@@ -17,3 +17,36 @@ mcp = FastMCP(
+ 
+ # Load tools
+ load_tools()
++
++# Read-only hardening: redis-mcp-server has no native read-only mode, so drop
++# every tool that mutates Redis after registration. (ponytail: denylist of
++# write tools; add any new write tool here.)
++WRITE_TOOLS = {
++    "hset",
++    "hdel",
++    "set_vector_in_hash",
++    "json_set",
++    "json_del",
++    "lpush",
++    "rpush",
++    "lpop",
++    "rpop",
++    "lrem",
++    "delete",
++    "expire",
++    "rename",
++    "publish",
++    "create_vector_index_hash",
++    "sadd",
++    "srem",
++    "zadd",
++    "zrem",
++    "xadd",
++    "xdel",
++    "xgroup_create",
++    "xgroup_destroy",
++    "xack",
++    "set",
++}
++for _name in WRITE_TOOLS:
++    mcp.remove_tool(_name)
