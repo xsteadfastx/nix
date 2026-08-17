@@ -148,20 +148,6 @@ in
                 compat.thinkingFormat = "qwen-chat-template";
               }
               {
-                id = "glm-4.7-flash";
-                name = "GLM 4.7 Flash";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 131072;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
                 id = "glm-5.2:cloud";
                 name = "GLM 5.2 Cloud";
                 reasoning = true;
@@ -345,12 +331,37 @@ in
             # models keep 8192 (output cap irrelevant for embeddings).
             models = [
               {
-                id = "gpt-oss:120b";
-                name = "GPT-OSS 120B";
+                id = "qwen3.8:27b";
+                name = "Qwen 3.8 27B";
+                # qwen35 family (27.3B Q4_K_M), same thinking + vision +
+                # tool-use capabilities as qwen3.6:35b but smaller.
                 reasoning = true;
-                input = [ "text" ];
+                input = [
+                  "text"
+                  "image"
+                ];
+                contextWindow = 262144; # /api/tags
+                maxTokens = 32768;
+                cost = {
+                  input = 0;
+                  output = 0;
+                  cacheRead = 0;
+                  cacheWrite = 0;
+                };
+                compat.thinkingFormat = "qwen-chat-template";
+              }
+              {
+                id = "muse-glimmer:30b";
+                name = "Muse Glimmer 30B";
+                # 27.9B Q4_K_M, muse-glimmer family. 131K native context;
+                # thinking + vision capabilities per /api/tags.
+                reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                ];
                 contextWindow = 131072; # /api/tags
-                maxTokens = 16384;
+                maxTokens = 32768;
                 cost = {
                   input = 0;
                   output = 0;
@@ -396,25 +407,6 @@ in
                   cacheWrite = 0;
                 };
                 compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "ornith:35b";
-                name = "Ornith 35B";
-                # Default model. 34.7B Q4_K_M, qwen35moe family with native
-                # 262K context and tool-use + thinking capabilities. Full
-                # offload on wobcom (no iGPU constraints there). The same
-                # model is also available locally as ornith:9b for when the
-                # network is down or ollama-wobcom is unreachable.
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
               }
               {
                 id = "gemma4:31b";
@@ -521,23 +513,6 @@ in
                   cacheWrite = 0;
                 };
                 compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "ornith:9b";
-                name = "Ornith 9B";
-                # Smaller 9B variant of the qwen35 family, same thinking +
-                # tool-use capabilities as ornith:35b but fits a tighter
-                # memory budget. Also available locally for offline use.
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
               }
               {
                 id = "gemma3:27b";
