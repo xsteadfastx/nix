@@ -19,12 +19,12 @@ let
   # nixpkgs-unstable's pi-coding-agent (0.83.0) is older than the release we
   # want; pinning from GitHub keeps the bundled pi-permission-system
   # (peerDeps >=0.79.0) satisfied.
-  piVersion = "0.84.1";
+  piVersion = "0.84.2";
   piSrc = unstable.fetchFromGitHub {
     owner = "earendil-works";
     repo = "pi";
     tag = "v${piVersion}";
-    hash = "sha256-lg+I4S/aAjazjhGZU567ow+rksoNiqOqjHl//TjAMes=";
+    hash = "sha256-d29ft9otYxdHRWYIAX8KMHPpppToX9ME5LbPb1rPcYo=";
   };
 in
 {
@@ -34,13 +34,13 @@ in
     npmDeps = unstable.fetchNpmDeps {
       src = piSrc;
       name = "pi-coding-agent-${piVersion}-npm-deps";
-      hash = "sha256-tufyZQRPAUeDtiq0UQodbKA/Y9xUAvNT8K+NWFjkeME=";
+      hash = "sha256-6J5Efe+6ptCuR3VZojwYPZO8BBnnZsOQ4OAeB64uYOY=";
     };
     # nixpkgs's modelData hash is for pi-ai-0.83.0.tgz; the URL follows
     # finalAttrs.version, so it must be re-pinned for the new version.
     modelData = unstable.fetchurl {
       url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${piVersion}.tgz";
-      hash = "sha256-araJGJ58s95c2xJjEqPmDorDX+XuXxtj0A9xHIpDDHM=";
+      hash = "sha256-AmJ4Wnaw6y7sWWzYp6su4j7vidLvG7EhHE8KGUTaz0E=";
     };
   });
 
