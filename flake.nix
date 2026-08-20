@@ -12,6 +12,9 @@
     colmena.url = "github:zhaofengli/colmena";
     compose2nix.inputs.nixpkgs.follows = "nixpkgs";
     compose2nix.url = "github:aksiksi/compose2nix";
+    coding-agent.inputs.home-manager.follows = "home-manager";
+    coding-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
     flake-utils.url = "github:numtide/flake-utils";
@@ -46,7 +49,13 @@
       lib = import ./lib;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
       nixosModules.base = import ./modules/base;
-      nixosModules.coding-agent = import ./modules/coding-agent;
+      # The coding-agent module now comes from its own repo (git.xsfx.dev),
+      # not a local copy. The `-raw` variant does NOT bundle home-manager
+      # (this repo's hive already imports it), and the overlay stays local
+      # (overlays/coding-agent.nix) because it's entangled with the repo's
+      # single-nixpkgs-unstable wiring. The module is pkgs-only, so it reads
+      # pkgs.mcp-* from the local overlay as before.
+      nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
       nixosModules.home-manager = import ./modules/home-manager;
       nixosModules.lix = import ./modules/lix;
       nixosModules.ssh = import ./modules/ssh;
@@ -85,8 +94,6 @@
       in
       {
         checks.pre-commit-check = preCommitGen.pre-commit-check;
-        checks.coding-agent-wrapper = import ./modules/coding-agent/check-wrapper.nix { inherit pkgs; };
-        checks.coding-agent-mcp = import ./modules/coding-agent/check-mcp.nix { inherit pkgs; };
         devShells.default = preCommitGen.devShell;
         formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
