@@ -298,6 +298,19 @@ in
               };
             }
           ) cfg.mcpServers.httpBasic
+        )
+        ++ lib.concatLists (
+          lib.mapAttrsToList (
+            name: s:
+            lib.optional s.enable {
+              # The mcp.json key is the catalog name = the registry key
+              # (grafana-viz-mon, confluence, youtrack, ...). The registry
+              # provides bin/command; only args + env differ per host.
+              name = name;
+              args = s.args;
+              env = s.extraEnv // s.secretEnv;
+            }
+          ) cfg.mcpServers.httpToken
         );
 
       # Resolve each catalog entry once; both the package list and the

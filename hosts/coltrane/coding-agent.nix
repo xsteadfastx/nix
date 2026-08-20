@@ -560,48 +560,50 @@
       urlSuffix = "/mcp";
     };
 
-    # --- Bespoke raw entries (not yet in the catalog) ---
-    extra = {
-      # Two Grafana instances, same read-only binary, distinct credentials.
+    # HTTP token/PAT servers (bearer auth, distinct from hemingway's basic
+    # auth). The registry maps the catalog name to bin/command; only args +
+    # env differ per host. secretEnv carries the *_FILE sops paths (auto-\
+    # injected by the secret wrapper); extraEnv holds plain env (GRAFANA_ORG_ID).
+    httpToken = {
       grafana-viz-mon = {
+        enable = true;
         args = [
           "--disable-write"
           "-debug"
         ];
-        env = {
+        secretEnv = {
           GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
           GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
-          GRAFANA_ORG_ID = "1";
         };
+        extraEnv.GRAFANA_ORG_ID = "1";
       };
       grafana-viz = {
+        enable = true;
         args = [ "--disable-write" ];
-        env = {
+        secretEnv = {
           GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
           GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
-          GRAFANA_ORG_ID = "1";
         };
+        extraEnv.GRAFANA_ORG_ID = "1";
       };
-      # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
-      # behind Caddy basic_auth). httpBasic builds the Basic auth header via
-      # mcp-proxy; the var names match hemingway's existing env so mcp.json is
-      # unchanged.
       # Confluence Data Center, read-only via PAT.
       confluence = {
+        enable = true;
         args = [ "--read-only" ];
-        env = {
+        secretEnv = {
           CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
           CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
         };
       };
       # YouTrack remote MCP over StreamableHTTP, Bearer token via mcp-proxy.
       youtrack = {
+        enable = true;
         args = [
           "--transport"
           "streamablehttp"
           "$YOUTRACK_URL"
         ];
-        env = {
+        secretEnv = {
           YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
           API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
         };

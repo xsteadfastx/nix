@@ -138,6 +138,36 @@ in
           default = { };
         };
 
+        # HTTP servers authenticated with a bearer token / personal-access-token
+        # (grafana, confluence, youtrack). The registry maps `name` -> bin/command;
+        # secretFile carries `*_FILE` env keys (sops paths) injected by the secret
+        # wrapper; extraEnv holds plain env (e.g. GRAFANA_ORG_ID).
+        httpToken = lib.mkOption {
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              options = {
+                enable = lib.mkEnableOption "this HTTP token/PAT MCP server";
+                args = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [ ];
+                  description = "Extra CLI args for the server.";
+                };
+                secretEnv = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.str;
+                  default = { };
+                  description = "*_FILE env keys -> secret file paths (auto-injected by the secret wrapper).";
+                };
+                extraEnv = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.str;
+                  default = { };
+                  description = "Plain (non-secret) env vars.";
+                };
+              };
+            }
+          );
+          default = { };
+        };
+
         # Raw escape hatch, backward-compatible with the old free-form shape.
         extra = lib.mkOption {
           type = lib.types.attrs;
