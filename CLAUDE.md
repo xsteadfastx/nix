@@ -8,37 +8,34 @@ This repository contains the NixOS configuration for multiple hosts using the **
 - **Pattern**: Coltrane (Columnar Nix). Host configurations are isolated in `hosts/<hostname>/`.
 - **Secrets**: Managed via `sops-nix`. All sensitive tokens and passwords must be declared in `hosts/<hostname>/secrets.nix` and stored in an encrypted `.yaml` file.
 - **Channels / `pkgs.unstable`**: The system builds on **nixpkgs stable (26.05)**. `nixpkgs-unstable` is imported exactly **once**, centrally, inside `overlays/default.nix`, and exposed as the attribute **`pkgs.unstable`** (the same `packageOverrides` are applied to both channels, so custom packages resolve identically — `pkgs.foo` = stable, `pkgs.unstable.foo` = unstable). There is **no `pkgsUnstable` specialArg** — reach unstable packages via `pkgs.unstable.<name>` in any NixOS or home-manager module (home-manager uses `useGlobalPkgs = true`, so it shares the system's overlaid `pkgs`). This deliberately avoids the "1000 instances of nixpkgs" antipattern of scattering `import nixpkgs-unstable {…}` across modules. `import` (not `.legacyPackages`) is required so `allowUnfree` can be set. Convention in package lists: **bare name = `pkgs.unstable`** (via `with pkgs.unstable;`), **`pkgs.<name>` = stable pin**.
-- **Pi Agent**: A reusable NixOS module at `modules/coding-agent/`, exported from the flake as `nixosModules.coding-agent` and configured via the `xsfx.codingAgent.*` option tree (enabled per-host, e.g. `hosts/coltrane/coding-agent.nix`). The module is intentionally `pkgs`-only so it stays portable; the pinned/unstable packages (`pi-coding-agent`, `agent-browser`, the `mcp-*` servers) are defined in `overlays/coding-agent.nix`, which is merged into `overlays.default` — the single overlay all hosts apply via `modules/base`.
+- **Pi Agent**: A reusable NixOS module now living in its **own repo** (`git+https://git.xsfx.dev/xsteadfastx/coding-agent.git`, input `coding-agent`), imported here as `nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw`. The `-raw` variant deliberately does NOT bundle home-manager (this repo's hive already imports it) or its own overlay (this repo's overlay wiring is entangled with the single-nixpkgs-unstable setup, so it stays local). Configured via the `codingAgent.*` option tree (enabled per-host, e.g. `hosts/coltrane/coding-agent.nix`).
 
-### Pi Agent Layout
-- `modules/coding-agent/default.nix` — the NixOS module (`options.xsfx.codingAgent` + the `symlinkJoin` that bundles pi + extensions + MCP packages).
-- `modules/coding-agent/build-extensions.nix` — hand-assembles the three pi extensions (permission-system, mcp-adapter, browser-tools) from npm tarballs; pinned lockfiles live in `modules/coding-agent/lockfiles/`.
-- `modules/coding-agent/mcp-registry.nix` — maps a logical MCP name to `{ bin, command }` on `pkgs`.
-- `modules/coding-agent/wrapper.nix` — `mkSecretWrapper`, the generic secret-injection wrapper (see Grafana below).
-- `modules/coding-agent/skills.nix` — the shared ECC asset pack (skills/agents/commands/rules) flattened into `~/.claude/*`, read by both pi and Claude.
-- `modules/coding-agent/plugins.nix` — shared source for upstream plugin packs (superpowers, ponytail), loaded as extensions by pi and plugins by Claude.
-- `overlays/coding-agent.nix` — defines pi + MCP packages (pinning `pi` to a release), sourced from the single central `pkgs.unstable` via the overlay's `final` fixed-point; it imports no nixpkgs of its own. It is a `final: prev` fragment **merged into** `overlays/default.nix` (`// (codingAgent final prev)`), which is the one overlay `modules/base` applies (`nixpkgs.overlays = [ overlays.default ]`). Consolidated this way so `nixpkgs-unstable` is imported **exactly once** for the whole repo — previously this file was a separately-exported sibling overlay that imported unstable itself (twice: `legacyPackages` + a scoped allowUnfree `import` for `claude-code`).
-- `modules/coding-agent/check-wrapper.nix` — pure `runCommand` test for the secret wrapper, exposed as `checks.x86_64-linux.coding-agent-wrapper`.
+### Pi Agent Layout (in this repo)
+- `overlays/coding-agent.nix` — defines pi + MCP packages (pinning `pi` to a release), sourced from the single central `pkgs.unstable` via the overlay's `final` fixed-point; it imports no nixpkgs of its own. It is a `final: prev` fragment **merged into** `overlays/default.nix` (`// (codingAgent final prev)`), which is the one overlay `modules/base` applies (`nixpkgs.overlays = [ overlays.default ]`). Consolidated this way so `nixpkgs-unstable` is imported **exactly once** for the whole repo.
+
+### Pi Agent Layout (in the coding-agent repo)
+The module source lives at `modules/coding-agent/` in the external repo: `default.nix` (options + the `symlinkJoin` bundling pi + extensions + MCP packages), `build-extensions.nix`, `mcp-registry.nix`, `wrapper.nix` (`mkSecretWrapper`), `skills.nix`, `plugins.nix`, `check-wrapper.nix`, `check-mcp.nix`, `test-nixos.nix`.
 
 ### Pi Agent Extension Pattern
-To add a new MCP server to the agent:
-1. If the package is not already on `pkgs`, add it to `overlays/coding-agent.nix` (sourced from `pkgs.unstable` via the overlay's `final`).
-2. Register the logical name → `{ bin, command }` mapping in `modules/coding-agent/mcp-registry.nix`.
-3. Enable the server per-host under `xsfx.codingAgent.mcpServers.<name>` (e.g. in `hosts/coltrane/coding-agent.nix`), supplying `args`/`env`. A bare `{ }` entry is enough for non-secret servers — the module resolves `bin`/`command` from the registry.
+To add a new MCP server to the agent (edit the external repo):
+1. If the package is not already on `pkgs`, add it to the external repo's `overlay.nix` (sourced from its nixpkgs-unstable).
+2. Register the logical name → `{ bin, command }` mapping in its `modules/coding-agent/mcp-registry.nix`.
+3. Enable the server per-host under `codingAgent.mcpServers.<name>` (e.g. in `hosts/coltrane/coding-agent.nix`), supplying `args`/`env`. A bare `{ }` entry is enough for non-secret servers — the module resolves `bin`/`command` from the registry.
 4. If the server needs secrets, put the sops `*_FILE` paths in `env`. Any env key ending in `_FILE` triggers the secret wrapper automatically (see Grafana below).
 
 ### Plugin packs (superpowers + ponytail)
 Two upstream Claude-Code plugin packs: **obra/superpowers** (TDD/debugging/planning)
-and **DietrichGebert/ponytail** (minimalism). Fetched once in `plugins.nix`,
-shared by both agents via native loading (extensions for pi, plugins for Claude).
-Bump: edit `rev`/`hash` in `plugins.nix` and `nixos-rebuild switch`.
+and **DietrichGebert/ponytail** (minimalism). Fetched once in the coding-agent repo's
+`plugins.nix`, shared by both agents via native loading (extensions for pi, plugins
+for Claude). Bump: edit `rev`/`hash` in the repo's `plugins.nix`, push, then
+`nix flake lock --update-input coding-agent` + `nixos-rebuild switch`.
 Lifecycle: requires pi/Claude restart to take effect.
 
 ## ⚠️ Known Issues & Critical Workarounds
 
 ### Grafana MCP Authentication Bug
 - **The Bug**: The upstream `mcp-grafana` binary ignores the `GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE` environment variable, resulting in `401 Unauthorized` errors.
-- **The Fix**: The generic `mkSecretWrapper` (`modules/coding-agent/wrapper.nix`) wraps `mcp-grafana`. Using the standard `_FILE` convention, it cats each `*_FILE` env var (a sops-managed path supplied in `env`) into the real env var (suffix stripped: `GRAFANA_URL_FILE` → `GRAFANA_URL`) before `exec`. The module auto-wraps any server whose `env` contains a `*_FILE` key; the coltrane host configures this in `hosts/coltrane/coding-agent.nix`.
+- **The Fix**: The generic `mkSecretWrapper` (the coding-agent repo's `wrapper.nix`) wraps `mcp-grafana`. Using the standard `_FILE` convention, it cats each `*_FILE` env var (a sops-managed path supplied in `env`) into the real env var (suffix stripped: `GRAFANA_URL_FILE` → `GRAFANA_URL`) before `exec`. The module auto-wraps any server whose `env` contains a `*_FILE` key; the coltrane host configures this in `hosts/coltrane/coding-agent.nix`.
 - **Security**: All Grafana MCP calls are locked to read-only mode using the `--disable-write` flag (passed via `args`).
 
 ### Playwright Extension Mode (driving the already-open Chromium)
