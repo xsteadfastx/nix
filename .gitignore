@@ -3,3 +3,6 @@
 /*.qcow2
 /.pre-commit-config.yaml
 /.playwright-mcp
+
+# superpowers subagent-driven scratch (progress ledger)
+/.superpowers
