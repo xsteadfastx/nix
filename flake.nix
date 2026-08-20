@@ -86,6 +86,7 @@
       {
         checks.pre-commit-check = preCommitGen.pre-commit-check;
         checks.coding-agent-wrapper = import ./modules/coding-agent/check-wrapper.nix { inherit pkgs; };
+        checks.coding-agent-mcp = import ./modules/coding-agent/check-mcp.nix { inherit pkgs; };
         devShells.default = preCommitGen.devShell;
         formatter = preCommitGen.formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
