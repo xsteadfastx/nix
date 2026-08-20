@@ -27,6 +27,7 @@ let
   # SSH-tunnel MCP builders, promoted from the coltrane host config so any
   # host can reach non-network-exposed postgres/redis over ssh(1).
   tunnels = import ./ssh-tunnels.nix { inherit pkgs lib; };
+  httpMcp = import ./http-mcp.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -203,7 +204,13 @@ in
         };
 
       # uid of the effective user, for the tmpfs playwright profile path.
-      uid = config.users.users."${effectiveUser}".uid or 1000;
+      # `isNormalUser` leaves uid null at eval time, so fall back to 1000
+      # (the auto-allocated value on a single-user host) when it's null.
+      uid =
+        if config.users.users."${effectiveUser}".uid != null then
+          config.users.users."${effectiveUser}".uid
+        else
+          1000;
 
       # --- Declarative catalog: named servers with their args/env. ---
       # Non-secret, hardware-agnostic servers are enabled by default (their
@@ -270,6 +277,27 @@ in
               };
             }
           ) cfg.mcpServers.sshRedis
+        )
+        ++ lib.concatLists (
+          lib.mapAttrsToList (
+            name: s:
+            lib.optional s.enable {
+              name = name;
+              command = s.command or "httpBasic-${name}";
+              bin = httpMcp.basicAuthWrapper {
+                name = "httpBasic-${name}";
+                urlVar = s.urlVar;
+                userVar = s.userVar;
+                passVar = s.passVar;
+                urlSuffix = s.urlSuffix;
+              };
+              env = {
+                "${s.urlVar}_FILE" = s.urlFile;
+                "${s.userVar}_FILE" = s.usernameFile;
+                "${s.passVar}_FILE" = s.passwordFile;
+              };
+            }
+          ) cfg.mcpServers.httpBasic
         );
 
       # Resolve each catalog entry once; both the package list and the

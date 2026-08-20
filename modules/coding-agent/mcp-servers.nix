@@ -110,6 +110,28 @@ in
                   default = null;
                   description = "Override binary name (for a bespoke wrapper).";
                 };
+                # Env var names the wrapper reads (after *_FILE stripping), so
+                # a host can keep existing names without changing its mcp.json.
+                urlVar = lib.mkOption {
+                  type = lib.types.str;
+                  default = "URL";
+                  description = "Env var holding the base URL.";
+                };
+                userVar = lib.mkOption {
+                  type = lib.types.str;
+                  default = "USERNAME";
+                  description = "Env var holding the basic-auth username.";
+                };
+                passVar = lib.mkOption {
+                  type = lib.types.str;
+                  default = "PASSWORD";
+                  description = "Env var holding the basic-auth password.";
+                };
+                urlSuffix = lib.mkOption {
+                  type = lib.types.str;
+                  default = "";
+                  description = "Suffix appended to the base URL (e.g. the server's /mcp path).";
+                };
               };
             }
           );

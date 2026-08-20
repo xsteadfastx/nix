@@ -1,41 +1,4 @@
-{ config, pkgs, ... }:
-let
-  # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
-  # deployed API (StreamableHTTP), behind the same Caddy basic_auth as the API.
-  # mcp-proxy bridges that remote endpoint to stdio; the wrinkle is that
-  # mcp-proxy has no native basic-auth option (only `-H KEY VALUE` or the
-  # `API_ACCESS_TOKEN` Bearer shortcut), so this wrapper builds the
-  # `Authorization: Basic <base64(user:pass)>` header from the HEMINGWAY_*
-  # secrets and execs mcp-proxy with it.
-  #   * `runtimeInputs` pins coreutils (base64) + mcp-proxy so the wrapper is
-  #     self-contained regardless of the launching shell's PATH (a dev shell
-  #     or bare systemd context may not put coreutils first).
-  #   * The real env vars (HEMINGWAY_SERVICES_API / _USERNAME / _PASSWORD) are
-  #     already exported by the module's secret wrapper (wrapper.nix), which
-  #     cats each *_FILE into the real var and unsets the *_FILE var before
-  #     exec'ing this wrapper. So this wrapper only consumes the real vars.
-  #   * The header is built as a shell variable and passed as a SINGLE argv
-  #     element to mcp-proxy (`-H Authorization "$AUTH"`); doing it inline in an
-  #     mcp.json arg via `$(...)` does NOT work — the module's wrapper eval-execs
-  #     with `eval exec ... "\$@"`, and the nested double-quotes inside the
-  #     command substitution ("$HEMINGWAY_MCP_USERNAME") close the outer
-  #     double-quote during eval's re-parse, splitting `Basic` from the b64 into
-  #     two argv elements and breaking mcp-proxy's arg parsing.
-  #   * The stdio `hemingway mcp` command still exists for local/off-host use but
-  #     is no longer wired into the agent.
-  hemingwayMcp = pkgs.writeShellApplication {
-    name = "hemingway-mcp";
-    runtimeInputs = [
-      pkgs.mcp-proxy
-      pkgs.coreutils
-    ];
-    text = ''
-      set -euo pipefail
-      AUTH="Basic $(printf '%s:%s' "$HEMINGWAY_MCP_USERNAME" "$HEMINGWAY_MCP_PASSWORD" | base64 -w0)"
-      exec mcp-proxy --transport streamablehttp -H Authorization "$AUTH" "$HEMINGWAY_SERVICES_API/mcp"
-    '';
-  };
-in
+{ config, ... }:
 {
   xsfx.codingAgent.enable = true;
 
@@ -557,7 +520,11 @@ in
       chromePath = "/home/marv/.nix-profile/bin/chromium";
       userDataDir = "/home/marv/.config/chromium";
     };
-    memory.enable = true;
+    memory = {
+      enable = true;
+      # Absolute (fs.writeFile doesn't mkdir/expand ~).
+      filePath = "/home/marv/.pi/agent/memory.jsonl";
+    };
     sshPostgres."hemingway-barletta" = {
       enable = true;
       host = "barletta";
@@ -576,6 +543,21 @@ in
     sshRedis.kirchart = {
       enable = true;
       host = "kirchart";
+    };
+    # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
+    # behind Caddy basic_auth). httpBasic builds the Basic auth header via
+    # mcp-proxy; the var names match hemingway's existing env so mcp.json is
+    # unchanged.
+    httpBasic.hemingway = {
+      enable = true;
+      urlFile = config.sops.secrets."mcp-hemingway-url".path;
+      usernameFile = config.sops.secrets."mcp-hemingway-username".path;
+      passwordFile = config.sops.secrets."mcp-hemingway-password".path;
+      command = "hemingway-mcp";
+      urlVar = "HEMINGWAY_SERVICES_API";
+      userVar = "HEMINGWAY_MCP_USERNAME";
+      passVar = "HEMINGWAY_MCP_PASSWORD";
+      urlSuffix = "/mcp";
     };
 
     # --- Bespoke raw entries (not yet in the catalog) ---
@@ -601,17 +583,9 @@ in
         };
       };
       # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
-      # behind Caddy basic_auth). hemingwayMcp (bespoke wrapper in the `let`
-      # above) builds the Basic auth header via mcp-proxy.
-      hemingway = {
-        bin = hemingwayMcp;
-        command = "hemingway-mcp";
-        env = {
-          HEMINGWAY_SERVICES_API_FILE = config.sops.secrets."mcp-hemingway-url".path;
-          HEMINGWAY_MCP_USERNAME_FILE = config.sops.secrets."mcp-hemingway-username".path;
-          HEMINGWAY_MCP_PASSWORD_FILE = config.sops.secrets."mcp-hemingway-password".path;
-        };
-      };
+      # behind Caddy basic_auth). httpBasic builds the Basic auth header via
+      # mcp-proxy; the var names match hemingway's existing env so mcp.json is
+      # unchanged.
       # Confluence Data Center, read-only via PAT.
       confluence = {
         args = [ "--read-only" ];
