@@ -1,125 +1,9 @@
 { config, pkgs, ... }:
 let
-  # marv's uid, for the tmpfs XDG runtime path used by the playwright MCP env
-  # below. Derived from the user config when a uid is pinned there; falls back
-  # to 1000 (the auto-allocated value on this single-user host) because
-  # isNormalUser leaves `uid` null at eval time.
-  marvUid = if config.users.users.marv.uid != null then config.users.users.marv.uid else 1000;
-
-  # Read-only postgres MCP over an SSH-forwarded UNIX socket. The remote host's
-  # postgres is not network-exposed, so we forward its socket
-  # (/run/postgresql/.s.PGSQL.5432) into a per-instance temp dir, then run
-  # postgres-mcp against it. marv's key auth to the host is passwordless and
-  # inherited from the agent's env (a systemd unit wouldn't see SSH_AUTH_SOCK).
-  # No DB role, password or sops secret is needed — the connection string is
-  # inlined.
-  #   * Per-instance `mktemp -d` socket dir, NOT a fixed TCP port. A fixed local
-  #     port can only be bound by ONE client: with pi and Claude sharing
-  #     mcp.json, the second `ssh -L` hits ExitOnForwardFailure, `set -e` aborts
-  #     the wrapper, postgres-mcp never starts and that client dies with
-  #     `-32000 Connection closed`. A fresh dir per instance lets them run
-  #     concurrently. It also sidesteps the IPv4/IPv6 gotcha of the TCP path
-  #     (hosts resolved `localhost` -> ::1, missing the IPv4 trust rule) — the
-  #     socket hits pg_hba `local all all trust` directly.
-  #   * Connect as `postgres` (superuser): the socket's `local all all trust`
-  #     rule grants the whole cluster as any role, so superuser gives full read
-  #     access across every DB (the app-owner `readonly` role has no data grants
-  #     and, on replicas, GRANTs can't run anyway). Reads are safe regardless:
-  #     `--access-mode restricted` rejects writes at parse time.
-  #   * On REPLICA hosts, long/full-scan reads may fail with "canceling statement
-  #     due to conflict with recovery" (a standby replay-conflict artifact of
-  #     max_standby_streaming_delay / hot_standby_feedback). Tune it on the
-  #     replica host, not here.
-  #   * `ssh -f` returns only once the forward is up (ExitOnForwardFailure), so
-  #     postgres-mcp never races a not-yet-bound socket.
-  #   * postgres-mcp runs in the FOREGROUND — NOT backgrounded (a backgrounded
-  #     job in a non-interactive shell has stdin redirected to /dev/null, which
-  #     severs the MCP stdio so the client fails with -32000), and NOT `exec`'d
-  #     either, so the EXIT trap still fires to close the tunnel and remove the
-  #     socket dir when the MCP exits.
-  # postgres-mcp is single-database (one database_url, no cluster-wide mode), so
-  # like the two grafana instances we register one server per DB. All hosts use
-  # the same wrapper; only the SSH host and DB name vary.
-  postgresForward =
-    host: db:
-    pkgs.writeShellApplication {
-      name = "postgres-${db}-${host}";
-      runtimeInputs = [
-        pkgs.openssh
-        pkgs.postgres-mcp
-      ];
-      text = ''
-        CTL="$(mktemp -u)"
-        SOCKDIR="$(mktemp -d)"
-        cleanup() {
-          ssh -S "$CTL" -O exit ${host} 2>/dev/null || true
-          rm -rf "$SOCKDIR"
-        }
-        trap cleanup EXIT
-
-        ssh -f -N -M -S "$CTL" -o ExitOnForwardFailure=yes \
-          -L "$SOCKDIR/.s.PGSQL.5432:/run/postgresql/.s.PGSQL.5432" ${host}
-
-        postgres-mcp --access-mode restricted \
-          "postgresql://postgres@/${db}?host=$SOCKDIR"
-      '';
-    };
-
-  # Read-only Redis MCP over an SSH-forwarded TCP port. kirchart's Redis is
-  # bound to 127.0.0.1:6379 (not network-exposed), so we forward that port into
-  # a per-instance random local port, then run redis-mcp-server against it. marv's
-  # key auth is passwordless and inherited from the agent's env (a systemd unit
-  # wouldn't see SSH_AUTH_SOCK). No password/secret needed — the connection is
-  # inlined.
-  #   * Per-instance RANDOM local port, NOT a fixed one. A fixed local port can
-  #     only be bound by ONE client: with pi and Claude sharing mcp.json, the
-  #     second `ssh -L` hits ExitOnForwardFailure and the wrapper aborts. A
-  #     random port (20000-39999) makes collision ~0.005%; on the rare miss we
-  #     retry up to 20 times with fresh ports.
-  #   * redis-mcp-server has NO unix-socket support (only TCP host/port), so we
-  #     forward TCP even though kirchart's Redis also listens on a unix socket.
-  #   * `ssh -f` returns only once the forward is up (ExitOnForwardFailure), so
-  #     redis-mcp-server never races a not-yet-bound port.
-  #   * redis-mcp-server runs in the FOREGROUND (NOT backgrounded — a
-  #     backgrounded job in a non-interactive shell has stdin redirected to
-  #     /dev/null, severing MCP stdio; and NOT `exec`'d, so the EXIT trap still
-  #     closes the tunnel when the MCP exits).
-  #   * Read-only: the redis-mcp-server package is patched to drop all write
-  #     tools (see pkgs/redis-mcp-readonly.patch).
-  redisForward =
-    host:
-    pkgs.writeShellApplication {
-      name = "redis-${host}";
-      runtimeInputs = [
-        pkgs.openssh
-        pkgs.redis-mcp-server
-      ];
-      text = ''
-        CTL="$(mktemp -u)"
-        cleanup() {
-          ssh -S "$CTL" -O exit ${host} 2>/dev/null || true
-        }
-        trap cleanup EXIT
-
-        PORT=""
-        for _ in $(seq 1 20); do
-          P=$(( (RANDOM % 20000) + 20000 ))
-          if ssh -f -N -M -S "$CTL" -o ExitOnForwardFailure=yes \
-              -L "127.0.0.1:$P:127.0.0.1:6379" ${host} 2>/dev/null; then
-            PORT=$P
-            break
-          fi
-        done
-        [ -n "$PORT" ] || { echo "could not bind a local port" >&2; exit 1; }
-
-        redis-mcp-server --host 127.0.0.1 --port "$PORT"
-      '';
-    };
-
   # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
-  # deployed API (StreamableHTTP), behind the same Caddy basic_auth as the rest
-  # of the API. mcp-proxy bridges that remote endpoint to stdio; the wrinkle is
-  # that mcp-proxy has no native basic-auth option (only `-H KEY VALUE` or the
+  # deployed API (StreamableHTTP), behind the same Caddy basic_auth as the API.
+  # mcp-proxy bridges that remote endpoint to stdio; the wrinkle is that
+  # mcp-proxy has no native basic-auth option (only `-H KEY VALUE` or the
   # `API_ACCESS_TOKEN` Bearer shortcut), so this wrapper builds the
   # `Authorization: Basic <base64(user:pass)>` header from the HEMINGWAY_*
   # secrets and execs mcp-proxy with it.
@@ -155,6 +39,496 @@ in
 {
   xsfx.codingAgent.enable = true;
 
+  # marv's model providers. Kept in the host config (not the module) because
+  # they are personal/hardware-specific.
+  xsfx.codingAgent.models = {
+    providers = {
+      ollama-local = {
+        baseUrl = "http://127.0.0.1:11434/v1";
+        api = "openai-completions";
+        apiKey = "ollama";
+        compat = {
+          supportsDeveloperRole = false;
+          supportsReasoningEffort = false;
+        };
+        models = [
+          {
+            id = "qwen3.5";
+            name = "Qwen 3.5 9B";
+            reasoning = true;
+            input = [ "text" ];
+            contextWindow = 65536;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+            compat.thinkingFormat = "qwen-chat-template";
+          }
+          {
+            id = "glm-5.2:cloud";
+            name = "GLM 5.2 Cloud";
+            reasoning = true;
+            input = [ "text" ];
+            contextWindow = 1000000;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen2.5-coder:14b";
+            name = "Qwen 2.5 Coder 14B";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 131072;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            # Small non-reasoning coder that fully fits the Arc iGPU.
+            # Native context is 32768, matching the local ollama server.
+            id = "qwen2.5-coder:7b";
+            name = "Qwen 2.5 Coder 7B";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 32768;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            # Ornith 9B — agentic-coding-tuned (Terminal-Bench/SWE-Bench),
+            # MIT. At ~5.6 GB it fully offloads to the Arc iGPU under normal
+            # desktop RAM pressure (unlike gemma4:12b/qwen3-coder:30b), so
+            # it's the candidate offline agent that both fits AND may drive
+            # pi's tool loop where qwen2.5-coder:7b emits text-JSON. Pull with
+            # `ollama pull ornith:9b`. reasoning = true: the model card says it
+            # "thinks step by step in a reasoning block", so pi must parse the
+            # thinking channel (same as gemma4:12b, else empty content).
+            # contextWindow MUST stay 32768 to match OLLAMA_CONTEXT_LENGTH —
+            # see qwen3-coder:30b warning. (35B variant omitted: ~21 GB won't
+            # fit the iGPU on this 30 GB laptop.)
+            id = "ornith:9b";
+            name = "Ornith 9B";
+            reasoning = true;
+            input = [ "text" ];
+            contextWindow = 32768;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "kimi-k2.7-code:cloud";
+            name = "Kimi K2.7 Code";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3-coder:480b-cloud";
+            name = "Qwen 3 Coder 480B Cloud";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 262144;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3-coder:30b";
+            name = "Qwen 3 Coder 30B";
+            reasoning = false;
+            input = [ "text" ];
+            # MUST equal ollama's OLLAMA_CONTEXT_LENGTH (32768 in
+            # hosts/coltrane/ollama.nix). The /v1 endpoint has no num_ctx
+            # field, so this is purely pi's prompt budget: set it higher and
+            # pi packs prompts past the server window, forcing llama-server
+            # to build oversized SYCL compute buffers on the shared iGPU —
+            # the Level Zero alloc fails and the SYCL backend abort()s
+            # (SIGABRT), surfacing as a 500 after the session grows.
+            contextWindow = 32768;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "gemma4:12b";
+            name = "Gemma 4 12B";
+            # This build emits a gemma4 thinking channel (RENDERER/PARSER
+            # gemma4); with thinking on it deliberates for hundreds of
+            # tokens before answering. pi must know it's a reasoning model
+            # to parse/display the thinking channel correctly.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            # Match the local ollama server's OLLAMA_CONTEXT_LENGTH (32768,
+            # set in hosts/coltrane/ollama.nix). pi only uses this to budget
+            # prompt size; it is NOT sent as num_ctx over the /v1 endpoint,
+            # so advertising 131072 here just lets pi overflow the real 32K
+            # window the server actually serves (silent truncation).
+            contextWindow = 32768;
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            # deepseek-v4-flash:0731-cloud — 304B FP8, served via the local
+            # ollama but inference on a cloud backend (no iGPU cap, so the
+            # full 1M context is advertised). thinking capability -> pi must
+            # parse the reasoning channel.
+            id = "deepseek-v4-flash:0731-cloud";
+            name = "DeepSeek V4 Flash";
+            reasoning = true;
+            input = [ "text" ];
+            contextWindow = 1048576; # /api/show
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+        ];
+      };
+      ollama-wobcom = {
+        baseUrl = "http://ollama.service.wobcom.de:11434/v1";
+        api = "openai-completions";
+        apiKey = "ollama";
+        compat = {
+          supportsDeveloperRole = false;
+          supportsReasoningEffort = false;
+        };
+        # contextWindow values come from ollama /api/tags
+        # (details.context_length). For models that don't report one
+        # (gemma4:26b/31b, gemma3:27b) the family native is used:
+        # gemma4 = 262144 (confirmed via gemma4:12b), gemma3 = 131072.
+        # maxTokens is tiered by context: 32K ctx -> 8192 out,
+        # 131K ctx -> 16384 out, 262K ctx -> 32768 out. Embedding
+        # models keep 8192 (output cap irrelevant for embeddings).
+        models = [
+          {
+            id = "qwen3.8:27b";
+            name = "Qwen 3.8 27B";
+            # qwen35 family (27.3B Q4_K_M), same thinking + vision +
+            # tool-use capabilities as qwen3.6:35b but smaller.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+            compat.thinkingFormat = "qwen-chat-template";
+          }
+          {
+            id = "muse-glimmer:30b";
+            name = "Muse Glimmer 30B";
+            # 27.9B Q4_K_M, muse-glimmer family. 131K native context;
+            # thinking + vision capabilities per /api/tags.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 131072; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3.6:35b";
+            name = "Qwen 3.6 35B-A3B";
+            # MoE: 35B total / 3B active params, qwen35moe family.
+            # Vision + tools + thinking. Fast inference on wobcom (no iGPU cap).
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+            compat.thinkingFormat = "qwen-chat-template";
+          }
+          {
+            id = "qwen3.6:latest";
+            name = "Qwen 3.6 36B";
+            # qwen35moe, 36B Q4_K_M. Vision + tools + thinking.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+            compat.thinkingFormat = "qwen-chat-template";
+          }
+          {
+            id = "gemma4:31b";
+            name = "Gemma 4 31B";
+            # gemma4 family is a reasoning model (thinking capability
+            # confirmed via /api/show); see gemma4:12b in ollama-local.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # gemma4 native (/api/tags on 12b)
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "gemma4:26b";
+            name = "Gemma 4 26B";
+            # gemma4 family is a reasoning model (thinking capability
+            # confirmed via /api/show); see gemma4:12b in ollama-local.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # gemma4 native (/api/tags on 12b)
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "gemma4:12b";
+            name = "Gemma 4 12B";
+            # gemma4 reasoning model with vision. Same build as the
+            # ollama-local entry but served from wobcom (no iGPU cap,
+            # so full 262K context advertised).
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3-coder:latest";
+            name = "Qwen 3 Coder";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3-coder:30b";
+            name = "Qwen 3 Coder 30B";
+            # Same digest as qwen3-coder:latest; explicit tag alias.
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen3.5:latest";
+            name = "Qwen 3.5";
+            # qwen35, 9.7B. /api/tags reports vision capability.
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 262144; # /api/tags
+            maxTokens = 32768;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+            compat.thinkingFormat = "qwen-chat-template";
+          }
+          {
+            id = "gemma3:27b";
+            name = "Gemma 3 27B";
+            reasoning = false;
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 131072; # gemma3 native
+            maxTokens = 16384;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "mistral-small:24b";
+            name = "Mistral Small 24B";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 32768; # /api/tags
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen2.5:14b-instruct";
+            name = "Qwen 2.5 14B Instruct";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 32768; # /api/tags
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "qwen2.5:7b-instruct";
+            name = "Qwen 2.5 7B Instruct";
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 32768; # /api/tags
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "bge-m3:latest";
+            name = "bge-m3";
+            # Embedding-only model (capability: embedding); kept for
+            # tooling that may request it, not a chat/completion model.
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 8192; # /api/tags
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+          {
+            id = "nomic-embed-text:latest";
+            name = "nomic-embed-text";
+            # Embedding-only model (capability: embedding).
+            reasoning = false;
+            input = [ "text" ];
+            contextWindow = 2048; # /api/tags
+            maxTokens = 8192;
+            cost = {
+              input = 0;
+              output = 0;
+              cacheRead = 0;
+              cacheWrite = 0;
+            };
+          }
+        ];
+      };
+    };
+  };
+
   xsfx.codingAgent.settings = {
     autoCompactionEnabled = true;
     defaultProvider = "ollama-wobcom";
@@ -168,175 +542,95 @@ in
   # secrets injected — any `*_FILE` env var is auto-translated into the real
   # var (suffix stripped) at exec time (modules/coding-agent/wrapper.nix).
   # Calls are locked read-only via `--disable-write`.
+  # MCP servers via the declarative catalog. `git`, `nixos`, `context7` and
+  # `sequential-thinking` are enabled by default (non-secret, hardware-
+  # agnostic), so they need no entry here. Secret-bound and infra servers are
+  # enabled explicitly below; grafana/confluence/youtrack/hemingway are bespoke
+  # and stay as raw `extra` entries.
   xsfx.codingAgent.mcpServers = {
-    nixos = { };
-    git = { };
-    context7 = { };
-    "sequential-thinking" = { };
-    # GitHub's official MCP server (github/github-mcp-server). Reuses the
-    # existing `gh-token` sops secret — a PAT works for both `gh` CLI
-    # (GH_TOKEN) and this server (GITHUB_PERSONAL_ACCESS_TOKEN). Default
-    # toolset covers issues, pull_requests, repos, users + copilot context;
-    # add `--toolsets=default,actions` if CI workflows should be reachable.
     github = {
-      args = [ "stdio" ];
-      env = {
-        GITHUB_PERSONAL_ACCESS_TOKEN_FILE = config.sops.secrets."gh-token".path;
-      };
+      enable = true;
+      tokenFile = config.sops.secrets."gh-token".path;
     };
-    # Grafana: two instances, same read-only binary, distinct credentials.
-    # grafana-viz-mon: monitoring Grafana instance (URL/token in sops).
-    grafana-viz-mon = {
-      args = [
-        "--disable-write"
-        "-debug"
-      ];
-      env = {
-        GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
-        GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
-        GRAFANA_ORG_ID = "1";
-      };
-    };
-    # grafana-viz: second Grafana instance (URL/token in sops).
-    grafana-viz = {
-      args = [ "--disable-write" ];
-      env = {
-        GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
-        GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
-        GRAFANA_ORG_ID = "1";
-      };
-    };
-    # Drives your already-open Chromium tabs via the Playwright browser
-    # extension (declared in home-manager/modules/chromium.nix; on a
-    # pre-existing profile HM only seeds extensions on first run, so install
-    # it once from the Web Store if it's missing). Extension mode sidesteps
-    # Chrome 136's refusal of --remote-debugging-port on the default profile,
-    # so it reuses your logged-in sessions. You attach the tabs you want
-    # automated.
     playwright = {
-      args = [
-        "--extension"
-        "--executable-path"
-        "/home/marv/.nix-profile/bin/chromium"
-      ];
-      env = {
-        # Extension mode launches a Chromium to host the connect page; point
-        # it at the real binary + your existing profile so Chromium's
-        # singleton forwards the connect page into the already-running
-        # instance (your logged-in sessions) instead of opening a fresh
-        # bundled Chromium with no extension installed.
-        PWTEST_EXTENSION_USER_DATA_DIR = "/home/marv/.config/chromium";
+      enable = true;
+      chromePath = "/home/marv/.nix-profile/bin/chromium";
+      userDataDir = "/home/marv/.config/chromium";
+    };
+    memory.enable = true;
+    sshPostgres."hemingway-barletta" = {
+      enable = true;
+      host = "barletta";
+      db = "hemingway";
+    };
+    sshPostgres."chirpas-kirchart" = {
+      enable = true;
+      host = "kirchart";
+      db = "chirpas";
+    };
+    sshPostgres."chirpns-kirchart" = {
+      enable = true;
+      host = "kirchart";
+      db = "chirpns";
+    };
+    sshRedis.kirchart = {
+      enable = true;
+      host = "kirchart";
+    };
 
-        # CRITICAL for extension mode on nixpkgs' playwright-mcp: the package's
-        # bin is a wrapper that does
-        #   if [ -z "$PLAYWRIGHT_MCP_USER_DATA_DIR" ]; then
-        #     export PLAYWRIGHT_MCP_ISOLATED=1; fi
-        # Since playwright-mcp 0.0.76 (playwright-core 1.61) the browser-mode
-        # decision checks `isolated` BEFORE `extension`, so a forced
-        # ISOLATED=1 silently wins over `--extension` and launches a throwaway
-        # temp-profile browser (no extension, no logins) instead of bridging to
-        # your running Chromium. (0.0.69 evaluated extension first, so this was
-        # latent.) Setting USER_DATA_DIR non-empty makes the wrapper skip the
-        # ISOLATED=1 export. The value itself is inert in extension mode: the
-        # target browser is your running Chromium via the extension, so
-        # playwright-mcp never launches with this dir and nothing is stored
-        # here. It exists only as a sentinel to defeat the wrapper's `-z` check.
-        # Point it at the tmpfs XDG runtime dir so that in the one edge case it
-        # *would* be used (a fallback persistent launch if the extension never
-        # connects) the profile lives in memory and is auto-cleaned on logout.
-        PLAYWRIGHT_MCP_USER_DATA_DIR = "/run/user/${toString marvUid}/playwright-mcp-profile";
+    # --- Bespoke raw entries (not yet in the catalog) ---
+    extra = {
+      # Two Grafana instances, same read-only binary, distinct credentials.
+      grafana-viz-mon = {
+        args = [
+          "--disable-write"
+          "-debug"
+        ];
+        env = {
+          GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
+          GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
+          GRAFANA_ORG_ID = "1";
+        };
       };
-    };
-    # Persistent knowledge-graph memory. MEMORY_FILE_PATH must be absolute
-    # (a relative path resolves against the read-only nix store) and its
-    # parent must already exist (the server uses fs.writeFile, which does
-    # not mkdir). ~/.pi/agent/ is created by this module's home.file entries.
-    memory = {
-      env = {
-        MEMORY_FILE_PATH = "/home/marv/.pi/agent/memory.jsonl";
+      grafana-viz = {
+        args = [ "--disable-write" ];
+        env = {
+          GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
+          GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
+          GRAFANA_ORG_ID = "1";
+        };
       };
-    };
-    # Read-only postgres MCP against barletta's `hemingway` DB. Keyed by
-    # host+DB (like the two grafana instances) since the key prefixes every tool
-    # name and a bare `postgres` wouldn't scale to a second DB. `bin` is the
-    # SSH-tunnel wrapper (postgres isn't exposed on the network); `command` must
-    # match the wrapper's binary name so the adapter execs it. No env/secret:
-    # the wrapper connects passwordlessly via barletta's localhost trust rule
-    # (see the wrapper comment above).
-    "postgres-hemingway-barletta" = {
-      bin = postgresForward "barletta" "hemingway";
-      command = "postgres-hemingway-barletta";
-    };
-    # kirchart's two ChirpStack DBs: chirpas (Application Server — users,
-    # applications, devices, gateways) and chirpns (Network Server — radio
-    # frames, device activations/queue). Same host+socket wrapper; postgres-mcp
-    # is one-DB-per-server, hence two entries (the grafana pattern).
-    "postgres-chirpas-kirchart" = {
-      bin = postgresForward "kirchart" "chirpas";
-      command = "postgres-chirpas-kirchart";
-    };
-    "postgres-chirpns-kirchart" = {
-      bin = postgresForward "kirchart" "chirpns";
-      command = "postgres-chirpns-kirchart";
-    };
-    # Read-only Redis MCP against kirchart's Redis (127.0.0.1:6379, no
-    # password). `bin` is the SSH-tunnel wrapper (Redis isn't network-exposed);
-    # `command` must match the wrapper's binary name so the adapter execs it.
-    # No env/secret: the wrapper connects passwordlessly via the forwarded port.
-    # Read-only: write tools are patched out of redis-mcp-server
-    # (pkgs/redis-mcp-readonly.patch).
-    redis-kirchart = {
-      bin = redisForward "kirchart";
-      command = "redis-kirchart";
-    };
-    # Hemingway MCP: v0.89.17+ hosts the MCP server in-process at /mcp on the
-    # deployed API (StreamableHTTP, behind the same Caddy basic_auth as the
-    # rest of the API). `hemingwayMcp` (bespoke wrapper in the `let` above)
-    # bridges it to stdio via mcp-proxy, building the `Authorization: Basic
-    # <base64(user:pass)>` header from the HEMINGWAY_* creds (mcp-proxy has no
-    # native basic-auth option). The three sops secrets are reused unchanged:
-    # HEMINGWAY_SERVICES_API (API base, e.g. https://api.smartmetering.service
-    # .wobcom.de) -> the wrapper appends /mcp; HEMINGWAY_MCP_USERNAME +
-    # HEMINGWAY_MCP_PASSWORD -> base64'd into the header. The module's secret
-    # wrapper cats each *_FILE into the real var and unsets the *_FILE var
-    # before exec'ing hemingwayMcp, which then reads the real vars.
-    hemingway = {
-      bin = hemingwayMcp;
-      command = "hemingway-mcp";
-      env = {
-        HEMINGWAY_SERVICES_API_FILE = config.sops.secrets."mcp-hemingway-url".path;
-        HEMINGWAY_MCP_USERNAME_FILE = config.sops.secrets."mcp-hemingway-username".path;
-        HEMINGWAY_MCP_PASSWORD_FILE = config.sops.secrets."mcp-hemingway-password".path;
+      # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
+      # behind Caddy basic_auth). hemingwayMcp (bespoke wrapper in the `let`
+      # above) builds the Basic auth header via mcp-proxy.
+      hemingway = {
+        bin = hemingwayMcp;
+        command = "hemingway-mcp";
+        env = {
+          HEMINGWAY_SERVICES_API_FILE = config.sops.secrets."mcp-hemingway-url".path;
+          HEMINGWAY_MCP_USERNAME_FILE = config.sops.secrets."mcp-hemingway-username".path;
+          HEMINGWAY_MCP_PASSWORD_FILE = config.sops.secrets."mcp-hemingway-password".path;
+        };
       };
-    };
-    # Confluence MCP (sooperset/mcp-atlassian) against the self-hosted Data
-    # Center instance at https://confluence.service.wobcom.de. Data Center auth
-    # is a personal access token (CONFLUENCE_PERSONAL_TOKEN), not email+API
-    # token. Locked read-only via `--read-only` (disables all write tools).
-    confluence = {
-      args = [ "--read-only" ];
-      env = {
-        CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
-        CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
+      # Confluence Data Center, read-only via PAT.
+      confluence = {
+        args = [ "--read-only" ];
+        env = {
+          CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
+          CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
+        };
       };
-    };
-    # JetBrains ships a remote MCP server built into YouTrack itself (no
-    # package to install): <instance>/mcp over StreamableHTTP. mcp-proxy
-    # bridges it to stdio so the adapter spawns it like any other server.
-    # The permanent token is injected via API_ACCESS_TOKEN_FILE; the module's
-    # secret wrapper cats it into API_ACCESS_TOKEN, which mcp-proxy sends as
-    # `Authorization: Bearer <token>`. Generate the token in YouTrack
-    # (Profile → Account → Permanent Tokens, scope: YouTrack) and store it in
-    # sops under `mcp-youtrack-token`.
-    youtrack = {
-      args = [
-        "--transport"
-        "streamablehttp"
-        "$YOUTRACK_URL"
-      ];
-      env = {
-        YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
-        API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
+      # YouTrack remote MCP over StreamableHTTP, Bearer token via mcp-proxy.
+      youtrack = {
+        args = [
+          "--transport"
+          "streamablehttp"
+          "$YOUTRACK_URL"
+        ];
+        env = {
+          YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
+          API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
+        };
       };
     };
   };

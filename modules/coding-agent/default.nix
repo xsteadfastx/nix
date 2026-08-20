@@ -24,19 +24,23 @@ let
   plugins = import ./plugins.nix { inherit pkgs; };
   superpowers = plugins.superpowers;
   ponytail = plugins.ponytail;
+  # SSH-tunnel MCP builders, promoted from the coltrane host config so any
+  # host can reach non-network-exposed postgres/redis over ssh(1).
+  tunnels = import ./ssh-tunnels.nix { inherit pkgs lib; };
 in
 {
   imports = [
     ./claude.nix
     ./skills.nix
+    ./mcp-servers.nix
   ];
 
   options.xsfx.codingAgent = {
     enable = lib.mkEnableOption "Enable the Coding Agent environment";
     user = lib.mkOption {
       type = lib.types.str;
-      description = "The user for whom to configure the agent";
-      default = "marv";
+      description = "The user for whom to configure the agent. Empty = first normal user.";
+      default = "";
     };
     theme = lib.mkOption {
       type = lib.types.attrs;
@@ -122,507 +126,25 @@ in
       type = lib.types.attrs;
       description = "Model providers and model definitions";
       default = {
-        providers = {
-          ollama-local = {
-            baseUrl = "http://127.0.0.1:11434/v1";
-            api = "openai-completions";
-            apiKey = "ollama";
-            compat = {
-              supportsDeveloperRole = false;
-              supportsReasoningEffort = false;
-            };
-            models = [
-              {
-                id = "qwen3.5";
-                name = "Qwen 3.5 9B";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 65536;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-                compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "glm-5.2:cloud";
-                name = "GLM 5.2 Cloud";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 1000000;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen2.5-coder:14b";
-                name = "Qwen 2.5 Coder 14B";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 131072;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                # Small non-reasoning coder that fully fits the Arc iGPU.
-                # Native context is 32768, matching the local ollama server.
-                id = "qwen2.5-coder:7b";
-                name = "Qwen 2.5 Coder 7B";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 32768;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                # Ornith 9B — agentic-coding-tuned (Terminal-Bench/SWE-Bench),
-                # MIT. At ~5.6 GB it fully offloads to the Arc iGPU under normal
-                # desktop RAM pressure (unlike gemma4:12b/qwen3-coder:30b), so
-                # it's the candidate offline agent that both fits AND may drive
-                # pi's tool loop where qwen2.5-coder:7b emits text-JSON. Pull with
-                # `ollama pull ornith:9b`. reasoning = true: the model card says it
-                # "thinks step by step in a reasoning block", so pi must parse the
-                # thinking channel (same as gemma4:12b, else empty content).
-                # contextWindow MUST stay 32768 to match OLLAMA_CONTEXT_LENGTH —
-                # see qwen3-coder:30b warning. (35B variant omitted: ~21 GB won't
-                # fit the iGPU on this 30 GB laptop.)
-                id = "ornith:9b";
-                name = "Ornith 9B";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 32768;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "kimi-k2.7-code:cloud";
-                name = "Kimi K2.7 Code";
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3-coder:480b-cloud";
-                name = "Qwen 3 Coder 480B Cloud";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 262144;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3-coder:30b";
-                name = "Qwen 3 Coder 30B";
-                reasoning = false;
-                input = [ "text" ];
-                # MUST equal ollama's OLLAMA_CONTEXT_LENGTH (32768 in
-                # hosts/coltrane/ollama.nix). The /v1 endpoint has no num_ctx
-                # field, so this is purely pi's prompt budget: set it higher and
-                # pi packs prompts past the server window, forcing llama-server
-                # to build oversized SYCL compute buffers on the shared iGPU —
-                # the Level Zero alloc fails and the SYCL backend abort()s
-                # (SIGABRT), surfacing as a 500 after the session grows.
-                contextWindow = 32768;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "gemma4:12b";
-                name = "Gemma 4 12B";
-                # This build emits a gemma4 thinking channel (RENDERER/PARSER
-                # gemma4); with thinking on it deliberates for hundreds of
-                # tokens before answering. pi must know it's a reasoning model
-                # to parse/display the thinking channel correctly.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                # Match the local ollama server's OLLAMA_CONTEXT_LENGTH (32768,
-                # set in hosts/coltrane/ollama.nix). pi only uses this to budget
-                # prompt size; it is NOT sent as num_ctx over the /v1 endpoint,
-                # so advertising 131072 here just lets pi overflow the real 32K
-                # window the server actually serves (silent truncation).
-                contextWindow = 32768;
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                # deepseek-v4-flash:0731-cloud — 304B FP8, served via the local
-                # ollama but inference on a cloud backend (no iGPU cap, so the
-                # full 1M context is advertised). thinking capability -> pi must
-                # parse the reasoning channel.
-                id = "deepseek-v4-flash:0731-cloud";
-                name = "DeepSeek V4 Flash";
-                reasoning = true;
-                input = [ "text" ];
-                contextWindow = 1048576; # /api/show
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-            ];
-          };
-          ollama-wobcom = {
-            baseUrl = "http://ollama.service.wobcom.de:11434/v1";
-            api = "openai-completions";
-            apiKey = "ollama";
-            compat = {
-              supportsDeveloperRole = false;
-              supportsReasoningEffort = false;
-            };
-            # contextWindow values come from ollama /api/tags
-            # (details.context_length). For models that don't report one
-            # (gemma4:26b/31b, gemma3:27b) the family native is used:
-            # gemma4 = 262144 (confirmed via gemma4:12b), gemma3 = 131072.
-            # maxTokens is tiered by context: 32K ctx -> 8192 out,
-            # 131K ctx -> 16384 out, 262K ctx -> 32768 out. Embedding
-            # models keep 8192 (output cap irrelevant for embeddings).
-            models = [
-              {
-                id = "qwen3.8:27b";
-                name = "Qwen 3.8 27B";
-                # qwen35 family (27.3B Q4_K_M), same thinking + vision +
-                # tool-use capabilities as qwen3.6:35b but smaller.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-                compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "muse-glimmer:30b";
-                name = "Muse Glimmer 30B";
-                # 27.9B Q4_K_M, muse-glimmer family. 131K native context;
-                # thinking + vision capabilities per /api/tags.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 131072; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3.6:35b";
-                name = "Qwen 3.6 35B-A3B";
-                # MoE: 35B total / 3B active params, qwen35moe family.
-                # Vision + tools + thinking. Fast inference on wobcom (no iGPU cap).
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-                compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "qwen3.6:latest";
-                name = "Qwen 3.6 36B";
-                # qwen35moe, 36B Q4_K_M. Vision + tools + thinking.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-                compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "gemma4:31b";
-                name = "Gemma 4 31B";
-                # gemma4 family is a reasoning model (thinking capability
-                # confirmed via /api/show); see gemma4:12b in ollama-local.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # gemma4 native (/api/tags on 12b)
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "gemma4:26b";
-                name = "Gemma 4 26B";
-                # gemma4 family is a reasoning model (thinking capability
-                # confirmed via /api/show); see gemma4:12b in ollama-local.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # gemma4 native (/api/tags on 12b)
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "gemma4:12b";
-                name = "Gemma 4 12B";
-                # gemma4 reasoning model with vision. Same build as the
-                # ollama-local entry but served from wobcom (no iGPU cap,
-                # so full 262K context advertised).
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3-coder:latest";
-                name = "Qwen 3 Coder";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3-coder:30b";
-                name = "Qwen 3 Coder 30B";
-                # Same digest as qwen3-coder:latest; explicit tag alias.
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen3.5:latest";
-                name = "Qwen 3.5";
-                # qwen35, 9.7B. /api/tags reports vision capability.
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 262144; # /api/tags
-                maxTokens = 32768;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-                compat.thinkingFormat = "qwen-chat-template";
-              }
-              {
-                id = "gemma3:27b";
-                name = "Gemma 3 27B";
-                reasoning = false;
-                input = [
-                  "text"
-                  "image"
-                ];
-                contextWindow = 131072; # gemma3 native
-                maxTokens = 16384;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "mistral-small:24b";
-                name = "Mistral Small 24B";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 32768; # /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen2.5:14b-instruct";
-                name = "Qwen 2.5 14B Instruct";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 32768; # /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "qwen2.5:7b-instruct";
-                name = "Qwen 2.5 7B Instruct";
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 32768; # /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "bge-m3:latest";
-                name = "bge-m3";
-                # Embedding-only model (capability: embedding); kept for
-                # tooling that may request it, not a chat/completion model.
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 8192; # /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-              {
-                id = "nomic-embed-text:latest";
-                name = "nomic-embed-text";
-                # Embedding-only model (capability: embedding).
-                reasoning = false;
-                input = [ "text" ];
-                contextWindow = 2048; # /api/tags
-                maxTokens = 8192;
-                cost = {
-                  input = 0;
-                  output = 0;
-                  cacheRead = 0;
-                  cacheWrite = 0;
-                };
-              }
-            ];
-          };
-        };
+        providers = { };
       };
     };
     settings = lib.mkOption {
       type = lib.types.attrs;
       description = "General agent settings";
-      default = {
-        defaultProvider = "ollama-wobcom";
-        defaultModel = "gemma4:31b";
-        theme = "dracula";
-        skills = [ "/home/marv/.claude/skills" ];
-      };
-    };
-    mcpServers = lib.mkOption {
-      type = lib.types.attrs;
-      description = "MCP server configurations";
       default = { };
+    };
+
+    _resolved = lib.mkOption {
+      internal = true;
+      type = lib.types.attrs;
+      description = "Flattened MCP server map resolved from the declarative catalog.";
+    };
+
+    _effectiveUser = lib.mkOption {
+      internal = true;
+      type = lib.types.str;
+      description = "The effective agent user (explicit or first normal user).";
     };
   };
 
@@ -630,44 +152,144 @@ in
     let
       cfg = config.xsfx.codingAgent;
 
-      # Resolve each MCP server against the registry: the registry is the
-      # source of truth for `bin` and `command`; a host only supplies args,
-      # env. Every server goes through the wrapper: it scrubs the inherited
-      # Python env (so a bundled-Python server like mcp-nixos uses its own
-      # interpreter regardless of the launching shell — direnv/nix develop
-      # otherwise leaks a mismatched PYTHONPATH and crashes it with -32000)
-      # and injects any `*_FILE` secret (the sops-nix convention). Servers
-      # with no `*_FILE` env keys just get the env scrub — a no-op secret pass.
-      resolveServer =
-        name: server:
+      # Explicit user, or the first normal user. Never hardcoded to marv.
+      effectiveUser =
+        if cfg.user != "" then
+          cfg.user
+        else
+          lib.head (
+            lib.filter (u: config.users.users.${u}.isNormalUser or false) (
+              builtins.attrNames config.users.users
+            )
+          );
+
+      # Resolve a single server to {bin, command, args, env}. The registry is
+      # the source of truth for `bin`/`command`; a raw entry may override both
+      # (the ssh-tunnel builders supply a bespoke bin + command name). Every
+      # server goes through the wrapper: it scrubs the inherited Python env
+      # (so a bundled-Python server like mcp-nixos uses its own interpreter
+      # regardless of the launching shell) and injects any `*_FILE` secret
+      # (the sops-nix convention). Servers with no `*_FILE` env keys just get
+      # the env scrub — a no-op secret pass.
+      mkWrapped =
+        name:
+        {
+          bin ? null,
+          command ? null,
+          args ? [ ],
+          env ? { },
+        }:
         let
           serverDef =
             registry.mcpRegistry."${name}" or {
               bin = null;
               command = name;
             };
-          bin = server.bin or serverDef.bin;
-          command = server.command or serverDef.command;
-          env = server.env or { };
+          useBin = if bin != null then bin else serverDef.bin;
+          useCommand = if command != null then command else serverDef.command;
         in
         {
-          inherit command;
-          bin = if bin != null then wrapperLib.mkSecretWrapper { inherit bin command env; } else bin;
+          inherit args env;
+          command = useCommand;
+          bin =
+            if useBin != null then
+              wrapperLib.mkSecretWrapper {
+                bin = useBin;
+                command = useCommand;
+                env = env;
+              }
+            else
+              useBin;
         };
 
-      # Resolve each server once; both the package list and the mcp.json
-      # manifest derive from this so the (potentially expensive) wrapper
-      # derivation is built a single time per server.
-      resolved = lib.mapAttrs (
-        name: server:
-        resolveServer name server
-        // {
-          args = server.args or [ ];
-          env = server.env or { };
-        }
-      ) cfg.mcpServers;
+      # uid of the effective user, for the tmpfs playwright profile path.
+      uid = config.users.users."${effectiveUser}".uid or 1000;
 
-      mcpPackages = lib.mapAttrs (_: r: r.bin) resolved;
+      # --- Declarative catalog: named servers with their args/env. ---
+      # Non-secret, hardware-agnostic servers are enabled by default (their
+      # enable flags default true in mcp-servers.nix). Secret/hardware-bound
+      # ones are opt-in via their enable flag.
+      catalogRaw =
+        lib.optional cfg.mcpServers.git { name = "git"; }
+        ++ lib.optional cfg.mcpServers.nixos { name = "nixos"; }
+        ++ lib.optional cfg.mcpServers.context7 { name = "context7"; }
+        ++ lib.optional cfg.mcpServers.sequentialThinking { name = "sequential-thinking"; }
+        ++ lib.optional cfg.mcpServers.github.enable {
+          name = "github";
+          args = [ "stdio" ];
+          env = lib.optionalAttrs (cfg.mcpServers.github.tokenFile != null) {
+            GITHUB_PERSONAL_ACCESS_TOKEN_FILE = cfg.mcpServers.github.tokenFile;
+          };
+        }
+        ++ lib.optional cfg.mcpServers.memory.enable {
+          name = "memory";
+          env = {
+            MEMORY_FILE_PATH = cfg.mcpServers.memory.filePath;
+          };
+        }
+        ++ lib.optional cfg.mcpServers.playwright.enable {
+          name = "playwright";
+          args = [
+            "--extension"
+            "--executable-path"
+            cfg.mcpServers.playwright.chromePath
+          ];
+          env = {
+            PWTEST_EXTENSION_USER_DATA_DIR = cfg.mcpServers.playwright.userDataDir;
+            PLAYWRIGHT_MCP_USER_DATA_DIR = "/run/user/${toString uid}/playwright-mcp-profile";
+          };
+        };
+
+      # --- SSH-tunneled catalog: one entry per named postgres/redis. ---
+      sshRaw =
+        lib.concatLists (
+          lib.mapAttrsToList (
+            name: s:
+            lib.optional s.enable {
+              name = "postgres-${name}";
+              command = "postgres-${name}";
+              bin = tunnels.postgresForward {
+                host = s.host;
+                db = s.db;
+                sshUser = s.sshUser;
+                sshOptions = s.sshOptions;
+              };
+            }
+          ) cfg.mcpServers.sshPostgres
+        )
+        ++ lib.concatLists (
+          lib.mapAttrsToList (
+            name: s:
+            lib.optional s.enable {
+              name = "redis-${name}";
+              command = "redis-${name}";
+              bin = tunnels.redisForward {
+                host = s.host;
+                sshUser = s.sshUser;
+                sshOptions = s.sshOptions;
+              };
+            }
+          ) cfg.mcpServers.sshRedis
+        );
+
+      # Resolve each catalog entry once; both the package list and the
+      # mcp.json manifest derive from this so the (potentially expensive)
+      # wrapper derivation is built a single time per server. Entries carry
+      # `name` + a spec; fold into a name -> spec map first (listToAttrs needs
+      # {name,value} pairs), then wrap each.
+      catalogMap = lib.listToAttrs (
+        map (e: {
+          name = e.name;
+          value = lib.removeAttrs e [ "name" ];
+        }) (catalogRaw ++ sshRaw)
+      );
+      resolved = lib.mapAttrs mkWrapped catalogMap;
+
+      # Raw `extra` entries (backward compat with the old free-form shape)
+      # overlay the catalog.
+      extraResolved = lib.mapAttrs mkWrapped cfg.mcpServers.extra;
+
+      mcpPackages = lib.mapAttrs (_: r: r.bin) (resolved // extraResolved);
 
       # The final bundled package
       codingAgentWithExtensions = pkgs.symlinkJoin {
@@ -708,16 +330,21 @@ in
           message = ''
             xsfx.codingAgent requires home-manager.nixosModules.home-manager to be
             imported on this host (it writes the agent config under the user's home
-            via home-manager.users.${cfg.user}.home.file).
+            via home-manager.users.${effectiveUser}.home.file).
           '';
         }
       ];
+
+      # Expose the resolved server map + effective user to other modules
+      # (claude.nix reads _effectiveUser).
+      xsfx.codingAgent._resolved = resolved // extraResolved;
+      xsfx.codingAgent._effectiveUser = effectiveUser;
 
       environment.systemPackages = [
         codingAgentWithExtensions
       ];
 
-      home-manager.users.${cfg.user}.home.file = {
+      home-manager.users.${effectiveUser}.home.file = {
         ".pi/agent/models.json" = {
           text = builtins.toJSON cfg.models;
           force = true;
@@ -741,7 +368,7 @@ in
           text = builtins.toJSON {
             mcpServers = lib.mapAttrs (_: r: {
               inherit (r) command args env;
-            }) resolved;
+            }) (resolved // extraResolved);
           };
           force = true;
         };

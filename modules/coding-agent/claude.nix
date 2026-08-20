@@ -19,6 +19,9 @@
 let
   cfg = config.xsfx.codingAgent;
 
+  # The user whose home the shared mcp.json lives under (see default.nix).
+  effectiveUser = cfg._effectiveUser;
+
   # obra/superpowers + DietrichGebert/ponytail sources, shared with default.nix
   plugins = import ./plugins.nix { inherit pkgs; };
   superpowers = plugins.superpowers;
@@ -38,7 +41,7 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/claude \
-        --add-flags "--mcp-config=/home/${cfg.user}/.pi/agent/mcp.json" \
+        --add-flags "--mcp-config=/home/${effectiveUser}/.pi/agent/mcp.json" \
         --prefix PATH : ${lib.makeBinPath [ pkgs.nodejs ]}
     '';
   };
@@ -46,7 +49,7 @@ in
 lib.mkIf cfg.enable {
   environment.systemPackages = [ wrappedClaude ];
 
-  home-manager.users.${cfg.user}.home.file = {
+  home-manager.users.${effectiveUser}.home.file = {
     ".claude/settings.json".text = builtins.toJSON {
       theme = "dracula";
 

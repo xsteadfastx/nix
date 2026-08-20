@@ -33,10 +33,27 @@ in
   options.xsfx.codingAgent.mcpServers = lib.mkOption {
     type = lib.types.submodule {
       options = {
-        git = lib.mkEnableOption "git MCP server";
-        nixos = lib.mkEnableOption "nixos MCP server";
-        context7 = lib.mkEnableOption "context7 MCP server";
-        sequentialThinking = lib.mkEnableOption "sequential-thinking MCP server";
+        # Basic, non-secret, hardware-agnostic servers — enabled by default.
+        git = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable the git MCP server.";
+        };
+        nixos = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable the nixos MCP server.";
+        };
+        context7 = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable the context7 MCP server.";
+        };
+        sequentialThinking = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable the sequential-thinking MCP server.";
+        };
 
         github = {
           enable = lib.mkEnableOption "github MCP server";
@@ -66,8 +83,7 @@ in
         sshPostgres = lib.mkOption {
           type = lib.types.attrsOf (
             lib.types.submodule (
-              sshServer
-              // {
+              lib.recursiveUpdate sshServer {
                 options.db = lib.mkOption {
                   type = lib.types.str;
                   description = "Database name to connect to.";
@@ -107,12 +123,6 @@ in
           description = "Raw MCP server entries ({bin,command,args,env}); merged last.";
         };
       };
-    };
-    default = {
-      git = true;
-      nixos = true;
-      context7 = true;
-      sequentialThinking = true;
     };
   };
 }

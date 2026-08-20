@@ -164,7 +164,7 @@ let
   '';
 in
 lib.mkIf cfg.enable {
-  home-manager.users.${cfg.user}.home.file = {
+  home-manager.users.${cfg._effectiveUser}.home.file = {
     # Curated daily agent set; full catalog parked (not auto-loaded) below.
     ".claude/agents".source = dailyAgentsDir;
     ".claude/agent-library".source = "${ecc-src}/agents";
