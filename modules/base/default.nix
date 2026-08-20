@@ -6,10 +6,11 @@
 }:
 {
   nixpkgs.overlays = [
-    # Single overlay that composes both the custom package overrides AND the
-    # coding-agent's pinned unstable packages (pi, agent-browser, mcp-*,
-    # claude-code). overlays/default.nix merges overlays/coding-agent.nix and
-    # owns the one nixpkgs-unstable import (exposed as pkgs.unstable).
+    # The single overlay: custom package overrides + the coding-agent repo's
+    # packages (pi, mcp-*, claude-code), exposed as plain pkgs.* attrs that the
+    # coding-agent module reads directly. overlays/default.nix applies the repo
+    # overlay to this repo's nixos-unstable instance (where the Python MCP
+    # servers' deps exist) and surfaces the names at the top level.
     inputs.self.overlays.default
   ];
 

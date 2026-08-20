@@ -82,14 +82,38 @@ let
       });
     };
 
-  # Coding-agent's pinned unstable packages (pi, agent-browser, mcp-*, claude-code,
-  # github-cli, ripgrep). Composed here so a single overlay (overlays.default)
-  # wires everything; base.nix applies only overlays.default. It sources all
-  # unstable packages from `final.unstable` (defined below) — the single
-  # nixpkgs-unstable import for the whole repo. No recursion: the unstable
-  # import does NOT apply codingAgent (its overlays list is [packageOverrides]),
-  # so final.unstable never reaches back into codingAgent.
-  codingAgent = import ./coding-agent.nix;
+  # (overlays/default.nix) — see modules/base. The coding-agent repo's overlay
+  # now provides the pi/mcp-* packages as plain pkgs.* attrs; overlays.default
+  # here is only the custom package overrides + the single unstable instance.
+  # Coding-agent packages: single-sourced from the coding-agent repo's own
+  # overlay, so we don't duplicate their definitions here. The repo overlay
+  # builds the Python MCP servers (mcp-atlassian, redis-mcp) from source against
+  # whatever channel it's applied to — those need recent deps (cattrs>=26.1,
+  # lxml>=6.1) that only exist on nixos-unstable, so we apply it to this repo's
+  # nested `unstable` instance (below), then surface the names at the top level
+  # where the coding-agent module reads them as plain `pkgs.*`.
+  codingAgentOverlay = inputs.coding-agent.overlays.default;
+
+  # The package names the coding-agent module consumes as top-level pkgs.*.
+  codingAgentPkgs = [
+    "pi-coding-agent"
+    "claude-code"
+    "postgres-mcp"
+    "mcp-atlassian"
+    "redis-mcp-server"
+    "agent-browser"
+    "mcp-nixos"
+    "mcp-server-git"
+    "mcp-grafana"
+    "github-mcp-server"
+    "context7-mcp"
+    "mcp-server-sequential-thinking"
+    "mcp-server-memory"
+    "playwright-mcp"
+    "mcp-proxy"
+    "github-cli"
+    "ripgrep"
+  ];
 in
 final: prev:
 (packageOverrides final prev)
@@ -102,11 +126,21 @@ final: prev:
   #
   # `import` (not `.legacyPackages`) is required for `allowUnfree`; the same
   # packageOverrides are applied so custom packages resolve identically on both
-  # channels (`pkgs.foo` = stable, `pkgs.unstable.foo` = unstable).
+  # channels (`pkgs.foo` = stable, `pkgs.unstable.foo` = unstable). The
+  # coding-agent repo's overlay is applied here too, so the Python MCP servers
+  # build against unstable (recent deps).
   unstable = import inputs.nixpkgs-unstable {
     inherit (prev.stdenv.hostPlatform) system;
     config.allowUnfree = true;
-    overlays = [ packageOverrides ];
+    overlays = [
+      packageOverrides
+      codingAgentOverlay
+    ];
   };
 }
-// (codingAgent final prev)
+// (builtins.listToAttrs (
+  map (name: {
+    inherit name;
+    value = final.unstable.${name};
+  }) codingAgentPkgs
+))
