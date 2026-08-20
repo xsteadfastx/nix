@@ -36,7 +36,7 @@ in
     ./mcp-servers.nix
   ];
 
-  options.xsfx.codingAgent = {
+  options.codingAgent = {
     enable = lib.mkEnableOption "Enable the Coding Agent environment";
     user = lib.mkOption {
       type = lib.types.str;
@@ -151,7 +151,7 @@ in
 
   config =
     let
-      cfg = config.xsfx.codingAgent;
+      cfg = config.codingAgent;
 
       # Explicit user, or the first normal user. Never hardcoded to marv.
       effectiveUser =
@@ -369,7 +369,7 @@ in
         {
           assertion = options ? home-manager;
           message = ''
-            xsfx.codingAgent requires home-manager.nixosModules.home-manager to be
+            codingAgent requires home-manager.nixosModules.home-manager to be
             imported on this host (it writes the agent config under the user's home
             via home-manager.users.${effectiveUser}.home.file).
           '';
@@ -378,8 +378,8 @@ in
 
       # Expose the resolved server map + effective user to other modules
       # (claude.nix reads _effectiveUser).
-      xsfx.codingAgent._resolved = resolved // extraResolved;
-      xsfx.codingAgent._effectiveUser = effectiveUser;
+      codingAgent._resolved = resolved // extraResolved;
+      codingAgent._effectiveUser = effectiveUser;
 
       environment.systemPackages = [
         codingAgentWithExtensions

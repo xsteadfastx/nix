@@ -4,7 +4,7 @@
 # resolved server set to ~/.pi/agent/mcp.json (see ./default.nix), and this
 # file bundles a `claude` wrapped with `--mcp-config=<that file>`. Claude's
 # `--mcp-config` consumes the exact `{"mcpServers":{...}}` schema pi emits, so
-# adding a server to `xsfx.codingAgent.mcpServers` feeds both agents at once.
+# adding a server to `codingAgent.mcpServers` feeds both agents at once.
 # The `=`-form keeps the variadic flag from eating the user's own args, and the
 # absence of `--strict-mcp-config` preserves Claude's own connectors (claude.ai).
 #
@@ -17,7 +17,7 @@
   ...
 }:
 let
-  cfg = config.xsfx.codingAgent;
+  cfg = config.codingAgent;
 
   # The user whose home the shared mcp.json lives under (see default.nix).
   effectiveUser = cfg._effectiveUser;

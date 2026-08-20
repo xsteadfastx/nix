@@ -1,10 +1,10 @@
 { config, ... }:
 {
-  xsfx.codingAgent.enable = true;
+  codingAgent.enable = true;
 
   # marv's model providers. Kept in the host config (not the module) because
   # they are personal/hardware-specific.
-  xsfx.codingAgent.models = {
+  codingAgent.models = {
     providers = {
       ollama-local = {
         baseUrl = "http://127.0.0.1:11434/v1";
@@ -492,7 +492,7 @@
     };
   };
 
-  xsfx.codingAgent.settings = {
+  codingAgent.settings = {
     autoCompactionEnabled = true;
     defaultProvider = "ollama-wobcom";
     defaultModel = "gemma4:31b";
@@ -510,7 +510,7 @@
   # agnostic), so they need no entry here. Secret-bound and infra servers are
   # enabled explicitly below; grafana/confluence/youtrack/hemingway are bespoke
   # and stay as raw `extra` entries.
-  xsfx.codingAgent.mcpServers = {
+  codingAgent.mcpServers = {
     github = {
       enable = true;
       tokenFile = config.sops.secrets."gh-token".path;

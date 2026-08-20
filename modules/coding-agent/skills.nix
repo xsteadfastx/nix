@@ -12,7 +12,7 @@
   ...
 }:
 let
-  cfg = config.xsfx.codingAgent;
+  cfg = config.codingAgent;
 
   # Rev: 2026-07-01 — run `nixos-rebuild` once, paste the correct hash from the error.
   # Upstream renamed the repo everything-claude-code → ECC (same owner).

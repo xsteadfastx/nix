@@ -18,12 +18,12 @@ let
     lib.evalModules {
       modules = [
         mcp
-        { config.xsfx.codingAgent.mcpServers = defs; }
+        { config.codingAgent.mcpServers = defs; }
       ];
     };
 
   # Defaults, no host definition.
-  defaults = (eval { }).config.xsfx.codingAgent.mcpServers;
+  defaults = (eval { }).config.codingAgent.mcpServers;
 
   # Host definition: enables a postgres tunnel + github with a token path,
   # plus an `extra` raw entry in the old shape.
@@ -42,7 +42,7 @@ let
           MY_TOKEN_FILE = "/run/secrets/tok";
         };
       };
-    }).config.xsfx.codingAgent.mcpServers;
+    }).config.codingAgent.mcpServers;
 
   checks = pkgs.writeShellScript "checks" ''
     set -e

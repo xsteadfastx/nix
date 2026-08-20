@@ -30,7 +30,7 @@ let
   };
 in
 {
-  options.xsfx.codingAgent.mcpServers = lib.mkOption {
+  options.codingAgent.mcpServers = lib.mkOption {
     type = lib.types.submodule {
       options = {
         # Basic, non-secret, hardware-agnostic servers — enabled by default.
