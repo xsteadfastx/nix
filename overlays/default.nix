@@ -53,6 +53,29 @@ let
         ];
       };
 
+      # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
+      # an Epson rpm via `rpm2cpio X | cpio -idmv`; stdenv sets `pipefail`, and
+      # cpio exits after the archive trailer while rpm2cpio is still writing, so
+      # the pipe intermittently dies with SIGPIPE (exit 141) even though
+      # extraction succeeded. That race flakes nixos-rebuild/CI (see
+      # NixOS/nixpkgs#541364).
+      #
+      # We drop pipefail for the install phase. This is SAFE against shipping a
+      # broken package: cpio is the LAST command in the pipe, so without
+      # pipefail the pipeline returns cpio's own exit status, and cpio returns
+      # non-zero on any truncated/corrupt stream (0 only after reading a
+      # complete archive to its trailer). The SIGPIPE only ever kills rpm2cpio
+      # (the producer), and only after cpio has already consumed the full valid
+      # archive and closed the pipe — the two can't coincide with a bad package.
+      epkowa = prev.epkowa.override {
+        plugins = builtins.mapAttrs (
+          _: p:
+          p.overrideAttrs (o: {
+            installPhase = "set +o pipefail\n" + o.installPhase;
+          })
+        ) prev.epkowa.plugins;
+      };
+
       quickemu = inputs.quickemu.packages.${system}.default;
 
       imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
