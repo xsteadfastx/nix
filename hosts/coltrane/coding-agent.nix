@@ -14,6 +14,11 @@
       --no-verify`, `HUSKY=0`, etc.). Pre-commit hooks exist for a reason; if a
       hook fails, fix the root cause or surface it to the user — never bypass.
       This is absolute; do not rationalize "just this once".
+    - **NEVER `git push` yourself.** You may commit locally (never bypassing
+      hooks), but never push to any remote — never `git push`, never open a PR
+      or trigger a push on the user's behalf. The user alone decides what
+      leaves the machine. If you think a push is needed, surface it and let
+      the user run it.
 
     ## Playwright MCP — driving the already-open Chromium
 
