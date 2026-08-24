@@ -72,7 +72,6 @@
       name = "ollama-local";
       baseUrl = "http://127.0.0.1:11434/v1";
       apiKey = "ollama";
-      contextCap = 32768;
     }
     {
       name = "ollama-wobcom";
@@ -85,7 +84,6 @@
     defaultProvider = "ollama-wobcom";
     defaultModel = "gemma4:31b";
     theme = "dracula";
-    skills = [ "/home/marv/.claude/skills" ];
   };
 
   # MCP servers. A bare entry is enough for non-secret servers: the module's
