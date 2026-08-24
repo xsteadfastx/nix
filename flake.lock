@@ -57,11 +57,11 @@
         "pre-commit": "pre-commit"
       },
       "locked": {
-        "lastModified": 1787559199,
-        "narHash": "sha256-cVoAx5JBvQY0cu2b3s2BtXA1DjDD7Z0kl4+mFZhZzAY=",
+        "lastModified": 1787562607,
+        "narHash": "sha256-zFMsc1uHiLe7OELsQlSFIlF/Dqs+NqUYX6T2goRsHm4=",
         "ref": "refs/heads/main",
-        "rev": "58039c9229c8d937cac323abd722614646e98efe",
-        "revCount": 38,
+        "rev": "7c98297b64f65dd2c383b0da16dcf3a9be6c007a",
+        "revCount": 42,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/coding-agent.git"
       },
@@ -678,11 +678,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1787360063,
-        "narHash": "sha256-dt4WdcvsA8/RCe+VZZwqU0X+XMM3wBbGCWA0/sFWzGo=",
+        "lastModified": 1787498568,
+        "narHash": "sha256-9i/VTdusq/+NM/tz+J1Re+ojkMB8MBf0QshnYfzHz30=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "2c423e03bbafcff28bfadc6781a4a8257f205cb5",
+        "rev": "56c02bc00adcf003215cc4bd996d6efaf4cff188",
         "type": "github"
       },
       "original": {
