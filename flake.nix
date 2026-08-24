@@ -2,9 +2,6 @@
   description = "xsfx";
 
   inputs = {
-    agenix.inputs.home-manager.follows = "home-manager";
-    agenix.inputs.nixpkgs.follows = "nixpkgs";
-    agenix.url = "github:ryantm/agenix";
     airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
@@ -84,7 +81,6 @@
           src = ./.;
           extra = preCommit;
           extraPackages = [
-            inputs.agenix.packages.${system}.default
             inputs.colmena.packages.${system}.colmena
             inputs.nixos-anywhere.packages.${system}.default
             pkgs.sops

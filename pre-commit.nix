@@ -9,6 +9,7 @@
   excludes = [
     "flake.lock"
     "hosts/.+/secrets.yaml"
+    "home-manager/secrets.yaml"
     "home-manager/modules/tmux/.tmux-dracula/.+$"
     "home-manager/modules/gtk/Dracula.+"
   ];

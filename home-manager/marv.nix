@@ -2,7 +2,7 @@
 {
   imports = [
     ./modules
-    inputs.agenix.homeManagerModules.age
+    inputs.sops-nix.homeManagerModules.sops
   ];
 
   home.username = "marv";

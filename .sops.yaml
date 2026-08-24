@@ -5,6 +5,11 @@ keys:
   - &srv_abed age10cfjx8n9vf0x58sj4z7tfq85q55u5r97xan62xe9cv8p2czumu6qs4vvew
   - &srv_coltrane age1ep7zs53a9jaq2lt98nhyc90zqehrn2cgywly8sp9wdl4xysnhcdqv4gppw
 creation_rules:
+  - path_regex: home-manager/secrets.yaml
+    key_groups:
+      - age:
+          - *admin_mpreuss
+          - *admin_mpreuss_ssh
   - path_regex: hosts/abed/secrets.yaml
     key_groups:
       - age:
