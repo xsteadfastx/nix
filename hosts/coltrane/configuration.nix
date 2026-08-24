@@ -27,7 +27,10 @@
     ];
   };
 
-  networking.firewall.allowedTCPPorts = [ 8080 ];
+  networking.firewall.allowedTCPPorts = [
+    8080
+    53317
+  ]; # 53317 localsend
 
   hardware.graphics.enable = true;
   hardware.enableAllFirmware = true;
@@ -195,6 +198,7 @@
   networking.firewall.allowedUDPPorts = [
     53 # networkmanager shared
     67 # networkmanager shared
+    53317 # localsend
   ];
 
   # bluetooth
