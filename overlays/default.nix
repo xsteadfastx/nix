@@ -41,6 +41,8 @@ let
 
       localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
+      trippy-dracula = prev.callPackage ../pkgs/trippy-dracula.nix { };
+
       airmtp = inputs.airmtp.packages.${system}.default;
       compose2nix = inputs.compose2nix.packages.${system}.default;
 

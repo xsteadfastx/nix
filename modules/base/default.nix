@@ -75,6 +75,7 @@
     ripgrep
     tmux
     tree
+    trippy-dracula
     vim
     wget
   ];
