@@ -116,6 +116,17 @@
       # Absolute (fs.writeFile doesn't mkdir/expand ~).
       filePath = "/home/marv/.pi/agent/memory.jsonl";
     };
+    # Self-ingesting session memory: indexes pi+claude transcripts, serves
+    # search_memories/store_memory/refresh to both agents via the shared mcp.json.
+    # embedUrl = local ollama for semantic recall (falls back to hashed embedder
+    # if unreachable). dataDir/sessionsPaths use the module defaults (upstream
+    # activity-mcp now expands `~` and ingests async, so they're safe).
+    activity = {
+      enable = true;
+      # Semantic recall via local ollama (nomic-embed-text; hardcoded model) —
+      # always reachable, no network hop. Falls back to hashed embedder if down.
+      embedUrl = "http://127.0.0.1:11434/v1";
+    };
     sshPostgres."hemingway-barletta" = {
       enable = true;
       host = "barletta";

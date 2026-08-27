@@ -134,6 +134,7 @@ let
     "context7-mcp"
     "mcp-server-sequential-thinking"
     "mcp-server-memory"
+    "activity-mcp"
     "playwright-mcp"
     "mcp-proxy"
     "github-cli"
