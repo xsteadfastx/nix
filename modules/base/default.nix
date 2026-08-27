@@ -73,6 +73,7 @@
     net-tools
     nmap
     ripgrep
+    speedtest-go
     tmux
     tree
     trippy-dracula
