@@ -1,37 +1,35 @@
 {
   lib,
-  fetchurl,
   stdenv,
   makeWrapper,
   trippy,
+  dbip-city-lite,
 }:
 
-# Trippy (trip) wrapped with a bundled GeoLite2-City mmdb and a Dracula TUI
+# Trippy (trip) wrapped with a bundled IP-to-city mmdb and a Dracula TUI
 # theme. Self-contained: binary + geoip data + config live in one store path,
 # so `trip` just works with geoip + theme on any host/user. CLI flags still
 # override the baked-in config per invocation.
 #
-# ponytail: the mmdb release is re-published roughly monthly; we pin to a tag
-# (snapshot). Re-pin url/sha256 (and `version`) when geoip data freshness
-# matters.
+# The mmdb comes from nixpkgs' dbip-city-lite (same MaxMind MMDB format trip
+# reads; IP-to-city granularity matching the old GeoLite2-City). Previously we
+# pinned a P3TERX/GeoLite.mmdb release tag, but P3TERX prunes old releases
+# (keeps only the two newest), so the pinned URL 404'd and CI failed on every
+# republish. dbip-city-lite's version/hash are maintained upstream and refresh
+# on `nix flake update`.
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "trippy-dracula";
-  version = "2026.08.25";
+  version = dbip-city-lite.version;
 
   nativeBuildInputs = [ makeWrapper ];
-
-  geoip = fetchurl {
-    url = "https://github.com/P3TERX/GeoLite.mmdb/releases/download/${version}/GeoLite2-City.mmdb";
-    sha256 = "b481e34bdfbeb937434d09b47d89622c36051560c5f64853b54e081678c7df74";
-  };
 
   dontUnpack = true;
 
   installPhase = ''
     runHook preInstall
     mkdir -p $out/share/trippy $out/bin
-    cp ${geoip} $out/share/trippy/GeoLite2-City.mmdb
+    cp ${dbip-city-lite.passthru.mmdb} $out/share/trippy/GeoLite2-City.mmdb
     cat > $out/share/trippy/trippy.toml <<EOF
     [tui]
     geoip-mmdb-file = "$out/share/trippy/GeoLite2-City.mmdb"
@@ -79,7 +77,7 @@ stdenv.mkDerivation rec {
   '';
 
   meta = with lib; {
-    description = "Trippy (trip) with a bundled GeoLite2-City mmdb and Dracula theme";
+    description = "Trippy (trip) with a bundled IP-to-city mmdb and Dracula theme";
     homepage = "https://trippy.rs";
     license = licenses.asl20;
     platforms = platforms.linux;
