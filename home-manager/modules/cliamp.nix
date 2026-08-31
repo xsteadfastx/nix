@@ -10,7 +10,7 @@ in
       export NAVIDROME_USER=admin
       export NAVIDROME_PASS=$(${gopass}/bin/gopass show -o websites/sonic.xsfx.name/admin)
 
-      exec ${cliamp}/bin/cliamp --start-theme dracula --visualizer Scatter "$@"
+      exec ${cliamp}/bin/cliamp --start-theme dracula --provider navidrome --visualizer Scatter "$@"
     '')
   ];
 }
