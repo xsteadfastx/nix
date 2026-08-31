@@ -14,6 +14,7 @@ lib.mkIf cfg.x11 {
     font-family = JetBrainsMono Nerd Font
     font-style = Regular
     font-size = 14
+    font-feature = zero
     shell-integration = fish
     theme = Dracula
     window-decoration = false
