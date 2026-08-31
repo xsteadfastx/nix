@@ -67,6 +67,15 @@ _: {
     owner = "marv";
   };
 
+  # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API access.
+  # URL is a secret here too, so both are injected via the *_FILE convention.
+  sops.secrets."mcp-netbox-token" = {
+    owner = "marv";
+  };
+  sops.secrets."mcp-netbox-url" = {
+    owner = "marv";
+  };
+
   sops.secrets."local-ca-key" = {
     owner = "caddy";
     mode = "0400";

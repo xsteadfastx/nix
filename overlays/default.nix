@@ -134,6 +134,7 @@ let
     "context7-mcp"
     "mcp-server-sequential-thinking"
     "mcp-server-memory"
+    "netbox-mcp-server"
     "activity-mcp"
     "playwright-mcp"
     "mcp-proxy"

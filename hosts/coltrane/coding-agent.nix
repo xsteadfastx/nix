@@ -211,5 +211,13 @@
         };
       };
     };
+
+    # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API. URL is a
+    # sops secret, so inject via NETBOX_URL_FILE (secret wrapper strips _FILE).
+    netbox = {
+      enable = true;
+      tokenFile = config.sops.secrets."mcp-netbox-token".path;
+      extraEnv.NETBOX_URL_FILE = config.sops.secrets."mcp-netbox-url".path;
+    };
   };
 }
