@@ -1,26 +1,23 @@
-{ nixosConfig, lib, ... }:
+{
+  nixosConfig,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = nixosConfig.xsfx;
 in
 lib.mkIf cfg.x11 {
+  # Combine the checked-in fonts with the custom patched JetBrainsMono into one
+  # directory, so there's a single home.file entry (no nested symlink that the
+  # recursive parent can clobber).
   home.file.".local/share/fonts" = {
-    source = ./fonts;
-    recursive = true;
-  };
-
-  # slashed zero for JetBrainsMono everywhere (i3 can't set font features itself)
-  fonts.fontconfig.enable = true;
-  fonts.fontconfig.configFile."jetbrains-zero" = {
-    enable = true;
-    text = ''
-      <fontconfig>
-        <match target="font">
-          <test qual="any" name="family" compare="contains"><string>JetBrainsMono Nerd Font</string></test>
-          <edit name="fontfeatures" mode="assign_replace">
-            <string>zero</string>
-          </edit>
-        </match>
-      </fontconfig>
+    source = pkgs.runCommand "fonts" { } ''
+      mkdir -p $out
+      cp -r ${./fonts}/* $out/
+      ln -s ${pkgs.jetbrainsmono-nerdfont-zero}/share/fonts/truetype/NerdFonts $out/NerdFonts
     '';
+    # The old config installed this as a real dir of symlinks; replace it.
+    force = true;
   };
 }

@@ -43,6 +43,8 @@ let
 
       trippy-dracula = prev.callPackage ../pkgs/trippy-dracula.nix { };
 
+      jetbrainsmono-nerdfont-zero = prev.callPackage ../pkgs/jetbrainsmono-nerdfont-zero.nix { };
+
       airmtp = inputs.airmtp.packages.${system}.default;
       compose2nix = inputs.compose2nix.packages.${system}.default;
 
