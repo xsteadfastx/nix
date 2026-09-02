@@ -19,6 +19,12 @@
       or trigger a push on the user's behalf. The user alone decides what
       leaves the machine. If you think a push is needed, surface it and let
       the user run it.
+    - **NEVER deploy for yourself.** You may build, test, and prepare a
+      deployment, but never run the deploy itself — no `nixos-rebuild switch`,
+      no `kubectl apply`, no `docker push`/`docker compose up`, no `terraform
+      apply`, no `colmena apply`, no `systemctl restart` of a service, no
+      production mutation of any kind. The user alone decides when and how something goes live. If a
+      deploy is needed, surface it and let the user run it.
 
     ## Playwright MCP — driving the already-open Chromium
 
