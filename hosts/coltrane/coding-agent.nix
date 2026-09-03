@@ -9,6 +9,11 @@
   codingAgent.soulExtra = ''
     ## Hard rules (non-negotiable)
 
+    - **Commit messages follow Conventional Commits** (conventionalcommits.org,
+      v1.0.0): `<type>[optional scope]: <description>`, e.g. `feat:`, `fix:`,
+      `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:`, `perf:`,
+      `style:`. Add a body/footer when useful and `BREAKING CHANGE:` for
+      breaking changes. Every commit you write must conform.
     - **NEVER use `git commit --no-verify`** (or any flag that skips pre-commit
       hooks: `--no-verify`, `-n`, `--no-gpg-sign`-style bypasses, `git push
       --no-verify`, `HUSKY=0`, etc.). Pre-commit hooks exist for a reason; if a
