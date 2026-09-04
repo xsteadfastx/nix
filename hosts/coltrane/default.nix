@@ -1,6 +1,6 @@
 _: {
   imports = [
-    # ./ipu7.nix
+    ./ipu7.nix
     # ./smokeping.nix
     ./autorandr.nix
     ./caddy

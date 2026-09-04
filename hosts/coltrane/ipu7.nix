@@ -7,12 +7,14 @@
 let
   ipu7-camera-bins = pkgs.stdenv.mkDerivation {
     pname = "ipu7-camera-bins";
-    version = "unstable-2025-01-15";
+    # cead732 (2026-04-23) is the last bins/libia-* set before the OV02C10
+    # black-frame regression (d235697, 2026-06-17). See intel/ipu7-camera-hal#52.
+    version = "unstable-2026-04-23";
     src = pkgs.fetchFromGitHub {
       owner = "intel";
       repo = "ipu7-camera-bins";
-      rev = "f4a353c7c2f0dc98416cd847a74724e8d6e07519";
-      hash = "sha256-4LOFOIdBSMITNA1RtH8TDwPd+r/0lyTA6RBPeD0exO8=";
+      rev = "cead7320d84ee9ade4f60d74e935b16b5a760945";
+      hash = "sha256-OFXAE3qoiIbnKH/qE1PlNqQYnUpbbOYCLhKrE1d2D+A=";
     };
     nativeBuildInputs = [
       pkgs.autoPatchelfHook
@@ -44,19 +46,16 @@ let
 
   ipu7x-camera-hal = pkgs.stdenv.mkDerivation {
     pname = "ipu7x-camera-hal";
-    version = "unstable-2025-01-15";
+    # e4a08b1 (2026-05-20) is the last HAL before the OV02C10 black-frame
+    # regression (b94eee8, 2026-06-18). Newer HALs stream but every frame is
+    # flat NV12 Y=16. See intel/ipu7-camera-hal#52.
+    version = "unstable-2026-05-20";
     src = pkgs.fetchFromGitHub {
       owner = "intel";
       repo = "ipu7-camera-hal";
-      rev = "431ff3f46ef821458d973390c8a88687637290c2";
-      hash = "sha256-/bSH+NJgVQ4HoW6yDlZGyg9EqTs+t0S3ZibVwl7IWf4=";
+      rev = "e4a08b1c56ae196741f5764582bab74ecd804bbc";
+      hash = "sha256-S3vdfWdaqfu2rNiorEqdxD7DIkT1DqvL6RplapL2uwQ=";
     };
-    patches = [
-      (pkgs.fetchpatch {
-        url = "https://github.com/NixOS/nixpkgs/raw/01a5efa47470cf5800f4e8b352d7bbe24b81e788/pkgs/development/libraries/ipu7-camera-hal/0001-Fix-missing-definition-of-uint32_t.patch";
-        hash = "sha256-hAo3upcozlGAL5kFmvVygdWeai8uy45uoyIEDi18kBM=";
-      })
-    ];
     nativeBuildInputs = [
       pkgs.cmake
       pkgs.pkg-config
@@ -84,6 +83,9 @@ let
     NIX_CFLAGS_COMPILE = [ "-Wno-error" ];
     enableParallelBuilding = true;
     postPatch = ''
+      substituteInPlace CMakeLists.txt \
+        --replace-fail 'set (CMAKE_CXX_STANDARD 11)' \
+                       'set (CMAKE_CXX_STANDARD 17)'
       substituteInPlace src/platformdata/JsonParserBase.h \
         --replace-fail '<jsoncpp/json/json.h>' '<json/json.h>'
     '';
@@ -149,33 +151,19 @@ let
     {
       stdenv,
       fetchFromGitHub,
-      ivsc-driver,
       kernel,
       kernelModuleMakeFlags,
       ...
     }:
     stdenv.mkDerivation {
       pname = "ipu7-drivers";
-      version = "unstable-2025-11-12";
+      version = "0-unstable-2026-08-12";
       src = fetchFromGitHub {
         owner = "intel";
         repo = "ipu7-drivers";
-        rev = "fc335577f95bf6ca3afc706d1ceab8297db4f010";
-        hash = "sha256-tRljxzo/WsFBLi/1YqxVRtXpSZzHRqIy3RZ8/heu7mI=";
+        rev = "495acc90feb09d8008c0a6228fb8bb4c6415ca62";
+        hash = "sha256-a2hIJ4wMCHQeDb4gp+5pjLizJ/CCfA0JivVDWeqB4vY=";
       };
-      patches = [
-        (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/raw/01a5efa47470cf5800f4e8b352d7bbe24b81e788/pkgs/os-specific/linux/ipu7-drivers/0001-media-ipu7-Stop-accessing-streams-configs-directly.patch";
-          hash = "sha256-FMlw9fRMi1ZQlrP+uA36XwvdjZqiJFQy0G/57mfDmY8=";
-        })
-      ];
-      postPatch = ''
-        cp --no-preserve=mode --recursive --verbose \
-          ${ivsc-driver.src}/backport-include \
-          ${ivsc-driver.src}/drivers \
-          ${ivsc-driver.src}/include \
-          .
-      '';
       nativeBuildInputs = kernel.moduleBuildDependencies;
       makeFlags = kernelModuleMakeFlags ++ [
         "KERNELRELEASE=${kernel.modDirVersion}"
@@ -183,23 +171,63 @@ let
       ];
       enableParallelBuilding = true;
       preInstall = ''
-        sed -i -e "s,INSTALL_MOD_DIR=,INSTALL_MOD_PATH=$out INSTALL_MOD_DIR=," Makefile
+        substituteInPlace Makefile \
+          --replace-fail "INSTALL_MOD_DIR=" "INSTALL_MOD_PATH=$out INSTALL_MOD_DIR="
       '';
       installTargets = [ "modules_install" ];
       meta.broken = kernel.kernelOlder "6.12";
     }
   ) { };
+
+  # intel_cvs: performs the sensor-ownership handshake with the CVS chip
+  # (INTC10DE:00) that the OV02C10 sensor sits behind. Without it the sensor is
+  # never released to the host, so ov02c10 reads reg 0x300a -> -121 timeout and
+  # never probes. Not upstreamed; from intel/vision-drivers.
+  intel-cvs-kmod = config.boot.kernelPackages.callPackage (
+    {
+      stdenv,
+      fetchFromGitHub,
+      kernel,
+      kernelModuleMakeFlags,
+      ...
+    }:
+    stdenv.mkDerivation {
+      pname = "intel-cvs";
+      version = "0-unstable-2026-05-07";
+      src = fetchFromGitHub {
+        owner = "intel";
+        repo = "vision-drivers";
+        rev = "845d6f8bdf66ff1f455901da9de5e00a53a83dce";
+        hash = "sha256-i/qZN8GXyqaE6n6pRtxQLdmGhmPDjoArzVvflDmwuSs=";
+      };
+      nativeBuildInputs = kernel.moduleBuildDependencies;
+      makeFlags = kernelModuleMakeFlags ++ [
+        "KERNELRELEASE=${kernel.modDirVersion}"
+        "KERNEL_SRC=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+      ];
+      enableParallelBuilding = true;
+      preInstall = ''
+        substituteInPlace Makefile \
+          --replace-fail "INSTALL_MOD_DIR=" "INSTALL_MOD_PATH=$out INSTALL_MOD_DIR="
+      '';
+      installTargets = [ "modules_install" ];
+      meta.broken = kernel.kernelOlder "6.6";
+    }
+  ) { };
 in
 {
-  # The in-tree IPU7 driver (6.12+) only has ISYS; no PSYS was upstreamed.
-  # ipu7-camera-hal requires PSYS for frame processing, so the out-of-tree
-  # driver must load even on 6.12+ kernels (overrides the in-tree modules).
-  boot.extraModulePackages = [ ipu7-drivers ];
+  # The in-tree IPU7 core + ISYS (6.12+) enumerate the sensor via ipu_bridge;
+  # only PSYS was never upstreamed. ipu7-drivers builds just the out-of-tree
+  # intel-ipu7-psys module against the in-tree core. Do NOT blacklist ipu_bridge
+  # nor load out-of-tree ipu_acpi: the current driver links against ipu_bridge
+  # for ACPI sensor enumeration.
+  boot.extraModulePackages = [
+    ipu7-drivers
+    intel-cvs-kmod
+  ];
 
-  boot.kernelModules = [ "mei-vsc" ];
-
-  # ipu_bridge (in-tree) conflicts with out-of-tree ipu_acpi for ACPI sensor setup
-  boot.blacklistedKernelModules = [ "ipu_bridge" ];
+  # CVS hands the sensor to the host via the GPIO handshake; it also owns power.
+  boot.kernelModules = [ "intel_cvs" ];
 
   environment.etc."camera".source = "${ipu7x-camera-hal}/etc/camera";
 
@@ -212,6 +240,34 @@ in
     SUBSYSTEM=="intel-ipu7-psys", MODE="0660", GROUP="video"
     KERNEL=="ipu7-psys*", MODE="0660", GROUP="video"
   '';
+
+  # The IPU7 exposes 32 raw ISYS capture nodes (/dev/video0-31, driver "isys").
+  # WirePlumber would publish them as selectable cameras — they deliver nothing
+  # and opening them blocks icamerasrc. Disabling the whole video-capture
+  # monitor works but also hides the v4l2-relayd loopback, so PipeWire clients
+  # (cheese, Firefox, anything using the camera portal) see no camera at all.
+  # Instead: disable only the isys-driven nodes, keep the loopback, and turn off
+  # the libcamera monitor (it publishes a "Built-in Front Camera" that drives
+  # the sensor directly and fights icamerasrc for it).
+  services.pipewire.wireplumber.extraConfig."51-ipu7-camera" = {
+    "wireplumber.profiles" = {
+      main = {
+        # Explicit: the "hardware.video-capture" feature only *wants* both
+        # monitors, and disabling libcamera stops v4l2 loading with it.
+        "monitor.v4l2" = "required";
+        "monitor.libcamera" = "disabled";
+      };
+    };
+    "monitor.v4l2.rules" = [
+      {
+        matches = [ { "api.v4l2.cap.driver" = "isys"; } ];
+        actions.update-props = {
+          "node.disabled" = true;
+          "device.disabled" = true;
+        };
+      }
+    ];
+  };
 
   services.v4l2-relayd.instances.ipu7 = {
     enable = true;

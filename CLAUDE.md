@@ -46,6 +46,57 @@ Lifecycle: requires pi/Claude restart to take effect.
 - **Approval / token**: `--extension` uses **manual approval** — the connect page opens in your running Chromium once per session; no `PLAYWRIGHT_MCP_EXTENSION_TOKEN` env is configured (a *wrong* token hard-errors, worse than none). Set a token only to skip repeated approvals.
 - **Lifecycle**: A killed `playwright-mcp` server is **not** auto-respawned by pi's MCP reconnect (it only refreshes cached tool metadata). To apply changed args/env, `sudo nixos-rebuild switch` (which regenerates `~/.pi/agent/mcp.json`) and **restart pi** so the server respawns from the new manifest.
 
+### IPU7 webcam (OV02C10 on Lunar Lake)
+The internal camera works (`hosts/coltrane/ipu7.nix`, imported since 2026-09-04).
+Hard-won facts:
+
+- **"Black frames" was mostly a measurement artifact.** The HAL's *first* buffer
+  is always flat (NV12 Y=16, U=V=128), frames 1–5 are ~Y=0, and auto-exposure
+  only converges around frame ~30 (~1 s @30 fps) to a normal Y mean of ~40–70.
+  Every diagnosis that captured `num-buffers=1..10` and read frame 0 concluded
+  "solid black". **Always discard the first ~60 frames** before judging output:
+
+      gst-launch-1.0 -q v4l2src device=/dev/video32 num-buffers=150 \
+        ! video/x-raw,format=YUY2 ! filesink location=/tmp/f.yuy2
+      # then inspect the LAST frame
+
+- **Whether the HAL regression ([intel/ipu7-camera-hal#52](https://github.com/intel/ipu7-camera-hal/issues/52))
+  also affects us is still unresolved.** The HAL is pinned to `e4a08b1`
+  (2026-05-20) and the bins to `cead732` (2026-04-23) — the issue's last-known-good
+  pair — but those pins were adopted *while the AE artifact was still being read
+  as the bug*, so they are not proven necessary. Issue #52 is still open with zero
+  comments; the only post-regression graph-config fix (`9312f0df`) targets OV13B10,
+  not OV02C10. Re-testing HEAD with the warmup method above is the open task.
+
+- **Kernel side needs `intel_cvs`** (out-of-tree, `intel/vision-drivers` @ `845d6f8`,
+  which includes the PR #38 protocol-1.0 probe fix). The OV02C10 sits behind the CVS
+  chip `INTC10DE:00`; without the ownership handshake `ov02c10` reads reg `0x300a`
+  → `-121` and never probes. Only PSYS is missing from the in-tree IPU7 driver, so
+  `ipu7-drivers` builds just `intel-ipu7-psys` against the in-tree core — do **not**
+  blacklist `ipu_bridge`. Healthy boot shows `Transfer of ownership success`,
+  `bind ov02c10 16-0036`, `IPU psys probe done`.
+
+- **Apps reach the camera via V4L2 on the relayd loopback `/dev/video32`, not via
+  PipeWire.** cheese, Slack, Chromium and mpv all work that way. There is **no
+  PipeWire camera source node**: the loopback advertises no format while idle, so
+  WirePlumber creates the device but no node — portal-only clients (Firefox) likely
+  still see nothing. Making relayd stream unconditionally would fix that at the cost
+  of a permanently-lit camera LED; not done.
+
+- **WirePlumber config gotchas** (`51-ipu7-camera`): the raw ISYS nodes
+  (`/dev/video0-31`) must stay hidden or they show up as bogus cameras, but the old
+  blanket `hardware.video-capture = disabled` also hid the loopback device. The
+  narrow rule matches `api.v4l2.cap.driver = "isys"` — the driver string is **`isys`**,
+  not `intel-ipu7`. And `monitor.v4l2 = "required"` is **mandatory**: the
+  `hardware.video-capture` feature only *wants* both monitors, so disabling
+  `monitor.libcamera` (needed — it publishes a rival "Built-in Front Camera" that
+  drives the sensor directly and fights icamerasrc) silently takes the v4l2 monitor
+  down with it.
+
+- **Camera LED latches on first stream** and only clears on `modprobe -r intel_cvs`
+  (upstream `intel/vision-drivers#32`, unfixed). An `intel_cvs` mainline series is in
+  flight: <https://lore.kernel.org/linux-media/20260514184431.288353-1-miguel.vadillo@intel.com/>
+
 ### Local ollama (SYCL on the Intel Arc iGPU)
 The local ollama is a hand-built SYCL container (`hosts/coltrane/ollama.nix`) driving the **Intel Arc 140V iGPU** (Lunar Lake) via Level Zero — there is no discrete GPU. Hard-won facts:
 
