@@ -41,6 +41,8 @@ let
 
       localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
+      lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
+
       trippy-dracula = prev.callPackage ../pkgs/trippy-dracula.nix { };
 
       jetbrainsmono-nerdfont-zero = prev.callPackage ../pkgs/jetbrainsmono-nerdfont-zero.nix { };

@@ -9,7 +9,11 @@
   xsfx.work = true;
   xsfx.x11 = true;
 
-  home-manager.users.marv = import ../../home-manager/marv.nix;
+  home-manager.users.marv = {
+    imports = [ ../../home-manager/marv.nix ];
+    # lilium-voyager via the self-contained home-manager module.
+    programs.liliumVoyager.enable = true;
+  };
 
   virtualisation.vmVariant = {
     users.users.marv.initialPassword = "notsafe";

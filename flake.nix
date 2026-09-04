@@ -59,6 +59,7 @@
       nixosModules.tlsrouter = import ./modules/tlsrouter;
       nixosModules.users = import ./modules/users;
       nixosModules.vm-variant = import ./modules/vm-variant;
+      homeManagerModules.liliumVoyager = import ./home-manager/modules/lilium-voyager.nix;
       overlays.default = import ./overlays { inherit inputs; };
     }
     // inputs.flake-utils.lib.eachDefaultSystem (
@@ -96,6 +97,7 @@
         packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
         packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
         packages.jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
+        packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
       }
     );
 }
