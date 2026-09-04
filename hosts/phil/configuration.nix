@@ -12,6 +12,10 @@
     })
   ];
 
+  # phil doesn't use ZFS; silence the 26.11 deprecation warning (also applies
+  # to the phil-sdcard-img build, which bypasses the hive's base module).
+  boot.zfs.forceImportRoot = false;
+
   networking.hostName = "phil";
   security.sudo.wheelNeedsPassword = false;
   nix.settings.trusted-users = [

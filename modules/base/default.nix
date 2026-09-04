@@ -52,6 +52,11 @@
 
   boot.loader.systemd-boot.configurationLimit = 10;
 
+  # Silence the 26.11 deprecation warning on hosts that don't use ZFS (the
+  # zfs module is loaded unconditionally, so the option exists at its old
+  # default `true`). mkDefault keeps any real ZFS host able to override.
+  boot.zfs.forceImportRoot = lib.mkDefault false;
+
   services.resolved = {
     enable = lib.mkDefault true;
     settings.Resolve.FallbackDNS = lib.mkDefault [
