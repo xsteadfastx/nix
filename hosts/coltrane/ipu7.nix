@@ -295,6 +295,28 @@ in
     ];
   };
 
+  # Self-heal orphaned loopbacks. If a consumer still holds the node when
+  # relayd stops, the upstream module's postStop `v4l2loopback-ctl delete`
+  # fails EBUSY, `set -e` aborts it, and Restart=always then adds a *second*
+  # device with the same card label. Apps resolve the label to the first match
+  # and get the corpse, while relayd happily reports `active`. Sweep every
+  # same-label node except the one preStart just created.
+  systemd.services.v4l2-relayd-ipu7.postStart =
+    let
+      inherit (config.services.v4l2-relayd.instances.ipu7) cardLabel;
+      ctl = lib.getExe' config.boot.kernelPackages.v4l2loopback.bin "v4l2loopback-ctl";
+    in
+    ''
+      live=$(cat "$V4L2_DEVICE_FILE")
+      for dir in /sys/class/video4linux/video*; do
+        [ "$(cat "$dir/name")" = "${cardLabel}" ] || continue
+        dev=/dev/$(basename "$dir")
+        [ "$dev" = "$live" ] && continue
+        echo "sweeping orphaned loopback $dev"
+        ${ctl} delete "$dev" || true
+      done
+    '';
+
   services.v4l2-relayd.instances.ipu7 = {
     enable = true;
     cardLabel = "Intel MIPI Camera";
