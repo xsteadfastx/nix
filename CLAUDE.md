@@ -87,6 +87,32 @@ Hard-won facts:
   still see nothing. Making relayd stream unconditionally would fix that at the cost
   of a permanently-lit camera LED; not done.
 
+- **Two separate paths enumerate cameras, and both need handling.** GStreamer's
+  `GstDeviceMonitor` (cheese and friends) walks **udev** directly and ignores
+  WirePlumber entirely, so the 32 raw ISYS nodes showed up as dead `ipu7` cameras
+  *ahead* of the loopback and became the default pick. Fixed by a udev rule
+  (`71-ipu7-hide-isys.rules`, via `services.udev.packages`) matching
+  `ENV{ID_V4L_PRODUCT}=="ipu7"` — which hits all 32 ISYS nodes and **not** the
+  loopback (whose `ID_V4L_PRODUCT` is `Intel MIPI Camera`) — setting them
+  root:root 0600. The `71-` prefix matters: it lands between systemd's
+  `70-uaccess.rules` (tags every video4linux device) and `73-seat-late.rules`
+  (grants the seat user an ACL); `services.udev.extraRules` is `99-local.rules`
+  and far too late. `v4l2-relayd` runs as **root**, so icamerasrc still reaches
+  the nodes. Verify with `gst-device-monitor-1.0 Video/Source` — it should list
+  exactly one device.
+
+- **⚠️ Killing a camera consumer mid-stream orphans the loopback.** The upstream
+  `services.v4l2-relayd` module creates the loopback in `preStart`
+  (`v4l2loopback-ctl add`) and deletes it in `postStop`. If a consumer still
+  holds the node, that delete fails `EBUSY`, `set -e` aborts the script, and
+  `Restart=always` then *adds a second* node — leaving an orphan at the old
+  number with the same card label. Apps resolve the label to the **first** match
+  and get the corpse; symptom is "camera stopped working" with relayd reporting
+  `active`. Check with `ls /sys/class/video4linux/*/name | ...` for duplicate
+  labels vs `cat /run/v4l2-relayd-ipu7/device`, and clear the orphan with
+  `v4l2loopback-ctl delete /dev/videoN`. The module has no option to pin a
+  device number.
+
 - **WirePlumber config gotchas** (`51-ipu7-camera`): the raw ISYS nodes
   (`/dev/video0-31`) must stay hidden or they show up as bogus cameras, but the old
   blanket `hardware.video-capture = disabled` also hid the loopback device. The
