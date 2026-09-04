@@ -60,13 +60,17 @@ Hard-won facts:
         ! video/x-raw,format=YUY2 ! filesink location=/tmp/f.yuy2
       # then inspect the LAST frame
 
-- **Whether the HAL regression ([intel/ipu7-camera-hal#52](https://github.com/intel/ipu7-camera-hal/issues/52))
-  also affects us is still unresolved.** The HAL is pinned to `e4a08b1`
-  (2026-05-20) and the bins to `cead732` (2026-04-23) — the issue's last-known-good
-  pair — but those pins were adopted *while the AE artifact was still being read
-  as the bug*, so they are not proven necessary. Issue #52 is still open with zero
-  comments; the only post-regression graph-config fix (`9312f0df`) targets OV13B10,
-  not OV02C10. Re-testing HEAD with the warmup method above is the open task.
+- **The HAL regression ([intel/ipu7-camera-hal#52](https://github.com/intel/ipu7-camera-hal/issues/52))
+  does NOT affect this unit** — tested 2026-09-04, so HAL and bins track upstream
+  HEAD. The pinned last-known-good pair (HAL `e4a08b1`, bins `cead732`) and HEAD
+  (`11d8aff0` / `adf55525`) were run A/B, each bind-mounted over `/etc/camera`
+  inside its own mount namespace (necessary: the two ship an identical
+  `ov02c10-uf.json` but a **different** `OV02C10_MSHW0550.IPU7X.bin` graph config,
+  the plausible #52 culprit). Result: same picture, last-frame Y mean 92.65 vs
+  92.99. The pins were only ever adopted while the AE artifact was being read as
+  the bug. Note the A/B harness needs **real root** — under an unprivileged user
+  namespace both HALs fail with `camera open num couldn't be 0` (userns breaks the
+  HAL's shm open-counter), which looks like a HAL bug but is not.
 
 - **Kernel side needs `intel_cvs`** (out-of-tree, `intel/vision-drivers` @ `845d6f8`,
   which includes the PR #38 protocol-1.0 probe fix). The OV02C10 sits behind the CVS

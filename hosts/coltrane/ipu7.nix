@@ -7,14 +7,12 @@
 let
   ipu7-camera-bins = pkgs.stdenv.mkDerivation {
     pname = "ipu7-camera-bins";
-    # cead732 (2026-04-23) is the last bins/libia-* set before the OV02C10
-    # black-frame regression (d235697, 2026-06-17). See intel/ipu7-camera-hal#52.
-    version = "unstable-2026-04-23";
+    version = "unstable-2026-07-17";
     src = pkgs.fetchFromGitHub {
       owner = "intel";
       repo = "ipu7-camera-bins";
-      rev = "cead7320d84ee9ade4f60d74e935b16b5a760945";
-      hash = "sha256-OFXAE3qoiIbnKH/qE1PlNqQYnUpbbOYCLhKrE1d2D+A=";
+      rev = "adf55525ab9d370828723b1ff8bee76ed7a492e8";
+      hash = "sha256-azeQ7XoItcYmAuiKMiSJC5beACVNV/Yx2xNIZAPu29I=";
     };
     nativeBuildInputs = [
       pkgs.autoPatchelfHook
@@ -46,15 +44,18 @@ let
 
   ipu7x-camera-hal = pkgs.stdenv.mkDerivation {
     pname = "ipu7x-camera-hal";
-    # e4a08b1 (2026-05-20) is the last HAL before the OV02C10 black-frame
-    # regression (b94eee8, 2026-06-18). Newer HALs stream but every frame is
-    # flat NV12 Y=16. See intel/ipu7-camera-hal#52.
-    version = "unstable-2026-05-20";
+    # Tracks upstream HEAD. The OV02C10 black-frame regression reported in
+    # intel/ipu7-camera-hal#52 (b94eee8) does NOT affect this unit: an A/B run
+    # of e4a08b1 vs 11d8aff0, each with its own /etc/camera (the
+    # OV02C10_MSHW0550.IPU7X.bin graph config differs between them), gave the
+    # same picture -- last-frame Y mean 92.65 vs 92.99. Judge output on the
+    # LAST of ~150 frames; the first buffer is always flat and AE needs ~30.
+    version = "unstable-2026-08-12";
     src = pkgs.fetchFromGitHub {
       owner = "intel";
       repo = "ipu7-camera-hal";
-      rev = "e4a08b1c56ae196741f5764582bab74ecd804bbc";
-      hash = "sha256-S3vdfWdaqfu2rNiorEqdxD7DIkT1DqvL6RplapL2uwQ=";
+      rev = "11d8aff0d1ddc16aef56c8e6518e08e2f936a95b";
+      hash = "sha256-NSZVVOZKa3xhwitdKw4EZpukf5B/ObQC4GEDwHMmZ6s=";
     };
     nativeBuildInputs = [
       pkgs.cmake
