@@ -51,6 +51,19 @@ let
     [[ -n "$cue" ]] || exit 0
     exec ${mednafenBase} "$cue"
   '';
+
+  ps2 = pkgs.writeShellScriptBin "ps2" ''
+    set -euo pipefail
+    rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/ps2" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
+    [[ -n "$rom" ]] || exit 0
+    # ponytail: same screensaver handling as gamecube — xset s off + trap to
+    # restore the timeout (xset s on would reset it to the 600s server default).
+    # No exec: the shell must survive to run the EXIT trap.
+    timeout=$(${pkgs.xset}/bin/xset q | ${pkgs.gawk}/bin/awk '/timeout:/{print $2}')
+    ${pkgs.xset}/bin/xset s off
+    trap '${pkgs.xset}/bin/xset s "$timeout"' EXIT
+    ${pkgs.systemd}/bin/systemd-inhibit --who="PCSX2" --why="Gaming" ${pkgs.pcsx2}/bin/pcsx2-qt "$rom"
+  '';
 in
 lib.mkIf cfg {
   programs.liliumVoyager.enable = true;
@@ -65,5 +78,6 @@ lib.mkIf cfg {
     nes
     pcsx2
     playstation
+    ps2
   ];
 }
