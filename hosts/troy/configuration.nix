@@ -4,16 +4,16 @@
   ...
 }:
 {
-  xsfx.kodi = true;
-  xsfx.neovim = true;
-  xsfx.work = true;
-  xsfx.x11 = true;
+  features.kodi = true;
+  features.neovim = true;
+  features.work = true;
+  features.x11 = true;
 
   home-manager.users.marv = import ../../home-manager/marv.nix;
 
   virtualisation.vmVariant = {
     users.users.marv.initialPassword = "notsafe";
-    xsfx.kodi = lib.mkForce false;
+    features.kodi = lib.mkForce false;
   };
 
   # dev stuff for chirpstack development

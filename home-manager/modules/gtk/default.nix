@@ -4,7 +4,7 @@
   ...
 }:
 let
-  cfg = nixosConfig.xsfx;
+  cfg = nixosConfig.features;
 in
 lib.mkIf cfg.x11 {
   home.file.".gtkrc-2.0".text = ''

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = nixosConfig.xsfx.games;
+  cfg = nixosConfig.features.games;
 
   gamesLibrary = "$HOME/library/games";
 

@@ -4,11 +4,11 @@
   ...
 }:
 {
-  options.xsfx.games = lib.mkEnableOption "enable games";
-  options.xsfx.kodi = lib.mkEnableOption "enable kodi";
-  options.xsfx.neovim = lib.mkEnableOption "enable neovim";
-  options.xsfx.work = lib.mkEnableOption "enable work";
-  options.xsfx.x11 = lib.mkEnableOption "enable x11";
+  options.features.games = lib.mkEnableOption "enable games";
+  options.features.kodi = lib.mkEnableOption "enable kodi";
+  options.features.neovim = lib.mkEnableOption "enable neovim";
+  options.features.work = lib.mkEnableOption "enable work";
+  options.features.x11 = lib.mkEnableOption "enable x11";
 
   config = {
     home-manager.useGlobalPkgs = true;

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = nixosConfig.xsfx;
+  cfg = nixosConfig.features;
   inherit (lib) mkIf;
 in
 mkIf cfg.neovim {

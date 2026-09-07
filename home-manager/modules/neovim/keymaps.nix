@@ -1,6 +1,6 @@
 { nixosConfig, lib, ... }:
 let
-  cfg = nixosConfig.xsfx;
+  cfg = nixosConfig.features;
 
   inherit (lib) mkIf mkBefore;
 in

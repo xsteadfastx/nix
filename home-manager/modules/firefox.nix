@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = nixosConfig.xsfx;
+  cfg = nixosConfig.features;
 in
 lib.mkIf cfg.x11 {
   programs.firefox = {
