@@ -24,6 +24,7 @@
     unstable.eza
     unstable.fzf
     unstable.nodejs
+    unstable.p7zip
     unstable.progress
     unstable.python3
     unstable.rlwrap
