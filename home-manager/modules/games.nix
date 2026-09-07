@@ -21,7 +21,7 @@ let
     set -euo pipefail
     rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/n64" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
     [[ -n "$rom" ]] || exit 0
-    exec ${pkgs.mupen64plus}/bin/mupen64plus "$rom"
+    exec ${pkgs.mupen64plus}/bin/mupen64plus --video mupen64plus-video-glide64mk2.so "$rom"
   '';
 
   nes = pkgs.writeShellScriptBin "nes" ''
@@ -63,6 +63,7 @@ lib.mkIf cfg {
     mupen64plus
     n64
     nes
+    pcsx2
     playstation
   ];
 }
