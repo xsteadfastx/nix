@@ -4,6 +4,7 @@
   ...
 }:
 {
+  xsfx.games = true;
   xsfx.kodi = true;
   xsfx.neovim = true;
   xsfx.work = true;
@@ -11,8 +12,6 @@
 
   home-manager.users.marv = {
     imports = [ ../../home-manager/marv.nix ];
-    # lilium-voyager via the self-contained home-manager module.
-    programs.liliumVoyager.enable = true;
   };
 
   virtualisation.vmVariant = {

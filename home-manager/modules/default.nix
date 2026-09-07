@@ -2,6 +2,7 @@
 {
   imports = [
     ./base.nix
+    ./games.nix
     ./kodi.nix
     ./lilium-voyager.nix
     ./neovim

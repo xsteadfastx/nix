@@ -4,6 +4,7 @@
   ...
 }:
 {
+  options.xsfx.games = lib.mkEnableOption "enable games";
   options.xsfx.kodi = lib.mkEnableOption "enable kodi";
   options.xsfx.neovim = lib.mkEnableOption "enable neovim";
   options.xsfx.work = lib.mkEnableOption "enable work";
