@@ -17,6 +17,17 @@ let
 
   mednafenBase = "${pkgs.mednafen}/bin/mednafen -sound.device sexyal-literal-default";
 
+  # ponytail: systemd-inhibit only blocks logind idle; the screensaver is
+  # xss-lock off the X11 saver, so suspend that too while playing. No exec:
+  # the shell must survive to run the EXIT trap that restores the timeout
+  # (xset s on would reset it to the 600s server default, not our 60s).
+  inhibit = who: cmd: ''
+    timeout=$(${pkgs.xset}/bin/xset q | ${pkgs.gawk}/bin/awk '/timeout:/{print $2}')
+    ${pkgs.xset}/bin/xset s off
+    trap '${pkgs.xset}/bin/xset s "$timeout"' EXIT
+    ${pkgs.systemd}/bin/systemd-inhibit --who="${who}" --why="Gaming" ${cmd}
+  '';
+
   n64 = pkgs.writeShellScriptBin "n64" ''
     set -euo pipefail
     rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/n64" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
@@ -35,14 +46,7 @@ let
     set -euo pipefail
     rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/gamecube" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
     [[ -n "$rom" ]] || exit 0
-    # ponytail: systemd-inhibit only blocks logind idle; the screensaver is
-    # xss-lock off the X11 saver, so suspend that too while playing. No exec:
-    # the shell must survive to run the EXIT trap that restores the timeout
-    # (xset s on would reset it to the 600s server default, not our 60s).
-    timeout=$(${pkgs.xset}/bin/xset q | ${pkgs.gawk}/bin/awk '/timeout:/{print $2}')
-    ${pkgs.xset}/bin/xset s off
-    trap '${pkgs.xset}/bin/xset s "$timeout"' EXIT
-    ${pkgs.systemd}/bin/systemd-inhibit --who="Dolphin" --why="Gaming" ${pkgs.dolphin-emu}/bin/dolphin-emu "$rom"
+    ${inhibit "Dolphin" "${pkgs.dolphin-emu}/bin/dolphin-emu \"$rom\""}
   '';
 
   playstation = pkgs.writeShellScriptBin "playstation" ''
@@ -54,15 +58,9 @@ let
 
   ps2 = pkgs.writeShellScriptBin "ps2" ''
     set -euo pipefail
-    rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/ps2" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
+    rom=$(${pkgs.findutils}/bin/find "${gamesLibrary}/playstation2" -type f | ${pkgs.fzf}/bin/fzf --preview "${pkgs.eza}/bin/eza -l {}")
     [[ -n "$rom" ]] || exit 0
-    # ponytail: same screensaver handling as gamecube — xset s off + trap to
-    # restore the timeout (xset s on would reset it to the 600s server default).
-    # No exec: the shell must survive to run the EXIT trap.
-    timeout=$(${pkgs.xset}/bin/xset q | ${pkgs.gawk}/bin/awk '/timeout:/{print $2}')
-    ${pkgs.xset}/bin/xset s off
-    trap '${pkgs.xset}/bin/xset s "$timeout"' EXIT
-    ${pkgs.systemd}/bin/systemd-inhibit --who="PCSX2" --why="Gaming" ${pkgs.pcsx2}/bin/pcsx2-qt "$rom"
+    ${inhibit "PCSX2" "${pkgs.pcsx2}/bin/pcsx2-qt \"$rom\""}
   '';
 in
 lib.mkIf cfg {
