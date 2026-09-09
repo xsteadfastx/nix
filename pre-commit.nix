@@ -50,6 +50,9 @@
         "home-manager/modules/aerc/aerc.conf"
         "home-manager/modules/i3/config"
       ];
+      settings.ignored-words = [
+        "ba" # yt-dlp format selector (best audio)
+      ];
     };
 
     trufflehog = {

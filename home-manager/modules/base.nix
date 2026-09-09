@@ -49,7 +49,16 @@
       	echo "Usage: yt-dlp-album <URL>"
       	exit 1
       fi
-      ${unstable.yt-dlp}/bin/yt-dlp -x --audio-format mp3 --audio-quality 0 -i -o "%(album)s/%(title)s-%(id)s.%(ext)s" --cookies-from-browser chromium $1
+      ${unstable.yt-dlp}/bin/yt-dlp \
+        -f 'ba*[ext=m4a]/ba*' \
+        -x --audio-format m4a \
+        --embed-metadata --embed-thumbnail --convert-thumbnails jpg \
+        --parse-metadata "playlist_index:%(track_number)s" \
+        --parse-metadata "%(album_artist,channel,creator,artist|Unknown)s:%(album_artist)s" \
+        -o "%(album,playlist_title|Unknown)s/%(track_number,playlist_index)02d - %(title)s.%(ext)s" \
+        --no-overwrites --concurrent-fragments 4 \
+        --cookies-from-browser chromium \
+        "$1"
     '')
 
     # backup
