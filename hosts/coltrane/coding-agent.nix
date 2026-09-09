@@ -102,6 +102,90 @@
     theme = "dracula";
   };
 
+  # Dracula theme override. The module default maps thinking levels to a
+  # rainbow (cyan/green/yellow/orange/pink), which makes the input border a
+  # harsh yellow at `medium`. This replaces it with a coherent cool→warm ramp
+  # (comment → cyan → green → yellow → orange → pink) so the border still
+  # signals thinking level but never lands on a jarring yellow.
+  codingAgent.theme = {
+    "$schema" =
+      "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json";
+    name = "dracula";
+    vars = {
+      bg = "#282a36";
+      currentLine = "#44475a";
+      fg = "#f8f8f2";
+      comment = "#6272a4";
+      cyan = "#8be9fd";
+      green = "#50fa7b";
+      orange = "#ffb86c";
+      pink = "#ff79c6";
+      purple = "#bd93f9";
+      red = "#ff5555";
+      yellow = "#f1fa8c";
+    };
+    colors = {
+      accent = "purple";
+      border = "comment";
+      borderAccent = "purple";
+      borderMuted = "currentLine";
+      success = "green";
+      error = "red";
+      warning = "yellow";
+      muted = "comment";
+      dim = 240;
+      text = "";
+      thinkingText = "comment";
+      selectedBg = "currentLine";
+      userMessageBg = "currentLine";
+      userMessageText = "";
+      customMessageBg = "currentLine";
+      customMessageText = "";
+      customMessageLabel = "purple";
+      toolPendingBg = "#21222c";
+      toolSuccessBg = "#1e2b22";
+      toolErrorBg = "#2d1f22";
+      toolTitle = "purple";
+      toolOutput = "";
+      mdHeading = "purple";
+      mdLink = "cyan";
+      mdLinkUrl = "comment";
+      mdCode = "green";
+      mdCodeBlock = "";
+      mdCodeBlockBorder = "comment";
+      mdQuote = "comment";
+      mdQuoteBorder = "purple";
+      mdHr = "comment";
+      mdListBullet = "pink";
+      toolDiffAdded = "green";
+      toolDiffRemoved = "red";
+      toolDiffContext = "comment";
+      syntaxComment = "comment";
+      syntaxKeyword = "pink";
+      syntaxFunction = "green";
+      syntaxVariable = "fg";
+      syntaxString = "yellow";
+      syntaxNumber = "purple";
+      syntaxType = "cyan";
+      syntaxOperator = "pink";
+      syntaxPunctuation = "fg";
+      # Coherent cool→warm thinking ramp (was a rainbow ending in harsh yellow)
+      thinkingOff = "comment";
+      thinkingMinimal = "comment";
+      thinkingLow = "cyan";
+      thinkingMedium = "green";
+      thinkingHigh = "yellow";
+      thinkingXhigh = "orange";
+      thinkingMax = "pink";
+      bashMode = "orange";
+    };
+    export = {
+      pageBg = "#21222c";
+      cardBg = "#282a36";
+      infoBg = "#44475a";
+    };
+  };
+
   # MCP servers. A bare entry is enough for non-secret servers: the module's
   # registry resolves `bin` and `command` from pkgs. Grafana needs its sops
   # secrets injected — any `*_FILE` env var is auto-translated into the real
