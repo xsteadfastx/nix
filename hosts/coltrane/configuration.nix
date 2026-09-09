@@ -47,8 +47,10 @@
 
   boot.kernelModules = [ "thunderbolt" ];
 
-  # ZFS-compatible default kernel (linuxPackages_latest outpaces ZFS and breaks the build)
-  boot.kernelPackages = pkgs.linuxPackages;
+  # ZFS-compatible kernel. ZFS 2.4.4 supports up to 7.2; linuxPackages_latest
+  # (7.2.3) is within range but pin 7_2 to stay inside the supported window.
+  # boot.kernelPackages = pkgs.linuxPackages_7_2;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.zfs.package = pkgs.zfs;
   boot.kernelParams = [ "drm_kms_helper.poll=1" ];
 
