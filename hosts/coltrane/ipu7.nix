@@ -207,6 +207,15 @@ let
         "KERNEL_SRC=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
       ];
       enableParallelBuilding = true;
+      # IRQF_ONESHOT is only meaningful for threaded IRQs; cvs_irq_handler is a
+      # plain hardirq with no thread_fn, so the flag trips a WARN_ON_ONCE in
+      # __setup_irq on 7.x and (worse) leaves the wake IRQ masked after the
+      # first hostwake. Drop it, matching the mainline drivers/media/i2c/cvs
+      # driver which uses a threaded handler.
+      postPatch = ''
+        substituteInPlace drivers/misc/icvs/intel_cvs.c \
+          --replace-fail "IRQF_ONESHOT | IRQF_NO_SUSPEND" "IRQF_NO_SUSPEND"
+      '';
       preInstall = ''
         substituteInPlace Makefile \
           --replace-fail "INSTALL_MOD_DIR=" "INSTALL_MOD_PATH=$out INSTALL_MOD_DIR="
