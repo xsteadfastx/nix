@@ -77,6 +77,15 @@
     read `frame[name=...].contentDocument` (same-origin) and drive the frame's
     DOM directly — enumerate frames, read their rows/inputs, and set field values
     with `input`/`change` events before triggering the page's save handler.
+
+    ## Documentation freshness
+
+    - **If a change alters observable behavior, update its docs in the same
+      change** — README, module docs, anything that describes it. A stale
+      README is a second bug; it lies to the next reader. Before finishing,
+      re-check the README's relevant section against your diff.
+    - **Pure-internal change (no behavior change)?** Name it in the commit
+      body instead of touching docs.
   '';
 
   # Auto-discover models from the live ollama servers on every pi/claude
