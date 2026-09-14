@@ -14,6 +14,19 @@ let
     final: prev:
     let
       system = prev.stdenv.hostPlatform.system;
+
+      # Expose only a tool's `bin/` to the profile (home.packages -> buildEnv).
+      # Used for meshtui/meshtui2, which both ship site-packages/meshtui/ and
+      # would collide if their full output trees were merged into one profile.
+      profileBinOnly =
+        name: pkg:
+        prev.runCommand name { } ''
+          mkdir -p $out/bin
+          for f in "${pkg}/bin/"*; do
+            [ -e "$f" ] || continue
+            ln -s "$f" "$out/bin/$(basename "$f")"
+          done
+        '';
     in
     {
       # `gh` wrapper that authenticates from the sops-decrypted token file at
@@ -40,6 +53,13 @@ let
       '';
 
       localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
+
+      meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
+
+      meshtui2 = prev.python3Packages.callPackage ../pkgs/meshtui2/package.nix { };
+
+      meshtuiProfile = profileBinOnly "meshtui" final.meshtui;
+      meshtui2Profile = profileBinOnly "meshtui2" final.meshtui2;
 
       lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
 
