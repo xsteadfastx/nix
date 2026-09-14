@@ -40,6 +40,15 @@
   hardware.enableAllFirmware = true;
 
   # Bootloader.
+  # MeshCore/CP210x USB-UART bridge (10c4:ea60): Chromium's Web Serial silently
+  # fails to read the port unless the tty is in a default ("sane") line state.
+  # Any program that leaves it non-default (CLI/SDK probes included) then makes
+  # the web tools time out. Reset the line state on device add so the browser
+  # can always talk to it.
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", RUN+="${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/stty sane -F $devnode'"
+  '';
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.memtest86.enable = true;
