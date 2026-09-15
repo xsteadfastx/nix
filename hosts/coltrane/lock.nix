@@ -12,10 +12,16 @@ let
 
     # Snapshot i3 workspace->output layout so autorandr can restore it after unlock.
     # ponytail: 1 i3-msg round-trip, not 3 (was ~1s lid-close delay)
+    # Only snapshot layout/visible-ws when actually docked (>1 output) -- a lock
+    # firing while mobile collapses every workspace onto eDP-1, and replaying that
+    # degenerate snapshot on the next dock overwrites the real multi-monitor layout.
     ws=$(${pkgs.i3}/bin/i3-msg -t get_workspaces)
-    printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
+    connected=$(${pkgs.xrandr}/bin/xrandr --query | grep -c " connected")
+    if [ "$connected" -gt 1 ]; then
+      printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | "\(.name) \(.output)"' > /run/user/1000/autorandr-ws-layout
+      printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
+    fi
     printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | select(.focused) | .name' > /run/user/1000/autorandr-current-ws
-    printf '%s' "$ws" | ${pkgs.jq}/bin/jq -r '.[] | select(.visible and (.focused | not)) | "\(.output) \(.name)"' > /run/user/1000/autorandr-visible-ws
 
     i3lock=${pkgs.i3lock-color}/bin/i3lock
     # Dracula ring + clock. Idle=comment, verify=cyan, wrong=red, keys=purple/pink.
