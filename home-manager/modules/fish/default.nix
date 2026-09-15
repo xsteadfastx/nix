@@ -16,15 +16,10 @@
   xdg.configFile."fish/functions/fzf_key_bindings.fish".source =
     "${pkgs.unstable.fzf}/share/fzf/key-bindings.fish";
 
-  # syncs XDG_DATA_DIRS changes (e.g. from direnv) into fish_complete_path
-  xdg.configFile."fish/conf.d/completion-sync.fish".source = "${
-    pkgs.unstable.fetchFromGitHub {
-      owner = "iynaix";
-      repo = "fish-completion-sync";
-      rev = "4f058ad2986727a5f510e757bc82cbbfca4596f0";
-      hash = "sha256-kHpdCQdYcpvi9EFM/uZXv93mZqlk1zCi2DRhWaDyK5g=";
-    }
-  }/init.fish";
+  # fish expands XDG_DATA_DIRS into fish_complete_path itself (also on
+  # mid-session changes, e.g. direnv). Scripts that mutate
+  # fish_complete_path at runtime make fish wipe loaded completions
+  # (e.g. git) with no reload, so never add one here.
 
   xdg.configFile."starship.toml".text = ''
     [kubernetes]
