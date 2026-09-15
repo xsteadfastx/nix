@@ -78,6 +78,12 @@
         '';
       };
 
+      "www.christine-preuss.de" = {
+        extraConfig = ''
+          redir https://christine-preuss.de{uri} permanent
+        '';
+      };
+
       "christine-preuss.de" = {
         extraConfig = ''
           root * ${inputs.christine-preuss-de.packages.${pkgs.stdenv.hostPlatform.system}.default}
