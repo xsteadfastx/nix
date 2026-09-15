@@ -5,6 +5,8 @@
     airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
+    christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    christine-preuss-de.url = "github:xsteadfastx/christine-preuss.de";
     coding-agent.inputs.home-manager.follows = "home-manager";
     coding-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
     coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";

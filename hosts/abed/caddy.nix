@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   networking.firewall.allowedTCPPorts = [
     443
@@ -75,6 +75,13 @@
             respond @goget `<meta name="go-import" content="{host}{path} git https://git.xsfx.dev/xsteadfastx{path}">`
             redir https://git.xsfx.dev/xsteadfastx{path}
           }
+        '';
+      };
+
+      "christine-preuss.de" = {
+        extraConfig = ''
+          root * ${inputs.christine-preuss-de.packages.${pkgs.stdenv.hostPlatform.system}.default}
+          file_server
         '';
       };
     };
