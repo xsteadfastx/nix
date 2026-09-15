@@ -5,13 +5,13 @@
     airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
+    coding-agent.inputs.home-manager.follows = "home-manager";
+    coding-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena";
     compose2nix.inputs.nixpkgs.follows = "nixpkgs";
     compose2nix.url = "github:aksiksi/compose2nix";
-    coding-agent.inputs.home-manager.follows = "home-manager";
-    coding-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
-    coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
     flake-utils.url = "github:numtide/flake-utils";
@@ -25,8 +25,8 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
-    pre-commit.url = "git+https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git";
     pre-commit.inputs.pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    pre-commit.url = "git+https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
     quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -46,12 +46,6 @@
       lib = import ./lib;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
       nixosModules.base = import ./modules/base;
-      # The coding-agent module now comes from its own repo (git.xsfx.dev),
-      # not a local copy. The `-raw` variant does NOT bundle home-manager
-      # (this repo's hive already imports it), and the overlay stays local
-      # (overlays/coding-agent.nix) because it's entangled with the repo's
-      # single-nixpkgs-unstable wiring. The module is pkgs-only, so it reads
-      # pkgs.mcp-* from the local overlay as before.
       nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
       nixosModules.home-manager = import ./modules/home-manager;
       nixosModules.lix = import ./modules/lix;
