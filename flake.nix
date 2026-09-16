@@ -94,6 +94,7 @@
         packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
         packages.jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
         packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
+        packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
       }
     );
 }

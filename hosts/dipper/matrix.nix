@@ -6,7 +6,6 @@ let
   federPort = 8448; # federation: other homeservers hit matrix.xsfx.dev:8448
   waAppPort = 29318; # mautrix-whatsapp appservice HTTP listener
   sgAppPort = 29328; # mautrix-signal appservice HTTP listener
-  tgAppPort = 8080; # mautrix-telegram appservice HTTP listener
   # Self-hosted Element (web client). Bake in the homeserver via override so
   # browsers load the client from www.${domain} but talk to ${domain} directly.
   elementWeb = pkgs.element-web.override {
@@ -100,21 +99,22 @@ in
   # account (likely rate-limit/2FA), so the API_ID/API_HASH aren't available.
   # WhatsApp & Signal need no secrets (tokens auto-generate; pairing is via QR).
 
-  # Telegram (re-enabled): needs API_ID/API_HASH in sops (`mautrix-telegram-env`).
-  # "full" IS a valid permission level for Telegram (unlike whatsapp/signal).
-  services.mautrix-telegram = {
+  # Telegram: Go bridgev2 (mautrix-telegram-go). Needs API_ID/API_HASH in sops
+  # (`mautrix-telegram-env`), read by the bridge as MAUTRIX_TELEGRAM_NETWORK__API_ID
+  # / __API_HASH (double underscore = the `.` in config path network.api_id). bridgev2
+  # only accepts relay/user/admin (NOT the Python "full").
+  services.mautrix-telegram-go = {
     enable = true;
+    package = pkgs.mautrix-telegram; # Go bridge, shadows nixpkgs' legacy Python one
     environmentFile = config.sops.secrets."mautrix-telegram-env".path;
     settings = {
       homeserver = {
         address = "http://127.0.0.1:${toString hsPort}";
         domain = domain;
       };
-      # telegram's OWN appservice listener is :8080 (not the homeserver port).
-      appservice.address = "http://127.0.0.1:${toString tgAppPort}";
       bridge.permissions = {
-        "${domain}" = "full";
-        "xsfx.dev" = "full";
+        "${domain}" = "admin";
+        "xsfx.dev" = "admin";
       };
     };
   };

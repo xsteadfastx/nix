@@ -5,6 +5,7 @@ _: {
     ./disko.nix
     ./hardware-configuration.nix
     ./matrix.nix
+    ./mautrix-telegram-go.nix
     ./network.nix
     ./secrets.nix
     ./tlsrouter.nix
