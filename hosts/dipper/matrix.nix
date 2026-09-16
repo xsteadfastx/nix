@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 let
   domain = "matrix.xsfx.dev";
   hsPort = 6167; # tuwunel plain HTTP, behind Caddy
@@ -7,6 +7,17 @@ let
   waAppPort = 29318; # mautrix-whatsapp appservice HTTP listener
   sgAppPort = 29328; # mautrix-signal appservice HTTP listener
   tgAppPort = 8080; # mautrix-telegram appservice HTTP listener
+  # Self-hosted Element (web client). Bake in the homeserver via override so
+  # browsers load the client from www.${domain} but talk to ${domain} directly.
+  elementWeb = pkgs.element-web.override {
+    conf = {
+      default_server_config = {
+        "m.homeserver" = {
+          base_url = "https://${domain}";
+        };
+      };
+    };
+  };
 in
 {
   # Federation + client API both need inbound TCP.
@@ -56,11 +67,21 @@ in
         }
         reverse_proxy 127.0.0.1:${toString hsPort}
       }
+      # Self-hosted Element web client. Served same-origin through the same
+      # Caddy listener; SNI differs, so tlsrouter routes www.${domain} here.
+      www.${domain}:${toString clientPort} {
+        root * ${elementWeb}
+        try_files {path} /index.html
+        encode gzip
+        file_server
+      }
     '';
   };
 
   # --- Edge: point the Matrix domain's SNI at our Caddy listener ---
   services.tlsrouter.routes.${domain}.backend = "127.0.0.1:${toString clientPort}";
+  # Element web client on its own subdomain.
+  services.tlsrouter.routes."www.${domain}".backend = "127.0.0.1:${toString clientPort}";
 
   # ---------------------------------------------------------------------------
   # Bridges: each a mautrix appservice. homeserver domain/address are set manually
