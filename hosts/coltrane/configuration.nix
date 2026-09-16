@@ -4,6 +4,10 @@
   ...
 }:
 {
+  # Allow nheko (Matrix client) to build: it links libolm (olm), which upstream
+  # has stopped maintaining -> marked insecure in nixpkgs. Opt in explicitly.
+  nixpkgs.config.permittedInsecurePackages = [ "olm-3.2.16" ];
+
   features.games = true;
   features.kodi = true;
   features.meshcore = true;
@@ -158,6 +162,7 @@
   environment.systemPackages = with pkgs; [
     brightnessctl
     dmidecode
+    nheko # Matrix client
     pciutils
     usbutils
     xclip

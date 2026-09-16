@@ -75,6 +75,7 @@
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.tlsrouter
       inputs.self.nixosModules.users
+      inputs.sops-nix.nixosModules.sops
       inputs.srvos.nixosModules.hardware-hetzner-cloud
       inputs.srvos.nixosModules.server
     ];
