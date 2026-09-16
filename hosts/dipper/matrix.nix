@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 let
   domain = "matrix.xsfx.dev";
   hsPort = 6167; # tuwunel plain HTTP, behind Caddy
@@ -6,6 +6,7 @@ let
   federPort = 8448; # federation: other homeservers hit matrix.xsfx.dev:8448
   waAppPort = 29318; # mautrix-whatsapp appservice HTTP listener
   sgAppPort = 29328; # mautrix-signal appservice HTTP listener
+  tgAppPort = 8080; # mautrix-telegram appservice HTTP listener
 in
 {
   # Federation + client API both need inbound TCP.
@@ -72,6 +73,25 @@ in
   # Telegram skipped for now: my.telegram.org returns generic "ERROR" for this
   # account (likely rate-limit/2FA), so the API_ID/API_HASH aren't available.
   # WhatsApp & Signal need no secrets (tokens auto-generate; pairing is via QR).
+
+  # Telegram (re-enabled): needs API_ID/API_HASH in sops (`mautrix-telegram-env`).
+  # "full" IS a valid permission level for Telegram (unlike whatsapp/signal).
+  services.mautrix-telegram = {
+    enable = true;
+    environmentFile = config.sops.secrets."mautrix-telegram-env".path;
+    settings = {
+      homeserver = {
+        address = "http://127.0.0.1:${toString hsPort}";
+        domain = domain;
+      };
+      # telegram's OWN appservice listener is :8080 (not the homeserver port).
+      appservice.address = "http://127.0.0.1:${toString tgAppPort}";
+      bridge.permissions = {
+        "${domain}" = "full";
+        "xsfx.dev" = "full";
+      };
+    };
+  };
 
   services.mautrix-whatsapp = {
     enable = true;
