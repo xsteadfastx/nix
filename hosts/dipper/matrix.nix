@@ -14,7 +14,12 @@ let
       default_server_config = {
         "m.homeserver" = {
           base_url = "https://${domain}";
+          # Without this the login form shows the default server_name (matrix.org).
+          server_name = domain;
         };
+        "m.identity_server" = {
+          base_url = "";
+        }; # no identity/3PID server
       };
     };
   };
