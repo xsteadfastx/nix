@@ -58,6 +58,25 @@ let
       # against cgo libolm (olm-3.2.16) — only on hosts that permit it (dipper does).
       mautrix-telegram = prev.callPackage ../pkgs/mautrix-telegram.nix { };
 
+      # Go (bridgev2) mautrix-slack pinned past the "missing version data" login
+      # bug (mautrix/slack#95, merged; lands in v0.2608.0). nixpkgs still ships
+      # 0.2605/0.2607 — both before that fix — so token-login aborts before the real
+      # credential check. Use v0.2609.0 instead.
+      mautrix-slack = prev.mautrix-slack.overrideAttrs (rec {
+        version = "26.09";
+        tag = "v0.2609.0";
+        src = prev.fetchFromGitHub {
+          owner = "mautrix";
+          repo = "slack";
+          tag = "v${version}";
+          hash = "sha256-FVeRHTYmMZ/Exh8pPwId7+nCrChdBAo/bvQagIua1TY=";
+        };
+        vendorHash = "sha256-F4A/ly7LqawBCvRF0U4BxMJmvTLNuZ8TpadkltUi6HQ=";
+        # pkg/msgconv unit tests need env fixtures that don't exist in the nix
+        # build sandbox; irrelevant to bridge runtime. Skip them.
+        doCheck = false;
+      });
+
       # Go (bridgev2) mautrix-telegram, shadows nixpkgs' legacy Python one. Builds
 
       meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
