@@ -6,6 +6,14 @@ let
   federPort = 8448; # federation: other homeservers hit matrix.xsfx.dev:8448
   waAppPort = 29318; # mautrix-whatsapp appservice HTTP listener
   sgAppPort = 29328; # mautrix-signal appservice HTTP listener
+  # Bridge admin: only @marv. Anyone else on ${domain} (e.g. the wife later) is a
+  # normal user. `*` = relay (external federated users only via relay, never as
+  # their own account). bridgev2 levels are relay < user < admin.
+  bridgePermissions = {
+    "@marv:${domain}" = "admin";
+    "${domain}" = "user";
+    "*" = "relay";
+  };
   # Self-hosted Element (web client). Bake in the homeserver via override so
   # browsers load the client from www.${domain} but talk to ${domain} directly.
   elementWeb = pkgs.element-web.override {
@@ -112,10 +120,7 @@ in
         address = "http://127.0.0.1:${toString hsPort}";
         domain = domain;
       };
-      bridge.permissions = {
-        "${domain}" = "admin";
-        "xsfx.dev" = "admin";
-      };
+      bridge.permissions = bridgePermissions;
     };
   };
 
@@ -129,11 +134,7 @@ in
       # appservice.address = the URL tuwunel pushes events TO = THIS bridge's own
       # HTTP listener (port 29318), NOT the homeserver port.
       appservice.address = "http://127.0.0.1:${toString waAppPort}";
-      # "admin" (not "full") — mautrix WhatsApp only accept relay/user/admin.
-      bridge.permissions = {
-        "${domain}" = "admin";
-        "xsfx.dev" = "admin";
-      };
+      bridge.permissions = bridgePermissions;
     };
   };
 
@@ -147,11 +148,7 @@ in
       # appservice.address = the URL tuwunel pushes events TO = THIS bridge's own
       # HTTP listener (port 29328), NOT the homeserver port.
       appservice.address = "http://127.0.0.1:${toString sgAppPort}";
-      # "admin" (not "full") — mautrix Signal only accept relay/user/admin.
-      bridge.permissions = {
-        "${domain}" = "admin";
-        "xsfx.dev" = "admin";
-      };
+      bridge.permissions = bridgePermissions;
     };
   };
 
@@ -166,11 +163,7 @@ in
         address = "http://127.0.0.1:${toString hsPort}";
         domain = domain;
       };
-      # "admin" (not "full") — mautrix bridges only accept relay/user/admin.
-      bridge.permissions = {
-        "${domain}" = "admin";
-        "xsfx.dev" = "admin";
-      };
+      bridge.permissions = bridgePermissions;
     };
   };
 }
