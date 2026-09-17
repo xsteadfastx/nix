@@ -154,4 +154,23 @@ in
       };
     };
   };
+
+  # Slack: Go bridgev2 (mautrix-slack, already the Go rewrite in nixpkgs).
+  # No secrets in sops — auth is per-session via `login token <xoxc-…> <xoxd-…>`
+  # in the Slack bot DM (token + `d` cookie from the Slack web app; they expire,
+  # so re-login when Slack rotates them).
+  services.mautrix-slack = {
+    enable = true;
+    settings = {
+      homeserver = {
+        address = "http://127.0.0.1:${toString hsPort}";
+        domain = domain;
+      };
+      # "admin" (not "full") — mautrix bridges only accept relay/user/admin.
+      bridge.permissions = {
+        "${domain}" = "admin";
+        "xsfx.dev" = "admin";
+      };
+    };
+  };
 }
