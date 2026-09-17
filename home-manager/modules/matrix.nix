@@ -13,6 +13,12 @@ let
     default_profile = "user";
     profiles.user.user_id = "@marv:matrix.xsfx.dev";
     layout.style = "restore";
+    settings.username_display = "displayname";
+    settings.image_preview = {
+      protocol = {
+        type = "kitty";
+      };
+    };
     settings.sort.rooms = [
       "unread"
       "favorite"
