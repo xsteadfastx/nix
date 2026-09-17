@@ -10,6 +10,7 @@
 
   features.games = true;
   features.kodi = true;
+  features.matrix = true;
   features.meshcore = true;
   features.neovim = true;
   features.work = true;

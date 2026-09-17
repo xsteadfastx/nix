@@ -6,6 +6,7 @@
 {
   options.features.games = lib.mkEnableOption "enable games";
   options.features.kodi = lib.mkEnableOption "enable kodi";
+  options.features.matrix = lib.mkEnableOption "enable matrix";
   options.features.meshcore = lib.mkEnableOption "enable meshcore";
   options.features.neovim = lib.mkEnableOption "enable neovim";
   options.features.work = lib.mkEnableOption "enable work";
