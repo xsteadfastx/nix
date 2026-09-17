@@ -10,8 +10,9 @@
     ./cliamp.nix
     ./fish
     ./git.nix
-    ./tmux
+    # ./tmux # disabled 2026-09-17, trying zellij as the daily driver instead
     ./whipper.nix
+    ./zellij
   ];
 
   systemd.user.startServices = "sd-switch";

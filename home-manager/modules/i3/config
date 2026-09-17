@@ -10,7 +10,7 @@ floating_modifier $mod
 
 # start a terminal
 # bindsym $mod+Return exec ~/.local/bin/st -e tmux new-session -t global-session || tmux new-session -s global-session
-bindsym $mod+Return exec ghostty -e tmx
+bindsym $mod+Return exec ghostty -e fish
 
 # kill focused window
 bindsym $mod+Shift+q kill
