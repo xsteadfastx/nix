@@ -1,263 +1,28 @@
-{ inputs, ... }:
-
-# Nix overlay for custom packages
-# Provides overrides and additional packages used by the system.
+{
+  inputs,
+  ...
+}:
+# Nix overlay for custom packages. A thin coordinator that composes the
+# per-concern overlay files below (via lib.composeManyExtensions); adding a new
+# concern is just another file plus one entry here.
+#
+#   package-overrides.nix  custom packages
+#   unstable.nix           the nested nixpkgs-unstable instance (pkgs.unstable)
+#   nixpak.nix             bubblewrap-sandboxed work apps
+#   coding-agent.nix .overlay  surface unstable coding-agent packages at top level
+#
 # Maintainer: Marvin Preuss <marv@yourdomain.com>
-
 let
-  # Custom packages / overrides. Factored into a named overlay so it can be
-  # applied to BOTH the stable base pkgs AND the nested unstable instance
-  # (below) without duplicating definitions. It deliberately does NOT define
-  # `unstable` itself — applying it to the unstable import would otherwise
-  # recurse forever (unstable.unstable.unstable...).
-  packageOverrides =
-    final: prev:
-    let
-      system = prev.stdenv.hostPlatform.system;
-
-      # Expose only a tool's `bin/` to the profile (home.packages -> buildEnv).
-      # Used for meshtui/meshtui2, which both ship site-packages/meshtui/ and
-      # would collide if their full output trees were merged into one profile.
-      profileBinOnly =
-        name: pkg:
-        prev.runCommand name { } ''
-          mkdir -p $out/bin
-          for f in "${pkg}/bin/"*; do
-            [ -e "$f" ] || continue
-            ln -s "$f" "$out/bin/$(basename "$f")"
-          done
-        '';
-    in
-    {
-      # `gh` wrapper that authenticates from the sops-decrypted token file at
-      # runtime. /run/secrets/gh-token is provisioned by sops-nix only on hosts
-      # that declare sops.secrets."gh-token" (see hosts/coltrane/secrets.nix); on
-      # hosts without it the file is absent, this is a no-op, and `gh` runs as-is
-      # (its own auth, or unauthenticated). Reading the file at exec time keeps
-      # the secret out of the nix store and picks up rotated tokens on the next
-      # call. This is a separate wrapper package (not an override of `github-cli`)
-      # that ships a `bin/gh`; it is added to the user's home.packages
-      # (home-manager/modules/base.nix), so it lands on the shell PATH and the
-      # coding agent inherits it from there. `github-cli` itself is left untouched
-      # (keeping its completions/man pages) and is deliberately not on PATH, so
-      # this wrapper is the only `gh`.
-      #
-      # Uses `final.github-cli` (not `prev.github-cli`) so it wraps the unstable
-      # `github-cli` set by codingAgent below — both overlays compose into one
-      # here, so `prev` would only see the stable `github-cli`.
-      githubCliTokenWrapped = prev.writeShellScriptBin "gh" ''
-        if [ -f /run/secrets/gh-token ]; then
-          export GH_TOKEN=$(cat /run/secrets/gh-token)
-        fi
-        exec ${final.github-cli}/bin/gh "$@"
-      '';
-
-      localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
-
-      # Go (bridgev2) mautrix-telegram, shadows nixpkgs' legacy Python one. Builds
-      # against cgo libolm (olm-3.2.16) — only on hosts that permit it (dipper does).
-      mautrix-telegram = prev.callPackage ../pkgs/mautrix-telegram.nix { };
-
-      # Go (bridgev2) mautrix-slack pinned past the "missing version data" login
-      # bug (mautrix/slack#95, merged; lands in v0.2608.0). nixpkgs still ships
-      # 0.2605/0.2607 — both before that fix — so token-login aborts before the real
-      # credential check. Use v0.2609.0 instead.
-      mautrix-slack = prev.mautrix-slack.overrideAttrs (rec {
-        version = "26.09";
-        tag = "v0.2609.0";
-        src = prev.fetchFromGitHub {
-          owner = "mautrix";
-          repo = "slack";
-          inherit tag;
-          hash = "sha256-FVeRHTYmMZ/Exh8pPwId7+nCrChdBAo/bvQagIua1TY=";
-        };
-        vendorHash = "sha256-F4A/ly7LqawBCvRF0U4BxMJmvTLNuZ8TpadkltUi6HQ=";
-        # pkg/msgconv unit tests need env fixtures that don't exist in the nix
-        # build sandbox; irrelevant to bridge runtime. Skip them.
-        doCheck = false;
-      });
-
-      # Go (bridgev2) mautrix-telegram, shadows nixpkgs' legacy Python one. Builds
-
-      meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
-
-      meshtui2 = prev.python3Packages.callPackage ../pkgs/meshtui2/package.nix { };
-
-      meshtuiProfile = profileBinOnly "meshtui" final.meshtui;
-      meshtui2Profile = profileBinOnly "meshtui2" final.meshtui2;
-
-      lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
-
-      trippy-dracula = prev.callPackage ../pkgs/trippy-dracula.nix { };
-
-      jetbrainsmono-nerdfont-zero = prev.callPackage ../pkgs/jetbrainsmono-nerdfont-zero.nix { };
-
-      airmtp = inputs.airmtp.packages.${system}.default;
-      compose2nix = inputs.compose2nix.packages.${system}.default;
-
-      bumblebee-status = prev.bumblebee-status.override {
-        # Add the plugins we actually use in this configuration.
-        plugins = p: [
-          p.cpu
-          p.nic
-          p.pipewire
-        ];
-      };
-
-      # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
-      # an Epson rpm via `rpm2cpio X | cpio -idmv`; stdenv sets `pipefail`, and
-      # cpio exits after the archive trailer while rpm2cpio is still writing, so
-      # the pipe intermittently dies with SIGPIPE (exit 141) even though
-      # extraction succeeded. That race flakes nixos-rebuild/CI (see
-      # NixOS/nixpkgs#541364).
-      #
-      # We drop pipefail for the install phase. This is SAFE against shipping a
-      # broken package: cpio is the LAST command in the pipe, so without
-      # pipefail the pipeline returns cpio's own exit status, and cpio returns
-      # non-zero on any truncated/corrupt stream (0 only after reading a
-      # complete archive to its trailer). The SIGPIPE only ever kills rpm2cpio
-      # (the producer), and only after cpio has already consumed the full valid
-      # archive and closed the pipe — the two can't coincide with a bad package.
-      epkowa = prev.epkowa.override {
-        plugins = builtins.mapAttrs (
-          _: p:
-          p.overrideAttrs (o: {
-            installPhase = "set +o pipefail\n" + o.installPhase;
-          })
-        ) prev.epkowa.plugins;
-      };
-
-      quickemu = inputs.quickemu.packages.${system}.default;
-
-      imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
-      importsony = prev.callPackage ../pkgs/importsony/package.nix { };
-      importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
-      paperless-gpt = prev.callPackage ../pkgs/paperless-gpt/package.nix { };
-
-      xsaneGimp = prev.xsane.override { gimpSupport = true; };
-
-      attic = inputs.attic.packages.${system}.attic;
-
-      cliamp = prev.cliamp.overrideAttrs (rec {
-        version = "1.63.2";
-        src = prev.fetchFromGitHub {
-          owner = "bjarneo";
-          repo = "cliamp";
-          tag = "v${version}";
-          hash = "sha256-HqFDT8jGvrKqb6bupvXqZ5ECpvColRB5dXPwcKCX4RQ=";
-        };
-        vendorHash = "sha256-WYyv0w5KFA15axb+NA9tClfc1H4Znj8kI2boR8XziXg=";
-        meta = {
-          description = "CLI amp – a simple audio volume controller for the terminal";
-          homepage = "https://github.com/bjarneo/cliamp";
-          license = prev.lib.licenses.mit;
-          maintainers = with prev.lib.maintainers; [ marv ];
-        };
-      });
-    };
-
-  # (overlays/default.nix) — see modules/base. The coding-agent repo's overlay
-  # now provides the pi/mcp-* packages as plain pkgs.* attrs; overlays.default
-  # here is only the custom package overrides + the single unstable instance.
-  # Coding-agent packages: single-sourced from the coding-agent repo's own
-  # overlay, so we don't duplicate their definitions here. The repo overlay
-  # builds the Python MCP servers (mcp-atlassian, redis-mcp) from source against
-  # whatever channel it's applied to — those need recent deps (cattrs>=26.1,
-  # lxml>=6.1) that only exist on nixos-unstable, so we apply it to this repo's
-  # nested `unstable` instance (below), then surface the names at the top level
-  # where the coding-agent module reads them as plain `pkgs.*`.
-  codingAgentOverlay = inputs.coding-agent.overlays.default;
-
-  # The package names the coding-agent module consumes as top-level pkgs.*.
-  codingAgentPkgs = [
-    "pi-coding-agent"
-    "claude-code"
-    "postgres-mcp"
-    "mcp-atlassian"
-    "redis-mcp-server"
-    "agent-browser"
-    "mcp-nixos"
-    "mcp-server-git"
-    "mcp-grafana"
-    "github-mcp-server"
-    "context7-mcp"
-    "mcp-server-sequential-thinking"
-    "mcp-server-memory"
-    "netbox-mcp-server"
-    "activity-mcp"
-    "playwright-mcp"
-    "mcp-proxy"
-    "github-cli"
-    "ripgrep"
-  ];
-in
-final: prev:
-let
-  # bubblewrap sandbox builder (nixpak). `lib`/`pkgs` come from the unstable
-  # channel instance so the wrapped apps match the unstable packages below.
-  mkNixPak = inputs.nixpak.lib.nixpak {
-    lib = final.unstable.lib;
-    pkgs = final.unstable;
+  packageOverrides = import ./package-overrides.nix { inherit inputs; };
+  codingAgent = import ./coding-agent.nix { inherit inputs; };
+  unstable = import ./unstable.nix {
+    inherit inputs packageOverrides codingAgent;
   };
+  nixpak = import ./nixpak.nix { inherit inputs; };
 in
-(packageOverrides final prev)
-// {
-  # second channel once, centrally, is the idiomatic way to mix channels — it
-  # avoids the "1000 instances of nixpkgs" antipattern of scattering
-  # `import nixpkgs-unstable {...}` across modules. Reachable anywhere `pkgs`
-  # is (system and, via useGlobalPkgs, home-manager) as `pkgs.unstable.<name>`.
-  #
-  # `import` (not `.legacyPackages`) is required for `allowUnfree`; the same
-  # packageOverrides are applied so custom packages resolve identically on both
-  # channels (`pkgs.foo` = stable, `pkgs.unstable.foo` = unstable). The
-  # coding-agent repo's overlay is applied here too, so the Python MCP servers
-  # build against unstable (recent deps).
-  unstable = import inputs.nixpkgs-unstable {
-    inherit (prev.stdenv.hostPlatform) system;
-    config.allowUnfree = true;
-    overlays = [
-      packageOverrides
-      codingAgentOverlay
-    ];
-  };
-
-  # GUI-only 1Password, sandboxed like Slack. No browser/CLI bridge, so no
-  # cross-sandbox sockets to break.
-  onepassword-gui-wrapped =
-    (mkNixPak {
-      config =
-        { sloth, ... }:
-        {
-          app.package = final.unstable._1password-gui;
-          flatpak.appId = "com.onepassword.OnePassword";
-          fonts.enable = true;
-          dbus.policies = {
-            "org.freedesktop.secrets" = "talk";
-            "org.freedesktop.Notifications" = "talk";
-            "org.freedesktop.portal.*" = "talk";
-          };
-          bubblewrap = {
-            network = true; # vault/account sync
-            sockets = {
-              x11 = true;
-              pipewire = true;
-              pulse = true;
-            };
-            bind.rw = [
-              (sloth.concat' sloth.homeDir "/.config/1Password")
-              (sloth.concat' sloth.homeDir "/.cache/1Password")
-            ];
-            bind.ro = [
-              "/etc/machine-id"
-              "/run/dbus/system_bus_socket"
-            ];
-          };
-        };
-    }).config.env;
-}
-// (builtins.listToAttrs (
-  map (name: {
-    inherit name;
-    value = final.unstable.${name};
-  }) codingAgentPkgs
-))
+inputs.nixpkgs.lib.composeManyExtensions [
+  packageOverrides
+  unstable
+  nixpak
+  codingAgent.overlay
+]
