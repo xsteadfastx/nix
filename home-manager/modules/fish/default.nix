@@ -236,11 +236,25 @@
     set -g fish_pager_color_completion f8f8f2
     set -g fish_pager_color_description 6272a4
 
-    # ssh-agent + gopass keys (formerly conf.d/ssh-agent-prepare.fish)
-    if not pgrep --full ssh-agent | string collect > /dev/null
+    # ssh-agent + gopass keys (formerly conf.d/ssh-agent-prepare.fish).
+    # Must be -Ux (universal): these need to be shared across every fish
+    # shell/reboot, not just the one that happened to start the agent.
+    # A -gx regression here once froze every new shell on a dead socket
+    # from before the last reboot.
+    #
+    # Validate the actual socket, not just "an ssh-agent process exists
+    # somewhere" (pgrep) -- a stale exported SSH_AUTH_SOCK inherited via
+    # `exec fish` from an old shell shadows the correct universal value,
+    # and pgrep alone can't detect or repair that. Drop such a shadow first
+    # so the universal value underneath can show through.
+    if not test -S "$SSH_AUTH_SOCK"
+        set -e -g SSH_AUTH_SOCK
+        set -e -g SSH_AGENT_PID
+    end
+    if not test -S "$SSH_AUTH_SOCK"
         eval (ssh-agent -c)
-        set -gx SSH_AGENT_PID $SSH_AGENT_PID
-        set -gx SSH_AUTH_SOCK $SSH_AUTH_SOCK
+        set -Ux SSH_AGENT_PID $SSH_AGENT_PID
+        set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK
         if type -q gopass
             for key in (gopass ls -f ssh/)
                 gopass show -n $key | ssh-add - 2>/dev/null
