@@ -93,8 +93,6 @@
     # vpn
     (writeShellScriptBin "wobcom-vpn" ''
       set -e
-
-      ${tmux}/bin/tmux rename-window "wobcom-vpn"
       sudo ${unstable.openfortivpn}/bin/openfortivpn \
       	vpn.wobcom.de \
       	--trusted-cert 7a3f29e18c303c26080671cd1c0925ba2ae7c229c50eef6222d6f1453596e88d \
