@@ -9,6 +9,7 @@
     ./meshtui.nix
     ./neovim
     ./secrets.nix
+    ./wobcom.nix
     ./x11.nix
   ];
 }

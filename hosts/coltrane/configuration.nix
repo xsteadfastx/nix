@@ -13,7 +13,7 @@
   features.matrix = true;
   features.meshcore = true;
   features.neovim = true;
-  features.work = true;
+  features.wobcom = true;
   features.x11 = true;
 
   home-manager.users.marv = {

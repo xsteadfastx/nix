@@ -9,7 +9,7 @@
   options.features.matrix = lib.mkEnableOption "enable matrix";
   options.features.meshcore = lib.mkEnableOption "enable meshcore";
   options.features.neovim = lib.mkEnableOption "enable neovim";
-  options.features.work = lib.mkEnableOption "enable work";
+  options.features.wobcom = lib.mkEnableOption "wobcom work apps (1password, sandboxed Slack)";
   options.features.x11 = lib.mkEnableOption "enable x11";
 
   config = {

@@ -35,14 +35,10 @@ in
     pkgs.unstable.remmina
     pkgs.unstable.rustdesk-flutter
     pkgs.unstable.signal-desktop
-    pkgs.unstable.slack
     pkgs.unstable.system-config-printer
     pkgs.unstable.tor-browser
     pkgs.unstable.xdotool
     pkgs.unstable.xsaneGimp
-
-    (lib.mkIf cfg.work pkgs._1password-cli)
-    (lib.mkIf cfg.work pkgs._1password-gui)
   ];
 
   home.sessionVariables.DEFAULT_BROWSER = "chromium";

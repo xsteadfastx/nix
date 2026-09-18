@@ -21,6 +21,7 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     microvm.inputs.nixpkgs.follows = "nixpkgs-unstable";
     microvm.url = "github:microvm-nix/microvm.nix";
+    nixpak.url = "github:nixpak/nixpak";
     nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
     nixos-anywhere.url = "github:nix-community/nixos-anywhere";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";

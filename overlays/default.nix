@@ -192,9 +192,16 @@ let
   ];
 in
 final: prev:
+let
+  # bubblewrap sandbox builder (nixpak). `lib`/`pkgs` come from the unstable
+  # channel instance so the wrapped apps match the unstable packages below.
+  mkNixPak = inputs.nixpak.lib.nixpak {
+    lib = final.unstable.lib;
+    pkgs = final.unstable;
+  };
+in
 (packageOverrides final prev)
 // {
-  # Single nixpkgs-unstable instance, exposed as `pkgs.unstable`. Importing a
   # second channel once, centrally, is the idiomatic way to mix channels — it
   # avoids the "1000 instances of nixpkgs" antipattern of scattering
   # `import nixpkgs-unstable {...}` across modules. Reachable anywhere `pkgs`
@@ -213,6 +220,40 @@ final: prev:
       codingAgentOverlay
     ];
   };
+
+  # GUI-only 1Password, sandboxed like Slack. No browser/CLI bridge, so no
+  # cross-sandbox sockets to break.
+  onepassword-gui-wrapped =
+    (mkNixPak {
+      config =
+        { sloth, ... }:
+        {
+          app.package = final.unstable._1password-gui;
+          flatpak.appId = "com.onepassword.OnePassword";
+          fonts.enable = true;
+          dbus.policies = {
+            "org.freedesktop.secrets" = "talk";
+            "org.freedesktop.Notifications" = "talk";
+            "org.freedesktop.portal.*" = "talk";
+          };
+          bubblewrap = {
+            network = true; # vault/account sync
+            sockets = {
+              x11 = true;
+              pipewire = true;
+              pulse = true;
+            };
+            bind.rw = [
+              (sloth.concat' sloth.homeDir "/.config/1Password")
+              (sloth.concat' sloth.homeDir "/.cache/1Password")
+            ];
+            bind.ro = [
+              "/etc/machine-id"
+              "/run/dbus/system_bus_socket"
+            ];
+          };
+        };
+    }).config.env;
 }
 // (builtins.listToAttrs (
   map (name: {
