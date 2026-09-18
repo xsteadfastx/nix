@@ -315,11 +315,20 @@ in
 
       // background plugin, no visible pane: auto-renames tabs to the
       // focused pane's running command (falls back to cwd). Manually
-      // renamed tabs (via the "," bind above) get overwritten again after
-      // ~0.5s UNLESS the name starts with "!" (tab_keep_prefix default) --
-      // type e.g. "!notes" to keep a manual name.
+      // renamed tabs (via the "," bind above) get overwritten again UNLESS
+      // the name starts with "!" (tab_keep_prefix default) -- type e.g.
+      // "!notes" to keep a manual name.
+      //
+      // update_interval is a debounce: the plugin polls the focused pane's
+      // process title once per interval and renames every tick (default
+      // 0.5s). At 0.5s, toggling focus between two panes (e.g. the pi agent
+      // and nvim) repaints the tab bar pi/nvim/pi/nvim and stutters. Raising
+      // it to 3s means only a focus change that sticks >=3s actually renames
+      // -- transient glances no longer flicker.
       load_plugins {
-          "file:${tabRenamePlugin}"
+          "file:${tabRenamePlugin}" {
+              update_interval "3"
+          }
       }
 
       // full dracula (v2) — all UI components, with #44475a instead of pure
