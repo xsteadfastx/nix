@@ -53,7 +53,7 @@
   programs.fish.functions = {
     "2mkv" = {
       body = ''
-        HandBrakeCLI --input $argv[1] --output $argv[2] \
+        ${pkgs.handbrake}/bin/HandBrakeCLI --input $argv[1] --output $argv[2] \
           --main-feature --markers --optimize --ipod-atom --encoder-tune film \
           --encoder x264 --encoder-profile high --encoder-preset medium \
           --encoder-level 4.1 --quality 20 --maxWidth 1920 --maxHeight 1080 \
@@ -63,14 +63,14 @@
     };
     "2mkv265" = {
       body = ''
-        HandBrakeCLI --input $argv[1] --output $argv[2] --encoder x265 \
+        ${pkgs.handbrake}/bin/HandBrakeCLI --input $argv[1] --output $argv[2] --encoder x265 \
           --encoder-preset medium --quality 18 --decomb --auto-anamorphic --cfr \
           --all-audio --aencoder copy --audio-fallback av_aac --ab 160 --all-subtitles
       '';
     };
     "2mp4" = {
       body = ''
-        /usr/bin/HandBrakeCLI --input $argv[1] --output $argv[2] \
+        ${pkgs.handbrake}/bin/HandBrakeCLI --input $argv[1] --output $argv[2] \
           --preset "Fast 1080p30" --audio-lang-list "eng,deu" --all-audio \
           --aencoder copy --audio-fallback av_aac --ab 160 \
           --subtitle-lang-list "eng,deu" --all-subtitles
@@ -256,11 +256,6 @@
     # gopass completions
     if type -q gopass
         gopass completion fish | source
-    end
-
-    # guarded path extras / tooling present on this machine
-    if test -d ~/library/apps/git-fuzzy
-        fish_add_path ~/library/apps/git-fuzzy/bin
     end
 
     # grc color-wrapped commands
