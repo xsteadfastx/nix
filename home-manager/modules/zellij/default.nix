@@ -243,6 +243,18 @@ in
       # yaml->kdl conversion of nested keybinds is unreliable).
     };
     extraConfig = ''
+      // On session resurrection zellij re-runs the command it serialized per
+      // pane. Neither `pi` nor `claude` resumes unless given `--continue`, so
+      // rewrite a resurrected `pi` / `claude` (with or without args) to append
+      // `--continue`: the discovery hook (sh -c) gets $RESURRECT_COMMAND and
+      // its STDOUT is what gets stored. The `/--continue/` guard passes
+      // through commands already carrying the flag so we never double-flag.
+      //
+      // ponytail: only covers bare `pi`/`claude` and `pi <args>`/`claude
+      // <args>` shapes; a user-typed `-c` still becomes `--continue -c`
+      // (harmless, both mean "continue").
+      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s/^pi$/pi --continue/; t; s/^pi /pi --continue /; t; s/^claude$/claude --continue/; t; s/^claude /claude --continue /'"
+
       // tmux-style prefix: C-a enters locked (prefix-following) mode
       keybinds {
           normal {
