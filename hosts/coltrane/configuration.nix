@@ -50,8 +50,18 @@
   # Any program that leaves it non-default (CLI/SDK probes included) then makes
   # the web tools time out. Reset the line state on device add so the browser
   # can always talk to it.
+  #
+  # ModemManager's 80-mm-candidate.rules generically tags every USB-serial tty
+  # (including this one -- confirmed via `udevadm info`: ID_MM_CANDIDATE=1) and
+  # dbus-activates itself to AT-probe it as a possible cellular modem. That
+  # probe is asynchronous and races the stty reset above, and reliably lands
+  # after it -- confirmed via journalctl: ModemManager activated one second
+  # after the CP210x attached. That's what actually corrupts the line (found
+  # it wedged at 9600/ospeed 0, not a sane 115200), not just "some CLI left it
+  # dirty". Tell ModemManager to ignore this device entirely so nothing ever
+  # races the reset.
   services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", RUN+="${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/stty sane -F $devnode'"
+    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1", RUN+="${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/stty sane -F $devnode'"
   '';
 
   boot.loader.systemd-boot.enable = true;
