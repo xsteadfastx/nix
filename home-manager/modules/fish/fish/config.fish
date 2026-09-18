@@ -180,11 +180,6 @@ abbr -a fd 'fd -I'
 abbr -a rg 'rg --no-ignore-vcs --hidden'
 abbr -a prev "fzf --preview 'bat --style=numbers --color=always {}'"
 
-# gping
-if type -q gping
-    abbr -a ping gping
-end
-
 # viddy
 if type -q viddy
     abbr -a watch viddy

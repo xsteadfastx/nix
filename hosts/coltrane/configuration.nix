@@ -246,7 +246,7 @@
     extraArgs = [
       # "-g"
       "--avoid"
-      "^(X|i3.*|sshd|systemd|ghostty|alacritty)$"
+      "^(X|i3.*|sshd|systemd|ghostty|alacritty|zellij)$"
       "--prefer"
       "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
     ];
@@ -285,6 +285,12 @@
         PowerKeyIgnoreInhibited = "yes";
         SleepKeyIgnoreInhibited = "yes";
         SuspendKeyIgnoreInhibited = "yes";
+        # Hard ceiling on tasks-per-session. systemd's own default is
+        # TasksMax=infinity on login-session scopes, so a runaway fork loop
+        # (see 2026-09-18 gping/ping storm: ~53k processes, ~17GB of swap)
+        # had nothing to stop it short of ulimit -u (126401). This caps it
+        # far below any real workload so a storm hits EAGAIN in seconds.
+        UserTasksMax = 10000;
       };
     };
   };
