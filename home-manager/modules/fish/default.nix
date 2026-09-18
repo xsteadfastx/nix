@@ -22,10 +22,10 @@
   };
 
   home.sessionPath = [
-    "$HOME/bin"
-    "$HOME/.local/bin"
-    "$HOME/.krew/bin"
-    "$HOME/.local/share/go/bin"
+    # "$HOME/bin"
+    # "$HOME/.local/bin"
+    # "$HOME/.krew/bin"
+    # "$HOME/.local/share/go/bin"
   ];
 
   # fzf's fish key bindings (fish_user_key_bindings depends on
