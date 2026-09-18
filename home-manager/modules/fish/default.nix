@@ -175,41 +175,6 @@
         end
       '';
     };
-    # kept: user relies on ssh-agent (separate live handler is the
-    # ssh-agent-prepare block in interactiveShellInit)
-    fish_ssh_agent = {
-      body = ''
-        function __ssh_agent_is_started -d "check if ssh agent is already started"
-           if begin; test -f $SSH_ENV; and test -z "$SSH_AGENT_PID"; end
-              source $SSH_ENV > /dev/null
-           end
-
-           if ! test -S "$SSH_AUTH_SOCK"; return 1; end
-           if test -z "$SSH_AGENT_PID"; return 1; end
-
-           ps -ef | grep $SSH_AGENT_PID | grep -v grep | grep -q ssh-agent
-           return $status
-        end
-
-        function __ssh_agent_start -d "start a new ssh agent"
-           ssh-agent -c | sed 's/^echo/#echo/' > $SSH_ENV
-           chmod 600 $SSH_ENV
-           source $SSH_ENV > /dev/null
-           true  # suppress errors from setenv, i.e. set -gx
-        end
-
-        function fish_ssh_agent --description "Start ssh-agent if not started yet, or uses already started ssh-agent."
-           if test -z "$SSH_ENV"
-              set -xg SSH_ENV $HOME/.ssh/environment
-           end
-
-           if not __ssh_agent_is_started
-              __ssh_agent_start
-              ~/bin/ssh-agent-prepare
-           end
-        end
-      '';
-    };
   };
 
   programs.fish.shellAbbrs = {
@@ -294,20 +259,6 @@
     end
 
     # guarded path extras / tooling present on this machine
-    if test -f /home/linuxbrew/.linuxbrew/bin/brew
-        set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew"
-        set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar"
-        set -gx HOMEBREW_REPOSITORY "/home/linuxbrew/.linuxbrew/Homebrew"
-        fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
-    end
-    if type -q asdf
-        set -gx ASDF_DIR (brew --prefix asdf)/libexec
-        fish_add_path "$ASDF_DIR/bin" ~/.asdf/shims
-        . "$ASDF_DIR/asdf.fish"
-    end
-    if test -d /usr/pgadmin4/bin
-        fish_add_path /usr/pgadmin4/bin
-    end
     if test -d ~/library/apps/git-fuzzy
         fish_add_path ~/library/apps/git-fuzzy/bin
     end
