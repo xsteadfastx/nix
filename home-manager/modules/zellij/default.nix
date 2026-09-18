@@ -250,10 +250,15 @@ in
       // its STDOUT is what gets stored. The `/--continue/` guard passes
       // through commands already carrying the flag so we never double-flag.
       //
-      // ponytail: only covers bare `pi`/`claude` and `pi <args>`/`claude
-      // <args>` shapes; a user-typed `-c` still becomes `--continue -c`
-      // (harmless, both mean "continue").
-      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s/^pi$/pi --continue/; t; s/^pi /pi --continue /; t; s/^claude$/claude --continue/; t; s/^claude /claude --continue /'"
+      // $RESURRECT_COMMAND is the resolved Nix store path (e.g.
+      // `/nix/store/…-claude-code-mcp/bin/claude`), never the bare word --
+      // match on the basename after the last `/` (or no `/` at all), not an
+      // anchored `^pi`/`^claude`, or the rewrite silently never fires.
+      //
+      // ponytail: only covers `.../pi`/`.../claude` and `.../pi <args>`/
+      // `.../claude <args>` shapes; a user-typed `-c` still becomes
+      // `--continue -c` (harmless, both mean "continue").
+      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\1 --continue #; t'"
 
       // tmux-style prefix: C-a enters locked (prefix-following) mode
       keybinds {
