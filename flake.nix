@@ -61,7 +61,15 @@
     // inputs.flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = inputs.nixpkgs.legacyPackages.${system};
+        # import (not legacyPackages) so we can set `permittedInsecurePackages`:
+        # packages.mautrix-telegram links libolm (olm-3.2.16), which nixpkgs marks
+        # insecure. Deploy hosts already permit it via nixpkgs.config. This keeps
+        # `nix flake check` (which builds every packages.*) from failing. Exactly
+        # equivalent to legacyPackages otherwise.
+        pkgs = import inputs.nixpkgs {
+          inherit system;
+          config.permittedInsecurePackages = [ "olm-3.2.16" ];
+        };
         pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
 
         preCommit = import ./pre-commit.nix {
