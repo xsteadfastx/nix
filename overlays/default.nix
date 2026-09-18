@@ -68,7 +68,7 @@ let
         src = prev.fetchFromGitHub {
           owner = "mautrix";
           repo = "slack";
-          tag = "v${version}";
+          inherit tag;
           hash = "sha256-FVeRHTYmMZ/Exh8pPwId7+nCrChdBAo/bvQagIua1TY=";
         };
         vendorHash = "sha256-F4A/ly7LqawBCvRF0U4BxMJmvTLNuZ8TpadkltUi6HQ=";
