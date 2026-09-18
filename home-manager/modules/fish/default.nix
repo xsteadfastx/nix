@@ -35,6 +35,14 @@
     "${pkgs.unstable.fzf}/share/fzf/key-bindings.fish";
 
   programs.fish.enable = true;
+  # fish 4.9.x moved/removed share/fish/tools/create_manpage_completions.py,
+  # which home-manager's manpage-based completion generation calls; the
+  # packages already ship vendor_completions.d, so skip the extra generation.
+  programs.fish.generateCompletions = false;
+  # pin the same fish home.packages already pulls; otherwise home-manager's
+  # programs.fish adds pkgs.fish (stable) and both land in the env, colliding
+  # on share/man/man1/fish-prompt-tutorial.1.gz in buildEnv.
+  programs.fish.package = pkgs.unstable.fish;
 
   # arch/hostname bin dirs cannot be declarative sessionPath; fish_add_path
   # keeps them (prepended) after the session vars are sourced.
