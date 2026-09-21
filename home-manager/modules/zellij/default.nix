@@ -258,7 +258,7 @@ in
       // ponytail: only covers `.../pi`/`.../claude` and `.../pi <args>`/
       // `.../claude <args>` shapes; a user-typed `-c` still becomes
       // `--continue -c` (harmless, both mean "continue").
-      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\1 --continue #; t'"
+      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
 
       // tmux-style prefix: C-a enters locked (prefix-following) mode
       keybinds {
