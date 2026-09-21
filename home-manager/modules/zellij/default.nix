@@ -281,6 +281,12 @@ in
               bind "k" { MoveFocus "Up"; SwitchToMode "Normal"; }
               bind "l" { MoveFocus "Right"; SwitchToMode "Normal"; }
 
+              // tmux-style pane resize: prefix + arrows
+              bind "Left" { Resize "Increase Left"; SwitchToMode "Normal"; }
+              bind "Right" { Resize "Increase Right"; SwitchToMode "Normal"; }
+              bind "Up" { Resize "Increase Up"; SwitchToMode "Normal"; }
+              bind "Down" { Resize "Increase Down"; SwitchToMode "Normal"; }
+
               // windows -> tabs
               bind "c" { NewTab; SwitchToMode "Normal"; }
               bind "," { SwitchToMode "RenameTab"; }
