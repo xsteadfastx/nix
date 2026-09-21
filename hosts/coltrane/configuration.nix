@@ -264,11 +264,16 @@
 
   services.resolved.enable = true;
 
-  # garbage
+  # Garbage: daily over 30d, but DON'T catch up after sleep.
+  # nix.gc.persistent (default true) makes a gc missed while the laptop is asleep
+  # fire the moment you wake it (~3 min CPU + GBs of disk read right after
+  # lid-open). Setting it false skips the catch-up; the 5..15G min/max-free in
+  # modules/base still auto-GC on low space, so a skipped scan can't grow the store.
   nix.gc = {
     automatic = true;
     dates = "daily";
     options = "--delete-older-than 30d";
+    persistent = false;
   };
 
   # dell dockingstation
