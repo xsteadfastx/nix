@@ -340,6 +340,13 @@ in
           "file:${tabRenamePlugin}" {
               update_interval "3"
           }
+
+          // tints a pane red while it runs `ssh <host>` — see /pkgs/zellij-ssh-tint.
+          // color is configurable; the plugin passively watches PaneUpdate, no
+          // wrapper or remote changes needed.
+          "file:${pkgs.unstable.zellij-ssh-tint}" {
+              color "#3a0000"
+          }
       }
 
       // full dracula (v2) — all UI components, with #44475a instead of pure

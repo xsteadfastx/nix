@@ -1,0 +1,13 @@
+[package]
+name = "zellij-ssh-tint"
+version = "0.1.0"
+edition = "2021"
+description = "Tint the pane red when it is running an ssh session so you can see at a glance that you are on a remote box."
+license = "MIT"
+repository = "https://github.com/xsteadfastx/xsfx"
+
+[dependencies]
+zellij-tile = "0.45"
+
+[profile.release]
+opt-level = "s"

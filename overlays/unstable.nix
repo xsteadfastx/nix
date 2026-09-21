@@ -25,6 +25,9 @@ _final: prev: {
     overlays = [
       packageOverrides
       codingAgent.codingAgentOverlay
+      # tint the zellij pane red while an ssh session runs — must build against
+      # nixpkgs-unstable, which is the only channel with pkgsCross.wasm32-wasip1
+      (_: prev: { zellij-ssh-tint = prev.callPackage ../pkgs/zellij-ssh-tint/package.nix { }; })
     ];
   };
 }

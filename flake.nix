@@ -104,6 +104,8 @@
         packages.jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
         packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
         packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
+        # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
+        packages.zellij-ssh-tint = pkgsUnstable.callPackage ./pkgs/zellij-ssh-tint/package.nix { };
       }
     );
 }
