@@ -312,15 +312,11 @@ in
               // tmux-style: Tab = last window, Space = next layout
               bind "Tab" { ToggleTab; SwitchToMode "Normal"; }
               bind "Space" { NextSwapLayout; SwitchToMode "Normal"; }
-              // tmux's "Ctrl-a w" tree overview -> zellij's session-manager
-              // (floating tab/pane overview, closest equivalent)
-              bind "w" {
-                  LaunchOrFocusPlugin "session-manager" {
-                      floating true
-                      move_to_focused_tab true
-                  }
-                  SwitchToMode "Normal"
-              }
+              // tmux's "Ctrl-a w" window list -> zellij's tab overview (a
+              // scrollable bar of all tabs at the top). tmux's choose-window has
+              // no pane/plugin form; Tab mode is the native equivalent. The
+              // session-manager plugin is *sessions* (tmux C-b s), not windows.
+              bind "w" { SwitchToMode "Tab"; }
           }
       }
 
