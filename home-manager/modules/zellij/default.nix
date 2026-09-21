@@ -305,6 +305,10 @@ in
               bind "8" { GoToTab 8; SwitchToMode "Normal"; }
               bind "9" { GoToTab 9; SwitchToMode "Normal"; }
 
+              // tmux-style pane swapping: } = swap with next, { = swap with previous
+              bind "}" { MovePane; SwitchToMode "Normal"; }
+              bind "{" { MovePaneBackwards; SwitchToMode "Normal"; }
+
               // misc
               bind "z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
               bind "x" { CloseFocus; SwitchToMode "Normal"; }
