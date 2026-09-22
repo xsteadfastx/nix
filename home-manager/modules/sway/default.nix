@@ -183,9 +183,8 @@ lib.mkIf cfg.x11 {
     pkgs.blueman
     # Wayland output-arrangement GUI (arandr is X11-only — no xrandr under sway).
     pkgs.wdisplays
-    # Wayland screenshot stack (flameshot's X11 capture path doesn't work under
-    # sway): grim captures, slurp selects a region, wl-copy puts it on the
-    # clipboard. satty annotates if wanted (`grim -g "$(slurp)" - | satty -f -`).
+    # grim/slurp stay for a plain region grab; flameshot (services.flameshot
+    # below) does the annotate/editor part via the same grim binary.
     pkgs.grim
     pkgs.slurp
     pkgs.wl-clipboard
@@ -193,8 +192,8 @@ lib.mkIf cfg.x11 {
     (pkgs.writeShellScriptBin "sway-autostart" ''
       set -u
       # Kill leftovers from a previous session so tray applets don't pile up
-      # across sway restarts (dunst/nm-applet/blueman/syncthingtray/flameshot).
-      for app in dunst nm-applet blueman-applet blueman-tray syncthingtray flameshot; do
+      # across sway restarts (dunst/nm-applet/blueman/syncthingtray).
+      for app in dunst nm-applet blueman-applet blueman-tray syncthingtray; do
         pkill -x "$app" 2>/dev/null || true
       done
       sleep 0.3
