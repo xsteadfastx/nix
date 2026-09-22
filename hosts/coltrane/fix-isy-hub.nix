@@ -7,9 +7,9 @@
   # over the TB/DP-alt-mode path, not this hub) and the typec alt-mode
   # `active` toggle is firmware-blocked ("firmware doesn't support alternate
   # mode overriding"), so no software lever recovers a wedged xe MST topology
-  # after long s2idle — only a physical replug or reboot does. autorandr
-  # --match-edid (udev-triggered on hotplug) still applies the right profile
-  # and the move-workspaces postswitch hook restores the layout on plug/unlock.
+  # after long s2idle — only a physical replug or reboot does. Output layout
+  # on boot/hotplug is now kanshi's job (EDID profiles); workspace pinning is
+  # the sway-outputs script. Nothing calls autorandr.
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x64a0", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa831", ATTR{power/control}="on"
@@ -22,6 +22,8 @@
   # Rebind ISY USB-C hub at boot to enumerate MST sub-ports (DP-1-3/DP-1-4).
   # The xe driver does not trigger HPD on the hub's DP alt mode at boot time.
   # Boot-only; resume recovery is not software-recoverable (see comment above).
+  # Once the sub-ports appear, kanshi applies the matching EDID profile and the
+  # sway-outputs script re-pins workspaces.
   systemd.services.isy-hub-mst-init = {
     description = "Rebind ISY USB-C hub to restore MST topology after boot";
     wantedBy = [ "graphical.target" ];
@@ -55,12 +57,8 @@
             ls /sys/class/drm/ 2>/dev/null | grep -q "DP-1-3\|DP-1-4" && break
             sleep 1
           done
-          XAUTH=$(ls /run/user/*/Xauthority 2>/dev/null | head -1)
-          if [ -n "$XAUTH" ]; then
-            XUSER=$(stat -c '%U' "$XAUTH")
-            runuser -u "$XUSER" -- env DISPLAY=:0 XAUTHORITY="$XAUTH" \
-              ${pkgs.autorandr}/bin/autorandr --change --match-edid --default mobile || true
-          fi
+          # kanshi applies the matching output profile once the MST sub-ports
+          # appear; sway-outputs then re-pins workspaces.
         fi
       '';
     };

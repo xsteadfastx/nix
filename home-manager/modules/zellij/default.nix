@@ -43,13 +43,6 @@ let
 
   # Auto-renames tabs to the focused pane's running command (falls back to
   # cwd) -- zellij has no built-in equivalent of tmux's automatic-rename.
-  # Sandboxed to ReadApplicationState/ChangeApplicationState only (no
-  # RunCommands, doesn't shell out). Not in nixpkgs; small enough to fetch
-  # directly rather than adding a package for a single-file plugin.
-  tabRenamePlugin = pkgs.fetchurl {
-    url = "https://github.com/imsuck/tab-rename/releases/download/v0.1.2/tab-rename.wasm";
-    hash = "sha256-eKEIujEAxHFsBnQ5lS13xhvFViTD3k/PIl2SVe9eJ/0=";
-  };
 in
 {
   # zellij writes an auto-generated default config.kdl on first run; force ours
@@ -324,28 +317,16 @@ in
           }
       }
 
-      // background plugin, no visible pane: auto-renames tabs to the
-      // focused pane's running command (falls back to cwd). Manually
-      // renamed tabs (via the "," bind above) get overwritten again UNLESS
-      // the name starts with "!" (tab_keep_prefix default) -- type e.g.
-      // "!notes" to keep a manual name.
-      //
-      // update_interval is a debounce: the plugin polls the focused pane's
-      // process title once per interval and renames every tick (default
-      // 0.5s). At 0.5s, toggling focus between two panes (e.g. the pi agent
-      // and nvim) repaints the tab bar pi/nvim/pi/nvim and stutters. Raising
-      // it to 3s means only a focus change that sticks >=3s actually renames
-      // -- transient glances no longer flicker.
+      // Tab names are set by the shell (`wip` etc. via `zellij action
+      // rename-tab`). The old tab-rename wasm poller was removed: zellij
+      // (zellij-org/zellij#5482) never delivers a PaneUpdate for later OSC
+      // title changes, so it kept re-asserting stale names every interval.
       load_plugins {
-          "file:${tabRenamePlugin}" {
-              update_interval "3"
-          }
-
           // tints a pane red while it runs `ssh <host>` — see /pkgs/zellij-ssh-tint.
           // color is configurable; the plugin passively watches PaneUpdate, no
           // wrapper or remote changes needed.
           "file:${pkgs.unstable.zellij-ssh-tint}" {
-              color "#3a0000"
+              color "#ff5555"
           }
       }
 

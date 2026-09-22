@@ -1,43 +1,95 @@
 {
   nixosConfig,
   lib,
+  pkgs,
   ...
 }:
 let
   cfg = nixosConfig.features;
 in
 lib.mkIf cfg.x11 {
-  home.file.".gtkrc-2.0".text = ''
-    gtk-theme-name = "Dracula"
-    gtk-icon-theme-name = "Adwaita"
-    gtk-font-name = "JetBrainsMono Nerd Font"
+  home.packages = with pkgs; [
+    dracula-theme
+    dracula-icon-theme
+    jetbrainsmono-nerdfont-zero
+  ];
+
+  fonts.fontconfig.enable = true;
+
+  gtk = {
+    enable = true;
+
+    theme = {
+      name = "Dracula";
+      package = pkgs.dracula-theme;
+    };
+
+    iconTheme = {
+      name = "Dracula";
+      package = pkgs.dracula-icon-theme;
+    };
+
+    font = {
+      name = "JetBrainsMono Nerd Font";
+      size = 10;
+    };
+
+    gtk3.extraConfig = {
+      gtk-application-prefer-dark-theme = 1;
+    };
+    # NOTE: gtk4 deliberately has no `gtk-application-prefer-dark-theme` —
+    # libadwaita rejects it; `colorScheme = "dark"` drives GTK4's dark mode.
+    gtk4.extraConfig = { };
+    gtk4.theme = {
+      name = "Dracula";
+      package = pkgs.dracula-theme;
+    };
+    colorScheme = "dark";
+  };
+  dconf.enable = true;
+
+  home.pointerCursor = {
+    package = pkgs.dracula-theme;
+    name = "Dracula-Cursors";
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+  };
+
+  # Qt apps mirror the GTK theme + font, and use the Dracula Kvantum style
+  # (shipped by pkgs.dracula-theme) instead of adwaita-dark.
+  qt = {
+    enable = true;
+    platformTheme.name = "gtk";
+    style.name = "kvantum";
+    kvantum.enable = true;
+  };
+  xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
+    [General]
+    theme=Dracula
   '';
 
-  xdg.configFile."gtk-3.0/settings.ini".text = ''
-    [Settings]
-    gtk-theme-name=Dracula
-    gtk-icon-theme-name=Adwaita
-    gtk-font-name=JetBrainsMono Nerd Font, 10
+  xdg.configFile."fontconfig/fonts.conf".text = ''
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+      <alias>
+        <family>sans-serif</family>
+        <prefer>
+          <family>JetBrainsMono Nerd Font</family>
+        </prefer>
+      </alias>
+      <alias>
+        <family>monospace</family>
+        <prefer>
+          <family>JetBrainsMono Nerd Font Mono</family>
+        </prefer>
+      </alias>
+    </fontconfig>
   '';
-
-  home.file.".themes/Dracula" = {
-    source = ./Dracula;
-    recursive = true;
-  };
-
-  xdg.configFile."assets" = {
-    source = ./assets;
-    recursive = true;
-  };
-
-  xdg.configFile."gtk-4.0" = {
-    source = ./gtk-4.0;
-    recursive = true;
-  };
 
   # GIMP 3 uses its own CSS theme engine with custom widget classes
   # (GimpDock, GimpToolPalette, etc.) that standard GTK themes don't target.
-  # This deploys a Dracula-specific gimp.css for those selectors.
   xdg.configFile."GIMP/3.0/themes/Dracula" = {
     source = ../gimp/Dracula;
     recursive = true;

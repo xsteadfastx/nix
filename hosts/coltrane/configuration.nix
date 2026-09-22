@@ -135,7 +135,9 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-  services.xserver.windowManager.i3.enable = true;
+  # Wayland: sway session (i3 removed).
+  programs.sway.enable = true;
+  services.displayManager.defaultSession = "sway";
 
   fonts.packages = with pkgs; [
     noto-fonts
@@ -256,7 +258,7 @@
     extraArgs = [
       # "-g"
       "--avoid"
-      "^(X|i3.*|sshd|systemd|ghostty|alacritty|zellij)$"
+      "^(X|i3.*|sway.*|sshd|systemd|ghostty|alacritty|zellij)$"
       "--prefer"
       "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
     ];

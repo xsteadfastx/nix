@@ -2,7 +2,6 @@ _: {
   imports = [
     ./ipu7.nix
     # ./smokeping.nix
-    ./autorandr.nix
     ./caddy
     ./configuration.nix
     ./coding-agent.nix
@@ -16,7 +15,6 @@ _: {
     ./paperless.nix
     ./print.nix
     ./secrets.nix
-    ./lock.nix
     ./syncthing.nix
   ];
 }

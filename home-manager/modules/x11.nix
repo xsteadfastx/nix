@@ -10,10 +10,11 @@ in
 {
   imports = [
     ./chromium.nix
+    ./desktop
     ./fonts
     ./ghostty.nix
     ./gtk
-    ./i3
+    ./sway
   ];
 
   home.packages = lib.mkIf cfg.x11 [
