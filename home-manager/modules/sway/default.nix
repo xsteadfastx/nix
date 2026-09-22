@@ -96,6 +96,29 @@ lib.mkIf cfg.x11 {
     ];
   };
 
+  # Flameshot (screenshot editor) with its tray applet, run via home-manager's
+  # systemd service so the applet is there after login and clicking it opens the
+  # capture launcher. Flameshot 14 defaults to the xdg-desktop-portal capture
+  # path, which is the part that's broken on wlroots; the grim adapter shells out
+  # to the grim we install, so capture works with no portal. The tray icon shows
+  # in swaybar (1.12 has a system tray). The hotkeys below call `flameshot
+  # screen …` directly, so the applet is optional for them.
+  services.flameshot = {
+    enable = true;
+    settings.General = {
+      useGrimAdapter = true;
+      disabledGrimWarning = true;
+      disabledTrayIcon = false;
+      showStartupLaunchMessage = false;
+      # Carried over from the hand-written ~/.config/flameshot/flameshot.ini that
+      # predates this module (HM refuses to clobber it, so it is moved aside
+      # once): these two are the user's own preferences, not module defaults.
+      drawColor = "#00ffff";
+      contrastOpacity = 188;
+      savePath = "/home/marv/tmp";
+    };
+  };
+
   # swayidle as a systemd user service (auto-restart).
   services.swayidle = {
     enable = true;
