@@ -143,34 +143,13 @@
   # Wayland: sway session (i3 removed).
   programs.sway.enable = true;
 
-  # Login screen via greetd + regreet (native Wayland greeter under cage).
-  # Enabling greetd turns off lightdm, which NixOS would otherwise enable by
-  # default from services.xserver.enable. Themed to match the Dracula desktop.
-  programs.regreet = {
-    enable = true;
-    theme = {
-      name = "Dracula";
-      package = pkgs.dracula-theme;
-    };
-    iconTheme = {
-      name = "Dracula";
-      package = pkgs.dracula-icon-theme;
-    };
-    cursorTheme = {
-      name = "Dracula-Cursors";
-      package = pkgs.dracula-theme;
-    };
-    font = {
-      name = "JetBrainsMono Nerd Font";
-      package = pkgs.jetbrainsmono-nerdfont-zero;
-      size = 11;
-    };
-    extraCss = ''
-      window {
-        background-color: #282a36;
-      }
-    '';
-  };
+  # No login/display manager. greetd+regreet (cage-based Wayland greeter) was
+  # a full compositor plus GTK theming just to draw a login box, and it
+  # crashed back to a bare getty on first boot here with no visible error.
+  # tty1 just runs NixOS's default `agetty` + password login; log in and run
+  # `sway` by hand. Same PAM auth underneath as any greeter, one less thing
+  # that can crash before you even get a shell -- and if sway itself fails,
+  # you see the real error instead of a greeter silently retrying.
 
   fonts.packages = with pkgs; [
     noto-fonts
