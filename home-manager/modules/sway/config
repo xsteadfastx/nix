@@ -35,7 +35,7 @@ bindsym $mod+Return exec ghostty -e fish
 # kill focused window
 bindsym $mod+Shift+q kill
 
-bindsym $mod+d exec rofi -show combi -combi-modi window#run#ssh -modi combi -terminal ghostty
+bindsym $mod+d exec rofi -m -1 -show combi -combi-modi window#run#ssh -modi combi -terminal ghostty
 
 # change focus
 bindsym $mod+h focus left
@@ -170,7 +170,7 @@ bindsym Print exec grim -g "$(slurp)" - | wl-copy
 bindsym $mod+Print exec grim -g "$(slurp)" "$HOME/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
 # run password manager
-bindsym $mod+p exec gopass ls --flat | rofi -dmenu -p gopass | xargs --no-run-if-empty gopass show -c
+bindsym $mod+p exec gopass ls --flat | rofi -m -1 -dmenu -p gopass | xargs --no-run-if-empty gopass show -c
 
 # dracula
 bar {
