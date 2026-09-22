@@ -315,6 +315,14 @@ in
               // session-manager plugin is *sessions* (tmux C-b s), not windows.
               bind "w" { SwitchToMode "Tab"; }
           }
+
+          // zellij's built-in Tab mode treats j/k as down/up and maps them to
+          // j = next (right), k = previous (left). Flip the pair so k moves
+          // right and j moves left; h/l and the arrow keys keep the defaults.
+          tab {
+              bind "j" { GoToPreviousTab; }
+              bind "k" { GoToNextTab; }
+          }
       }
 
       // Tab names are set by the shell (`wip` etc. via `zellij action
