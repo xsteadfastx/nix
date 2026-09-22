@@ -23,6 +23,13 @@ output * bg #282a36 solid_color
 # ConditionEnvironment unmet => skipped for the whole session).
 include /etc/sway/config.d/*
 
+# sway's default is "yes": a layer-shell popup (rofi) on an output the mouse
+# isn't currently over loses the keyboard-focus handoff to whatever's focused
+# under the pointer elsewhere -- confirmed live: rofi on the laptop screen
+# typed into the window behind it whenever the mouse was resting on an
+# external monitor. Not relied on anywhere else in this config.
+focus_follows_mouse no
+
 # === input ===
 input type:keyboard {
     xkb_layout de
@@ -35,7 +42,10 @@ bindsym $mod+Return exec ghostty -e fish
 # kill focused window
 bindsym $mod+Shift+q kill
 
-bindsym $mod+d exec rofi -m -1 -show combi -combi-modi window#run#ssh -modi combi -terminal ghostty
+# The real bug here was focus_follows_mouse (see above), not rofi -- -normal-window
+# (XWayland) was a wrong diagnosis, reverted. -m is an X11-only flag on rofi 2,
+# a no-op under Wayland, dropped; --release avoids a separate keydown/grab race.
+bindsym --release $mod+d exec rofi -show combi -combi-modi window#run#ssh -modi combi -terminal ghostty
 
 # change focus
 bindsym $mod+h focus left
@@ -163,14 +173,12 @@ bindsym Control+mod1+l exec swaylock -f
 # properties are unsupported — so launch the manager directly)
 bindsym $mod+b exec blueman-manager
 
-# screenshots (flameshot's X11 backend doesn't work under sway)
-#   Print        region -> clipboard
-#   $mod+Print   region -> file
-bindsym Print exec grim -g "$(slurp)" - | wl-copy
-bindsym $mod+Print exec grim -g "$(slurp)" "$HOME/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"
+# screenshots — flameshot itself is used via its tray applet, not a keybind;
+# this is just a quick region grab straight to clipboard, no editor.
+bindsym $mod+Shift+Print exec grim -g "$(slurp)" - | wl-copy
 
-# run password manager
-bindsym $mod+p exec gopass ls --flat | rofi -m -1 -dmenu -p gopass | xargs --no-run-if-empty gopass show -c
+# run password manager (see $mod+d above for --release / dropped -m)
+bindsym --release $mod+p exec gopass ls --flat | rofi -dmenu -p gopass | xargs --no-run-if-empty gopass show -c
 
 # dracula
 bar {
