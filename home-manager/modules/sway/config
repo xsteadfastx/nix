@@ -131,8 +131,11 @@ bindsym $mod+Shift+Control+0 move container to workspace 20
 # toggle fullscreen mode for a window
 bindsym $mod+Shift+f fullscreen toggle global
 
-# reload the configuration file
-bindsym $mod+Shift+c reload
+# reload the configuration file. sway's reload re-applies its own (unset)
+# output config, wiping whatever kanshi last set and leaving outputs in
+# connector-enumeration order until something re-triggers it -- confirmed
+# live, twice. Restart kanshi right after so it always self-heals.
+bindsym $mod+Shift+c exec swaymsg reload && systemctl --user restart kanshi
 
 # exit sway (logs you out of your Wayland session)
 bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
