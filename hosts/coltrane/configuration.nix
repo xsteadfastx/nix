@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -161,13 +162,31 @@
 
   # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
-  # German keymap for the console/TTY. Also what the greetd/cage greeter types
-  # against (Wayland compositors read the kernel/VT keymap), so the login screen
-  # and any TTY use the right layout. base forces console.useXkbConfig (console
-  # follows the X keyboard), which is dead on this host now that there is no X
-  # server, so we pin the map directly.
-  console.keyMap = "de";
+  # German keymap for the console/TTY. Also what any bare getty types against.
+  # base forces console.useXkbConfig (console follows the X keyboard), which
+  # is dead on this host now that there is no X server, so we pin the map
+  # directly. Plain "de" is kbd's legacy 7-bit-ASCII keymap -- it binds the ü
+  # key to literal "@"/"\", no umlauts at all; "de-latin1" is the variant with
+  # real ü/ö/ä, matching what every other German-keyboard tool here expects.
+  console.keyMap = "de-latin1";
   console.useXkbConfig = lib.mkForce false;
+
+  # systemd-vconsole-setup races the xe/simpledrm driver claiming the console
+  # into graphics mode at early boot and silently skips loading the keymap
+  # ("Configuration of first virtual console was skipped, ignoring remaining
+  # ones" in the boot log) -- a known KMS/systemd race, not specific to
+  # anything above. Re-apply it once multi-user is reached so a fallback tty
+  # (recovery, a crashed session) never strands you on a US layout. Reads
+  # console.keyMap rather than hardcoding it again so the two can't drift.
+  systemd.services.force-console-keymap = {
+    description = "Reapply console keymap after early-KMS vconsole-setup race";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "systemd-vconsole-setup.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.kbd}/bin/loadkeys ${config.console.keyMap}";
+    };
+  };
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
