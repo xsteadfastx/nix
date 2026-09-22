@@ -206,6 +206,11 @@ in
   # directly into fish's conf.d: every new interactive shell attaches to the one
   # persistent session instead of spawning another. `$ZELLIJ` is set by zellij in
   # its own panes, so this never nests. `-c` = create the session only if none.
+  #
+  # Don't run zellij from a bare console login shell: the first shell to hit
+  # this spawns the server, which keeps that shell's environment for the
+  # session's lifetime, so a pre-sway console shell wedges every later pane
+  # without WAYLAND_DISPLAY/SWAYSOCK.
   xdg.configFile."fish/conf.d/zellij.fish".text = ''
     if status is-interactive; and not set -q ZELLIJ
         set -gx ZELLIJ_AUTO_ATTACH true
