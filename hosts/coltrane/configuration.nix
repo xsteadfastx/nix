@@ -137,8 +137,32 @@
 
   # Login screen via greetd + regreet (native Wayland greeter under cage).
   # Enabling greetd turns off lightdm, which NixOS would otherwise enable by
-  # default from services.xserver.enable.
-  programs.regreet.enable = true;
+  # default from services.xserver.enable. Themed to match the Dracula desktop.
+  programs.regreet = {
+    enable = true;
+    theme = {
+      name = "Dracula";
+      package = pkgs.dracula-theme;
+    };
+    iconTheme = {
+      name = "Dracula";
+      package = pkgs.dracula-icon-theme;
+    };
+    cursorTheme = {
+      name = "Dracula-Cursors";
+      package = pkgs.dracula-theme;
+    };
+    font = {
+      name = "JetBrainsMono Nerd Font";
+      package = pkgs.jetbrainsmono-nerdfont-zero;
+      size = 11;
+    };
+    extraCss = ''
+      window {
+        background-color: #282a36;
+      }
+    '';
+  };
 
   fonts.packages = with pkgs; [
     noto-fonts
