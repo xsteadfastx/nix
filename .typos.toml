@@ -9,6 +9,7 @@ mosquitto = "mosquitto"
 therre = "therre"
 hda = "hda"
 ba = "ba" # yt-dlp format selector (best audio)
+ratatui = "ratatui" # ratatui-image, the TUI image crate
 
 [default.extend-identifiers]
 # Windows VM/interface name; typos splits identifiers on digits, so this was

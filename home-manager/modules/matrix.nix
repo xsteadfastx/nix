@@ -15,9 +15,16 @@ let
     layout.style = "restore";
     settings.username_display = "displayname";
     settings.image_preview = {
-      protocol = {
-        type = "kitty";
-      };
+      # Not "kitty": zellij 0.45 rejects kitty's Unicode-placeholder (U=1)
+      # placements with ENOTSUPPORTED, and ratatui-image (iamb's renderer) draws
+      # previews exactly that way — so every preview silently rendered as nothing
+      # inside zellij, while pi kept working because it places images directly
+      # (c=/r= cells instead of U=1). Ghostty has no sixel, but zellij parses
+      # sixel itself and re-emits it, so sixel is the path that renders here.
+      # Switch back to "kitty" once zellij ships PR #5531 (U=1 support, after
+      # 0.45.1) or when running iamb outside zellij. "halfblocks" renders
+      # anywhere, as blocky pixel art, if sixel turns out to misbehave.
+      protocol.type = "sixel";
     };
     settings.sort.rooms = [
       "unread"
