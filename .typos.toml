@@ -5,10 +5,10 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
-abd = "abd" # ZFS ARC Buffered Data (abd_free, arc_hdr_free_abd, ...)
 mosquitto = "mosquitto"
 therre = "therre"
 hda = "hda"
+abd = "abd" # ZFS ARC Buffered Data (abd_free, arc_hdr_free_abd, ...)
 ba = "ba" # yt-dlp format selector (best audio)
 ratatui = "ratatui" # ratatui-image, the TUI image crate
 
