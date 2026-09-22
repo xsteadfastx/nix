@@ -132,23 +132,21 @@
     ];
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-
   # Wayland: sway session (i3 removed).
   programs.sway.enable = true;
-  services.displayManager.defaultSession = "sway";
+
+  # Login screen via greetd + regreet (native Wayland greeter under cage).
+  # Enabling greetd turns off lightdm, which NixOS would otherwise enable by
+  # default from services.xserver.enable.
+  programs.regreet.enable = true;
 
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk-sans
   ];
 
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "de";
-    variant = "";
-  };
+  # Keyboard layout is set by the sway config (input * xkb_layout de); no X server
+  # or X11 keymap config is needed on this host.
 
   # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
