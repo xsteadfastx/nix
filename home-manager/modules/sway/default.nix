@@ -119,6 +119,18 @@ lib.mkIf cfg.x11 {
     };
   };
 
+  # Flameshot's own screen-detection (separate from the grim adapter above,
+  # which only handles the actual pixel capture) can't reliably enumerate
+  # wlroots outputs via the native Wayland Qt platform -- confirmed live in
+  # its systemd journal: "There are no outputs - creating placeholder
+  # screen", followed by QPainter errors on an invalid surface. Forcing Qt
+  # onto XWayland fixes screen detection (a documented flameshot/Wayland
+  # workaround); grim still does the real capture, so this only affects
+  # detection, not capture quality. Trade-off: flameshot's own in-editor
+  # keyboard shortcuts (undo, save, ...) don't work under xcb -- the
+  # toolbar buttons still do.
+  systemd.user.services.flameshot.Service.Environment = [ "QT_QPA_PLATFORM=xcb" ];
+
   # swayidle as a systemd user service (auto-restart).
   services.swayidle = {
     enable = true;
