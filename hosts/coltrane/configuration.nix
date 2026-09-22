@@ -72,10 +72,18 @@
 
   boot.kernelModules = [ "thunderbolt" ];
 
-  # ZFS-compatible kernel. ZFS 2.4.4 supports up to 7.2; linuxPackages_latest
-  # (7.2.3) is within range but pin 7_2 to stay inside the supported window.
-  # boot.kernelPackages = pkgs.linuxPackages_7_2;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # ZFS-compatible kernel. linuxPackages_latest drifted from 7.2.3 (thought to
+  # be within ZFS 2.4.4's supported window) to 7.2.6, which then hit a real
+  # kernel Oops during a normal ZFS pool sync at shutdown -- confirmed live,
+  # 2026-09-22: page fault in __alloc_tagging_slab_free_hook, called from
+  # kmem_cache_free <- spl_kmem_cache_free <- abd_free <- arc_hdr_free_abd
+  # <- arc_write <- dbuf_write <- dbuf_sync_leaf, in ZFS's own dp_sync_taskq.
+  # linuxPackages_7_2 is not a real pin -- it's a moving alias that currently
+  # resolves to the exact same 7.2.6 as latest (confirmed), so it would have
+  # kept the crash. Plain linuxPackages (nixpkgs' own default/stable track,
+  # 6.18.x) is what ZFS is actually broadly tested against; the Lunar Lake xe
+  # driver and IPU7 out-of-tree modules don't need bleeding-edge to work.
+  boot.kernelPackages = pkgs.linuxPackages;
   boot.zfs.package = pkgs.zfs;
   boot.kernelParams = [ "drm_kms_helper.poll=1" ];
 

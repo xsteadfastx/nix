@@ -5,6 +5,7 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
+abd = "abd" # ZFS ARC Buffered Data (abd_free, arc_hdr_free_abd, ...)
 mosquitto = "mosquitto"
 therre = "therre"
 hda = "hda"
