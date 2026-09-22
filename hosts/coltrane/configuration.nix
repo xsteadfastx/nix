@@ -337,13 +337,21 @@
         PowerKeyIgnoreInhibited = "yes";
         SleepKeyIgnoreInhibited = "yes";
         SuspendKeyIgnoreInhibited = "yes";
-        # Hard ceiling on tasks-per-session. systemd's own default is
-        # TasksMax=infinity on login-session scopes, so a runaway fork loop
-        # (see 2026-09-18 gping/ping storm: ~53k processes, ~17GB of swap)
-        # had nothing to stop it short of ulimit -u (126401). This caps it
-        # far below any real workload so a storm hits EAGAIN in seconds.
-        UserTasksMax = 10000;
       };
     };
   };
+
+  # Hard ceiling on tasks-per-session. systemd's own default is
+  # TasksMax=infinity on login-session scopes, so a runaway fork loop (see
+  # 2026-09-18 gping/ping storm: ~53k processes, ~17GB of swap) had nothing
+  # to stop it short of ulimit -u (126401). This caps it far below any real
+  # workload so a storm hits EAGAIN in seconds.
+  #
+  # This used to be services.logind.settings.Login.UserTasksMax, but systemd
+  # removed that logind.conf option entirely -- confirmed live on 2026-09-22:
+  # "systemd-logind: /etc/systemd/logind.conf:16: Support for option
+  # UserTasksMax= has been removed", meaning the cap had been silently doing
+  # nothing since it was added. The replacement lives on the user-.slice
+  # template (matches every user-<uid>.slice instance) instead.
+  systemd.slices."user-".sliceConfig.TasksMax = "10000";
 }
