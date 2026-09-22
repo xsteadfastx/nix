@@ -11,7 +11,6 @@
     "hosts/.+/secrets.yaml"
     "home-manager/secrets.yaml"
     "home-manager/modules/tmux/.tmux-dracula/.+$"
-    "home-manager/modules/gtk/Dracula.+"
   ];
 
   hooks = {
@@ -48,11 +47,11 @@
       enable = true;
       excludes = [
         "home-manager/modules/aerc/aerc.conf"
-        "home-manager/modules/i3/config"
       ];
-      settings.ignored-words = [
-        "ba" # yt-dlp format selector (best audio)
-      ];
+      # The repo's own typos config, so both stages (pre-commit and commit-msg)
+      # read the same file. Without this the pre-commit stage gets a generated
+      # config and .typos.toml only applies to commit messages.
+      settings.configPath = ".typos.toml";
     };
 
     trufflehog = {

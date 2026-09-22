@@ -8,3 +8,9 @@ extend-ignore-re = [
 mosquitto = "mosquitto"
 therre = "therre"
 hda = "hda"
+ba = "ba" # yt-dlp format selector (best audio)
+
+[default.extend-identifiers]
+# Windows VM/interface name; typos splits identifiers on digits, so this was
+# reported as a stray "nd".
+w1nd50r = "w1nd50r"
