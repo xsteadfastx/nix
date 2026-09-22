@@ -48,9 +48,23 @@
   # keeps them (prepended) after the session vars are sourced.
   programs.fish.shellInit = ''
     fish_add_path "$HOME/bin/(uname -m)" "$HOME/bin/(hostname)"
+    zellij_tab_name
   '';
 
   programs.fish.functions = {
+    # Name the zellij tab after the current directory. Without this a tab keeps
+    # zellij's "Tab #N" default until something explicitly renames it. Runs on
+    # every cd, plus once at shell start (shellInit) for new tabs/panes.
+    zellij_tab_name = {
+      onVariable = "PWD";
+      description = "name the zellij tab after the current directory";
+      body = ''
+        set -q ZELLIJ; or return
+        set -l name (basename $PWD)
+        test "$PWD" = "$HOME"; and set name "~"
+        zellij action rename-tab "$name" 2>/dev/null
+      '';
+    };
     "2mkv" = {
       body = ''
         ${pkgs.handbrake}/bin/HandBrakeCLI --input $argv[1] --output $argv[2] \
@@ -133,8 +147,6 @@
         set -l proj (ls ~/wip/|fzf)
         if set -q TMUX
             tmux rename-window $proj
-        else if set -q ZELLIJ
-            zellij action rename-tab $proj
         end
         cd ~/wip/$proj
       '';
