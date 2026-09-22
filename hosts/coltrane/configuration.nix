@@ -174,6 +174,13 @@
 
   # Bigger tty fonts
   console.font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
+  # German keymap for the console/TTY. Also what the greetd/cage greeter types
+  # against (Wayland compositors read the kernel/VT keymap), so the login screen
+  # and any TTY use the right layout. base forces console.useXkbConfig (console
+  # follows the X keyboard), which is dead on this host now that there is no X
+  # server, so we pin the map directly.
+  console.keyMap = "de";
+  console.useXkbConfig = lib.mkForce false;
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
