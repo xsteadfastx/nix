@@ -35,10 +35,11 @@ in
           -- force tab
           vim.keymap.set("i", "<S-Tab>", "<C-V><Tab>")
 
-          -- buffers
-          -- should be delivered through barbar or moll/vim-bbye
-          vim.keymap.set("n", "<A-,>", ":TablineBufferPrevious<CR>")
-          vim.keymap.set("n", "<A-.>", ":TablineBufferNext<CR>")
+          -- buffers -- native :bprevious/:bnext, tabline-nvim (which used to
+          -- provide TablineBufferPrevious/Next) is gone; the visual buffer
+          -- list is now lualine's own tabline (see misc-plugins.nix).
+          vim.keymap.set("n", "<A-,>", ":bprevious<CR>")
+          vim.keymap.set("n", "<A-.>", ":bnext<CR>")
           vim.keymap.set("n", "<A-c>", ":bd<CR>")
 
           -- terminal mode

@@ -66,6 +66,19 @@ in
         		section_separators = "",
         		component_separators = "",
         	},
+        	-- Replaces the buffer tab bar tabline-nvim used to draw (dropped
+        	-- along with the powerline look): lualine's own bundled "buffers"
+        	-- component, already flat/no-arrows via the separators above, so
+        	-- no extra plugin. <A-,>/<A-.> still switch buffers via native
+        	-- :bprevious/:bnext (see keymaps.nix); this only renders the list.
+        	tabline = {
+        		lualine_a = {
+        			-- default symbols.alternate_file is "#", marking whichever
+        			-- buffer is vim's alternate (Ctrl-^ target) -- off, it read as
+        			-- a stray character in front of the tab name, not a symbol.
+        			{ "buffers", symbols = { alternate_file = "" } },
+        		},
+        	},
         })
 
         -- vim-pencil
