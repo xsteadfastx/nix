@@ -202,9 +202,14 @@
   # properties are unsupported — so launch the manager directly)
   bindsym $mod+b exec ${pkgs.blueman}/bin/blueman-manager
 
-  # screenshots — flameshot itself is used via its tray applet, not a keybind;
-  # this is just a quick region grab straight to clipboard, no editor.
+  # screenshots — $mod+Shift+Print is a quick region grab straight to
+  # clipboard, no editor. $mod+Print opens the same grab in satty to
+  # annotate first; Enter copies, Escape discards, both close the window.
+  # satty is native Wayland end to end (grim/slurp/satty/wl-copy), unlike
+  # flameshot which had to be forced onto XWayland for screen detection and
+  # then couldn't get its clipboard writes back out to native Wayland apps.
   bindsym $mod+Shift+Print exec ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" - | ${pkgs.wl-clipboard}/bin/wl-copy
+  bindsym $mod+Print exec ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" - | ${pkgs.satty}/bin/satty --filename - --output-filename ~/tmp/satty-%Y%m%d-%H%M%S.png --copy-command "${pkgs.wl-clipboard}/bin/wl-copy" --early-exit copy --actions-on-enter save-to-clipboard
 
   # run password manager
   bindsym --release $mod+p exec ${pkgs.gopass}/bin/gopass ls --flat | ${pkgs.unstable.wofi}/bin/wofi --dmenu -p gopass | xargs --no-run-if-empty ${pkgs.gopass}/bin/gopass show -c
@@ -257,9 +262,9 @@
   for_window [app_id="Qemu-kvm"] move scratchpad
   for_window [app_id="Qemu-system-x86_64"] move scratchpad
 
-  # xwayland -- still needed for GTK/X11 applets (nm-applet, blueman) and
-  # flameshot, which is forced onto XWayland further up. dunst no longer needs
-  # it: swaync is Wayland-native.
+  # xwayland -- still needed for GTK/X11 applets (nm-applet, blueman). dunst
+  # no longer needs it: swaync is Wayland-native, and satty replaced
+  # flameshot, which used to be the other reason this stayed on.
   xwayland enable
 
   # AUTOSTART

@@ -103,7 +103,7 @@ window#waybar {
     color: @purple;
 }
 
-/* ── Tray (nm-applet / syncthingtray / flameshot …) ─────────────────────── */
+/* ── Tray (nm-applet / syncthingtray / blueman …) ─────────────────────── */
 #tray > .passive {
     -gtk-icon-effect: dim;
 }
