@@ -10,7 +10,7 @@
   options.features.meshcore = lib.mkEnableOption "enable meshcore";
   options.features.neovim = lib.mkEnableOption "enable neovim";
   options.features.wobcom = lib.mkEnableOption "wobcom work apps (1password, sandboxed Slack)";
-  options.features.x11 = lib.mkEnableOption "enable x11";
+  options.features.desktop = lib.mkEnableOption "the graphical desktop (sway/Wayland + GUI apps)";
 
   config = {
     home-manager.useGlobalPkgs = true;

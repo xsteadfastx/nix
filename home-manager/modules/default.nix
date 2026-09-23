@@ -10,6 +10,6 @@
     ./neovim
     ./secrets.nix
     ./wobcom.nix
-    ./x11.nix
+    ./desktop.nix
   ];
 }

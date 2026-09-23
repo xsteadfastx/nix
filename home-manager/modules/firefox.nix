@@ -7,7 +7,7 @@
 let
   cfg = nixosConfig.features;
 in
-lib.mkIf cfg.x11 {
+lib.mkIf cfg.desktop {
   programs.firefox = {
     enable = true;
     policies = {

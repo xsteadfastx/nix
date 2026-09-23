@@ -7,7 +7,7 @@
 let
   cfg = nixosConfig.features;
 in
-lib.mkIf cfg.x11 {
+lib.mkIf cfg.desktop {
   home.packages = [ pkgs.unstable.ghostty ];
 
   xdg.configFile."ghostty/config".text = ''

@@ -7,7 +7,7 @@
   features.kodi = true;
   features.neovim = true;
   features.wobcom = true;
-  features.x11 = true;
+  features.desktop = true;
 
   home-manager.users.marv = import ../../home-manager/marv.nix;
 

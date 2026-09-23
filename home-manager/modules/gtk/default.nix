@@ -7,7 +7,7 @@
 let
   cfg = nixosConfig.features;
 in
-lib.mkIf cfg.x11 {
+lib.mkIf cfg.desktop {
   home.packages = with pkgs; [
     dracula-theme
     dracula-icon-theme

@@ -7,7 +7,7 @@
 let
   cfg = nixosConfig.features;
 in
-lib.mkIf cfg.x11 {
+lib.mkIf cfg.desktop {
   # Combine the checked-in fonts with the custom patched JetBrainsMono into one
   # directory, so there's a single home.file entry (no nested symlink that the
   # recursive parent can clobber).
