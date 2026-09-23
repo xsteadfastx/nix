@@ -263,6 +263,13 @@ in
 
       // tmux-style prefix: C-a enters locked (prefix-following) mode
       keybinds {
+          // zellij's own default binds bare Ctrl-t (shared_except "tab"
+          // "locked") to enter Tab mode from every other mode, including
+          // normal -- so it swallows the keystroke before fish's fzf
+          // Ctrl-T (insert-file) binding ever sees it. Tab mode is still
+          // reachable via the prefix ("Ctrl a" then "t", tmux-style).
+          unbind "Ctrl t"
+
           normal {
               bind "Ctrl a" { SwitchToMode "locked"; }
           }
@@ -291,8 +298,8 @@ in
               // windows -> tabs
               bind "c" { NewTab; SwitchToMode "Normal"; }
               bind "," { SwitchToMode "RenameTab"; }
-              // live tab-scroll overview: Ctrl-t works unprefixed too, this
-              // just bridges it under the prefix like everything else here
+              // tab overview -- prefixed only (see the top-level unbind above:
+              // bare Ctrl-t is freed for fish's fzf Ctrl-T binding).
               bind "t" { SwitchToMode "Tab"; }
               bind "n" { GoToNextTab; SwitchToMode "Normal"; }
               bind "p" { GoToPreviousTab; SwitchToMode "Normal"; }
