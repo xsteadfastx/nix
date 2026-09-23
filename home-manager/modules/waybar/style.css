@@ -64,7 +64,10 @@ window#waybar {
 
 #workspaces button.focused,
 #workspaces button.active {
-    background-image: linear-gradient(0deg, @purple, @selection);
+    /* Solid, not upstream's fade-to-@selection gradient -- the current
+       workspace should read as one clear colour, not a shadowed blend. */
+    background-image: none;
+    background: @purple;
 }
 
 #workspaces button.urgent {
@@ -96,6 +99,29 @@ window#waybar {
 #clock {
     background: @background;
     padding: 0 10px;
+}
+
+/*
+ * Streamlined with zellij's status bar (home-manager/modules/zellij/default.nix):
+ * same metric, same colour, on both bars -- battery pink, cpu orange, memory
+ * cyan, clock the blue-grey zellij calls "blue" (Dracula's own name for it is
+ * @comment). #battery's state colours below still win: `.warning`/`.critical`
+ * are more specific than the bare `#battery` here.
+ */
+#battery {
+    color: @pink;
+}
+
+#cpu {
+    color: @orange;
+}
+
+#memory {
+    color: @cyan;
+}
+
+#clock {
+    color: @comment;
 }
 
 /* ── Notification centre button ─────────────────────────────────────────── */
