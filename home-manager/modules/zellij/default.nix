@@ -30,17 +30,38 @@ let
         echo "''${icons[$idx]} $stat_word $cap" | tr -s ' '
         ;;
       cpu)
-        # two /proc/stat samples 1s apart -> real (not load-avg-proxied) CPU%
+        # Delta since the LAST invocation, not an internal 1s sleep-sample:
+        # waybar's cpu module (interval=5, matching command_cpu_interval
+        # below) computes usage the same way -- a delta between successive
+        # polls -- so a same-formula 1s spot-sample here used to disagree
+        # with it, sometimes by a lot during a burst. Caching the previous
+        # /proc/stat reading gives the same ~5s window waybar uses.
+        state="''${XDG_RUNTIME_DIR:-/tmp}/zellij-statusbar-cpu-stat"
         read -r _ a b c i d e f g _ _ </proc/stat
-        sleep 1
-        read -r _ a2 b2 c2 i2 d2 e2 f2 g2 _ _ </proc/stat
-        t1=$((a + b + c + i + d + e + f + g))
-        t2=$((a2 + b2 + c2 + i2 + d2 + e2 + f2 + g2))
-        awk -v i1="$i" -v i2="$i2" -v t1="$t1" -v t2="$t2" \
-          'BEGIN { printf " %.0f%%", 100 * (1 - (i2 - i1) / (t2 - t1)) }'
+        if [ -f "$state" ]; then
+          read -r a1 b1 c1 i1 d1 e1 f1 g1 <"$state"
+          t1=$((a1 + b1 + c1 + i1 + d1 + e1 + f1 + g1))
+          t2=$((a + b + c + i + d + e + f + g))
+          awk -v i1="$i1" -v i2="$i" -v t1="$t1" -v t2="$t2" \
+            'BEGIN { d = t2 - t1; printf " %.0f%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
+        else
+          echo " ..."
+        fi
+        echo "$a $b $c $i $d $e $f $g" >"$state"
         ;;
       ram)
-        free -g | awk '/^Mem:/ { printf "󰍛 %dGB/%dGB", $3, $2 }'
+        # MemTotal - MemAvailable, matching waybar's memory module formula
+        # exactly -- free -g used a different "used" definition (and rounded
+        # to whole GB), so the two bars used to disagree on the same state.
+        # Reported as a bare percentage, not usedGB/totalGB -- waybar's
+        # memory module (`{percentage}%`) is the same kind of number as its
+        # own cpu module, and zellij's cpu case above; GB/GB was a different
+        # unit from both.
+        awk '
+          /^MemTotal:/     { total = $2 }
+          /^MemAvailable:/ { avail = $2 }
+          END               { printf "󰍛 %.0f%%", (total - avail) / total * 100 }
+        ' /proc/meminfo
         ;;
       esac
     '';
@@ -178,7 +199,10 @@ in
 
                     format_left   "{mode}#[fg=$bg,bg=$purple,bold] {session} #[fg=$fg,bg=$dim]{tabs}"
                     format_center ""
-                    format_right  "{command_battery}#[fg=$bg,bg=$dim]│{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{datetime}"
+                    // order matches waybar's modules-right: cpu, memory,
+                    // battery, clock (its disk/network have no zellij
+                    // equivalent, so they're just skipped here).
+                    format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
                     format_space  "#[bg=$dim]"
 
                     border_enabled "false"
