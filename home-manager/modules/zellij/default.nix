@@ -22,7 +22,12 @@ let
         Full | high) stat_word="" ;;
         *) stat_word="AC" ;;
         esac
-        echo "♥ $stat_word $cap" | tr -s ' '
+        # same 5-icon bucketing as waybar's battery format-icons/states:
+        # cap/20 (0-19/20-39/40-59/60-79/80-100), capped at the last icon.
+        icons=(    )
+        idx=$(( ''${cap:-0} / 20 ))
+        [ "$idx" -gt 4 ] && idx=4
+        echo "''${icons[$idx]} $stat_word $cap" | tr -s ' '
         ;;
       cpu)
         # two /proc/stat samples 1s apart -> real (not load-avg-proxied) CPU%
@@ -32,10 +37,10 @@ let
         t1=$((a + b + c + i + d + e + f + g))
         t2=$((a2 + b2 + c2 + i2 + d2 + e2 + f2 + g2))
         awk -v i1="$i" -v i2="$i2" -v t1="$t1" -v t2="$t2" \
-          'BEGIN { printf "⚙️  %.0f%%", 100 * (1 - (i2 - i1) / (t2 - t1)) }'
+          'BEGIN { printf " %.0f%%", 100 * (1 - (i2 - i1) / (t2 - t1)) }'
         ;;
       ram)
-        free -g | awk '/^Mem:/ { printf "💻 %dGB/%dGB", $3, $2 }'
+        free -g | awk '/^Mem:/ { printf "󰍛 %dGB/%dGB", $3, $2 }'
         ;;
       esac
     '';
@@ -190,7 +195,7 @@ in
                     command_ram_format   "#[fg=$cyan,bg=$dim,bold] {stdout} "
                     command_ram_interval "15"
 
-                    datetime          "#[fg=$blue,bg=$dim,bold]  {format} "
+                    datetime          "#[fg=$blue,bg=$dim,bold] 󰥔 {format} "
                     datetime_format   "%H:%M:%S %d/%m/%Y"
                     datetime_timezone "Europe/Berlin"
                 }
