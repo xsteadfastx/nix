@@ -97,6 +97,18 @@
   # created; the deadlocking write path is then never entered.
   boot.extraModprobeConfig = "options zfs zfs_bclone_enabled=0";
 
+  # Make a boot-time hang name its culprit instead of dying silently. On
+  # 2026-09-23 a reboot froze ~20s in, in early udev with the console on xe,
+  # leaving no panic, no oops and an empty pstore. The hung-task detector that
+  # would have printed a stack never got to speak: its timeout is 120s but the
+  # machine was powered off 58s after the last log line. Drop the timeout to
+  # 60s and dump *every* CPU's stack -- all_cpu_backtrace shows what the stuck
+  # task is blocking behind, which is what usually points at the driver.
+  boot.kernel.sysctl = {
+    "kernel.hung_task_timeout_secs" = 60;
+    "kernel.hung_task_all_cpu_backtrace" = 1;
+  };
+
   boot.initrd.availableKernelModules = [
     "nvme"
     "thunderbolt"
@@ -172,19 +184,29 @@
   console.useXkbConfig = lib.mkForce false;
 
   # systemd-vconsole-setup races the xe/simpledrm driver claiming the console
-  # into graphics mode at early boot and silently skips loading the keymap
-  # ("Configuration of first virtual console was skipped, ignoring remaining
-  # ones" in the boot log) -- a known KMS/systemd race, not specific to
-  # anything above. Re-apply it once multi-user is reached so a fallback tty
-  # (recovery, a crashed session) never strands you on a US layout. Reads
-  # console.keyMap rather than hardcoding it again so the two can't drift.
-  systemd.services.force-console-keymap = {
-    description = "Reapply console keymap after early-KMS vconsole-setup race";
+  # into graphics mode at early boot and silently skips ALL of its work --
+  # font, unimap and keymap ("Configuration of first virtual console was
+  # skipped, ignoring remaining ones" in the boot log). A known KMS/systemd
+  # race, not specific to anything above.
+  #
+  # This used to re-apply just the keymap (`loadkeys`), which is not enough:
+  # loadkeys resolves keysyms against the console's *current* mode and charset,
+  # so on a console whose font/unimap were never applied, a non-ASCII keysym
+  # cannot be represented and collapses -- typing ü produced "u". Re-run
+  # systemd-vconsole-setup itself instead, so font + unimap + keymap all come
+  # from /etc/vconsole.conf (i.e. from console.font / console.keyMap above):
+  # nothing to keep in sync, and no half-configured console.
+  #
+  # before getty.target so the very first login prompt already accepts non-ASCII
+  # input (a password with an umlaut in it is unwritable otherwise).
+  systemd.services.force-console-setup = {
+    description = "Re-apply console font+keymap after the early-KMS vconsole-setup race";
     wantedBy = [ "multi-user.target" ];
+    before = [ "getty.target" ];
     after = [ "systemd-vconsole-setup.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.kbd}/bin/loadkeys ${config.console.keyMap}";
+      ExecStart = "${config.systemd.package}/lib/systemd/systemd-vconsole-setup";
     };
   };
 
