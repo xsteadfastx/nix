@@ -55,7 +55,13 @@ lib.mkIf cfg.desktop {
 
   home.pointerCursor = {
     package = pkgs.dracula-theme;
-    name = "Dracula-Cursors";
+    # The package ships the theme dir as "Dracula-cursors" (lowercase c) --
+    # this used to say "Dracula-Cursors", a name that doesn't exist on a
+    # case-sensitive filesystem, so the whole cursor theme silently failed to
+    # load (not just the specific glyphs GTK warned about, e.g. "Unable to
+    # load hand2/arrow from the cursor theme" -- confirmed live: the
+    # generated symlink chain resolved to a nonexistent path).
+    name = "Dracula-cursors";
     size = 24;
     gtk.enable = true;
     x11.enable = true;
