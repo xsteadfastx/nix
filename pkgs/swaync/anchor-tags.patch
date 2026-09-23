@@ -1,0 +1,34 @@
+--- a/src/notification/notification.vala
++++ b/src/notification/notification.vala
+@@ -91,6 +91,7 @@
+         private static Regex tag_regex;
+         private static Regex tag_unescape_regex;
+         private static Regex img_tag_regex;
++        private static Regex anchor_tag_regex;
+         private const string[] TAGS = { "b", "u", "i" };
+         private const string[] UNESCAPE_CHARS = {
+             "lt;", "#60;", "#x3C;", "#x3c;", // <
+@@ -139,6 +140,7 @@
+                 string unescaped = string.joinv ("|", UNESCAPE_CHARS);
+                 tag_unescape_regex = new Regex ("&amp;(?=%s)".printf (unescaped));
+                 img_tag_regex = new Regex ("<img[^>]* src=((\"([^\"]*)\")|(\'([^\']*)\'))[^>]*>");
++                anchor_tag_regex = new Regex ("</?a[^>]*>");
+             } catch (Error e) {
+                 stderr.printf ("Invalid regex: %s", e.message);
+             }
+@@ -362,6 +364,15 @@
+                 }
+             }
+ 
++            // The notification spec allows <a href="..."> in the body, but Pango's
++            // markup has no <a> tag. A body containing one makes the
++            // Pango.parse_markup below throw, which drops into the escape
++            // fallback, and that fallback restores only the tags listed in TAGS
++            // (b/u/i) -- so the anchor renders as literal text AND every other
++            // tag in the same body is lost with it. Drop the tags, keep the
++            // text. Clickable links would need upstream issue #220.
++            text = anchor_tag_regex.replace (text, text.length, 0, "");
++
+             // Markup
+             try {
+                 Pango.AttrList ?attr = null;
