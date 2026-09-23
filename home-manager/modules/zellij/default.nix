@@ -56,8 +56,11 @@ in
 
   # A file named `default.kdl` in the layout dir overrides zellij's built-in
   # default layout. Needed to swap the plain status-bar/tab-bar plugins for
-  # zjstatus's bar (dracula): icon, tabs, then battery/cpu/ram/clock segments,
-  # flat -- no powerline arrows, matching waybar/neovim. Each segment is just
+  # zjstatus's bar (dracula, modeled on zjstatus's own "simple" example:
+  # https://github.com/dj95/zjstatus/blob/main/examples/simple.kdl): mode +
+  # session name, then tabs on the left; battery/cpu/ram/clock on the right,
+  # divided by a thin dim divider instead of the example's "::". Flat --
+  # no powerline arrows, matching waybar/neovim. Each segment is just
   # colored text on the one flat $dim bar background, not its own block.
   #
   # The swap_tiled_layout / swap_floating_layout blocks below are zellij's
@@ -173,15 +176,27 @@ in
                     color_cyan   "#8be9fd"
                     color_blue   "#6272a4"
 
-                    format_left   "#[fg=$green,bg=$dim,bold]  🐧  #[fg=$fg,bg=$dim]{tabs}"
+                    format_left   "{mode}#[fg=$bg,bg=$purple,bold] {session} #[fg=$fg,bg=$dim]{tabs}"
                     format_center ""
-                    format_right  "{command_battery}{command_cpu}{command_ram}{datetime}"
+                    format_right  "{command_battery}#[fg=$bg,bg=$dim]│{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{datetime}"
                     format_space  "#[bg=$dim]"
 
                     border_enabled "false"
 
-                    tab_normal "#[fg=$fg,bg=$dim] {index} {name} "
-                    tab_active "#[fg=$purple,bg=$dim,bold] {index} {name} "
+                    // mode + session get their own solid-color chip (not just
+                    // colored text on $dim) so the left side reads distinctly
+                    // from the flat tabs/metrics -- covers every locked-derived
+                    // submode (tab/resize/renametab/...) with the pink "locked"
+                    // look; {name} still prints the real mode.
+                    mode_normal          "#[fg=$bg,bg=$green,bold] {name} "
+                    mode_locked          "#[fg=$bg,bg=$pink,bold] {name} "
+                    mode_default_to_mode "locked"
+
+                    tab_normal               "#[fg=$fg,bg=$dim] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                    tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                    tab_fullscreen_indicator "□ "
+                    tab_sync_indicator       "  "
+                    tab_floating_indicator   "󰉈 "
 
                     command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
                     command_battery_format   "#[fg=$pink,bg=$dim,bold] {stdout} "
