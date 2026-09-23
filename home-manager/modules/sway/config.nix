@@ -38,10 +38,13 @@
   # Sway's default, and what we want: hovering a window focuses it, no click
   # needed. It only ever half-worked here because of two sway 1.10+ layer-focus
   # defects -- with `yes`, a launcher could lose its keyboard grab either from
-  # hover-focus handing seat focus to a view, or from a `mode hide` swaybar's
-  # per-mod-press surface churn stealing it on destroy. Both are fixed for us
-  # by the sway patch in overlays/package-overrides.nix (upstream
-  # swaywm/sway#9262). Drop that patch -> expect this to break again.
+  # hover-focus handing seat focus to a view, or (back when the bar was a
+  # `mode hide` swaybar sway hide/reveal-managed itself) from its per-mod-press
+  # surface churn stealing it on destroy. The bar's now a plain always-visible
+  # systemd service (waybar/default.nix), which removes that second trigger
+  # outright, but the sway patch in overlays/package-overrides.nix (upstream
+  # swaywm/sway#9262) still fixes the first one. Drop that patch -> expect
+  # this to break again.
   focus_follows_mouse yes
 
   # === input ===
@@ -214,32 +217,12 @@
   # run password manager
   bindsym --release $mod+p exec ${pkgs.gopass}/bin/gopass ls --flat | ${pkgs.unstable.wofi}/bin/wofi --dmenu -p gopass | xargs --no-run-if-empty ${pkgs.gopass}/bin/gopass show -c
 
-  # The bar is waybar, but it MUST be declared here as a sway bar too.
-  #
-  # Reason: waybar's `mode hide` is not waybar watching the modifier itself --
-  # Wayland forbids a client grabbing keys, and waybar is not the compositor.
-  # Waybar subscribes to sway's bar IPC and reveals on the `visible_by_modifier`
-  # flag of a bar_state_update event, and sway only emits those for bars it knows
-  # about -- i.e. a block right here. Without it we had a bar that ran happily on
-  # all three outputs and could never be revealed (that was the "no bar at all"
-  # bug).
-  #
-  # `swaybar_command` is what hands the process to waybar: sway runs it (as
-  # `waybar -b bar-0`, the id sway assigns when none is given) and keeps owning
-  # mode/visibility. Consequently waybar must NOT also be started by systemd --
-  # see programs.waybar.systemd.enable = false in
-  # home-manager/modules/waybar/default.nix, and there is nothing to exec from
-  # here either.
-  #
-  # No `id` is set deliberately: sway then assigns bar-0, and waybar's default
-  # bar_id is also bar-0, so they match whether or not sway passes -b along.
-  bar {
-    swaybar_command ${pkgs.waybar}/bin/waybar
-    hidden_state hide
-    mode hide
-    modifier Mod4
-    position top
-  }
+  # No bar block here anymore: waybar runs as a normal always-visible
+  # systemd user service (programs.waybar.systemd.enable = true in
+  # home-manager/modules/waybar/default.nix), like every other waybar setup
+  # out there, instead of sway spawning and hide/reveal-managing it via
+  # `swaybar_command` + bar IPC. Simpler, and removes the repeated
+  # layer-surface show/hide churn every Mod4 press used to cause.
 
   client.focused          #6272A4 #6272A4 #F8F8F2 #6272A4   #6272A4
   client.focused_inactive #44475A #44475A #F8F8F2 #44475A   #44475A

@@ -50,18 +50,14 @@ lib.mkIf cfg.desktop {
   # read as irregular islands and a green "plugged" battery slab cut across it.
   # See style.css for the palette.
   #
-  # `mode = "dock"` here is only a fallback: with `ipc = true` waybar asks
-  # sway for the bar's initial configuration and creates its window with THAT
-  # mode, so the real mode/hidden_state/modifier live in the `bar {}` block in
-  # ../sway/config.nix (`mode hide` + `modifier Mod4` = hidden until Super is
-  # held). `start_hidden` is deliberately absent -- sway owns that now.
-  #
-  # `ipc = true` is what makes the peek work: it subscribes waybar to sway's bar
-  # state events and reveals it on `visible_by_modifier`. No `id` is set, so
-  # waybar uses sway's default bar_id (bar-0), which is what sway assigns.
-  #
-  # systemd.enable = false, because sway launches waybar via `swaybar_command`
-  # in that same `bar {}` block. Leaving the unit on would give TWO bars.
+  # `mode = "dock"` is the real mode now: always visible, standard systemd-run
+  # waybar like everyone else's setup, not sway hide/reveal-managing it via
+  # `swaybar_command` + bar IPC (that used to live in ../sway/config.nix's
+  # `bar {}` block -- removed, along with the repeated layer-surface
+  # show/hide churn every Mod4 press caused). No `ipc` setting: that was only
+  # for asking sway for the hide/reveal bar_state_update, which nothing needs
+  # anymore -- the `sway/workspaces` and `sway/mode` modules below have their
+  # own separate IPC connection to sway and don't need it either.
   #
   # NOTE: module definitions sit directly on the bar, NOT nested under a
   # `modules = { ... }` attr -- Home Manager removed that nesting and writing it
@@ -69,15 +65,14 @@ lib.mkIf cfg.desktop {
   programs.waybar = {
     enable = true;
     package = pkgs.waybar;
-    systemd.enable = false; # sway owns the process; see the bar block in sway/config.nix
+    systemd.enable = true;
     style = ./style.css;
 
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
-        mode = "dock"; # fallback only -- sway's bar config wins under ipc
-        ipc = true;
+        mode = "dock";
         height = 30;
 
         modules-left = [
