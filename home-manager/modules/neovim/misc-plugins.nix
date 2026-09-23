@@ -40,7 +40,6 @@ in
       rainbow-delimiters-nvim
       render-markdown-nvim
       snacks-nvim
-      tabline-nvim
       todo-comments-nvim
       vim-better-whitespace
       vim-bracketed-paste
@@ -63,11 +62,11 @@ in
         require("lualine").setup({
         	options = {
         		theme = "dracula-nvim",
+        		-- Flat, no powerline arrows -- matches the waybar/zellij look.
+        		section_separators = "",
+        		component_separators = "",
         	},
         })
-
-        -- tabline-nvim
-        require("tabline").setup({ enable = true })
 
         -- vim-pencil
         vim.g["pencil#wrapModeDefault"] = "soft"
