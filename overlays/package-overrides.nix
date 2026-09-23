@@ -90,6 +90,27 @@ in
   airmtp = inputs.airmtp.packages.${system}.default;
   compose2nix = inputs.compose2nix.packages.${system}.default;
 
+  # sway 1.12 regression (since 1.10), affects THIS setup (3 outputs + a
+  # `mode hide` swaybar): two layer-focus defects make a launcher lose the
+  # keyboard right after it opens, so you can't type into it, and they are why
+  # `focus_follows_mouse` had to stay off.
+  #   1. `has_exclusive_layer` is a per-seat flag but arrange_layers() clears it
+  #      per-output, so arranging a monitor without an exclusive layer drops the
+  #      protection belonging to a launcher focused on another monitor.
+  #   2. layer-surface destruction hands the keyboard to any mapped layer of
+  #      the same client, so the hide-mode bar's surface churn on every mod
+  #      press can steal it.
+  # Upstream fix, still open -- DROP THIS PATCH when it lands:
+  #   https://github.com/swaywm/sway/pull/9262
+  # NOTE: pkgs.sway is only a wrapper -- the code lives in sway-unwrapped, and
+  # `patches` on the wrapper is silently ignored (verified: the wrapper just
+  # links sway-unwrapped). Patch the unwrapped package; the wrapper picks it up
+  # through the overlay fixpoint. Verify with `nix log` on the *unwrapped* drv
+  # (a real compile = minutes, not 2 seconds).
+  sway-unwrapped = prev.sway-unwrapped.overrideAttrs (o: {
+    patches = (o.patches or [ ]) ++ [ ../pkgs/sway/9262-exclusive-layer-focus.patch ];
+  });
+
   # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
   # an Epson rpm via `rpm2cpio X | cpio -idmv`; stdenv sets `pipefail`, and
   # cpio exits after the archive trailer while rpm2cpio is still writing, so

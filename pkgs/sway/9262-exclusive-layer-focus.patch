@@ -1,0 +1,85 @@
+diff --git a/include/sway/input/seat.h b/include/sway/input/seat.h
+index 428f96796c..480d9e814c 100644
+--- a/include/sway/input/seat.h
++++ b/include/sway/input/seat.h
+@@ -99,8 +99,6 @@ struct sway_seat {
+ 	char *prev_workspace_name; // for workspace back_and_forth
+ 
+ 	struct wlr_layer_surface_v1 *focused_layer;
+-	// If the exclusive layer is set, views cannot receive keyboard focus
+-	bool has_exclusive_layer;
+ 
+ 	// Last touch point
+ 	int32_t touch_id;
+diff --git a/sway/desktop/layer_shell.c b/sway/desktop/layer_shell.c
+index 4df94852d6..30cfcb23a4 100644
+--- a/sway/desktop/layer_shell.c
++++ b/sway/desktop/layer_shell.c
+@@ -127,7 +127,6 @@ void arrange_layers(struct sway_output *output) {
+ 
+ 	struct sway_seat *seat;
+ 	wl_list_for_each(seat, &server.input->seats, link) {
+-		seat->has_exclusive_layer = false;
+ 		if (topmost != NULL) {
+ 			seat_set_focus_layer(seat, topmost->layer_surface);
+ 		} else if (seat->focused_layer &&
+@@ -189,7 +188,7 @@ static struct sway_layer_surface *sway_layer_surface_create(
+ 	return surface;
+ }
+ 
+-static struct sway_layer_surface *find_mapped_layer_by_client(
++static struct sway_layer_surface *find_mapped_exclusive_layer_by_client(
+ 		struct wl_client *client, struct sway_output *ignore_output) {
+ 	for (int i = 0; i < root->outputs->length; ++i) {
+ 		struct sway_output *output = root->outputs->items[i];
+@@ -208,6 +207,8 @@ static struct sway_layer_surface *find_mapped_layer_by_client(
+ 			struct wlr_layer_surface_v1 *layer_surface = surface->layer_surface;
+ 			struct wl_resource *resource = layer_surface->resource;
+ 			if (wl_resource_get_client(resource) == client
++					&& layer_surface->current.keyboard_interactive ==
++						ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE
+ 					&& layer_surface->surface->mapped) {
+ 				return surface;
+ 			}
+@@ -229,9 +230,11 @@ static void handle_node_destroy(struct wl_listener *listener, void *data) {
+ 	struct sway_seat *seat = input_manager_get_default_seat();
+ 	struct wl_client *client =
+ 		wl_resource_get_client(layer->layer_surface->resource);
+-	if (!server.session_lock.lock) {
++	if (!server.session_lock.lock &&
++			layer->layer_surface->current.keyboard_interactive ==
++				ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
+ 		struct sway_layer_surface *consider_layer =
+-			find_mapped_layer_by_client(client, layer->output);
++			find_mapped_exclusive_layer_by_client(client, layer->output);
+ 		if (consider_layer) {
+ 			seat_set_focus_layer(seat, consider_layer->layer_surface);
+ 		}
+diff --git a/sway/input/seat.c b/sway/input/seat.c
+index 6b73919cb2..a3054a31fc 100644
+--- a/sway/input/seat.c
++++ b/sway/input/seat.c
+@@ -1254,7 +1254,10 @@ static void seat_set_workspace_focus(struct sway_seat *seat, struct sway_node *n
+ 
+ void seat_set_focus(struct sway_seat *seat, struct sway_node *node) {
+ 	// Prevents the layer from losing focus if it has keyboard exclusivity
+-	if (seat->has_exclusive_layer) {
++	if (seat->focused_layer &&
++			seat->focused_layer->current.layer >= ZWLR_LAYER_SHELL_V1_LAYER_TOP &&
++			seat->focused_layer->current.keyboard_interactive ==
++				ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
+ 		struct wlr_layer_surface_v1 *layer = seat->focused_layer;
+ 		seat_set_focus_layer(seat, NULL);
+ 		seat_set_workspace_focus(seat, node);
+@@ -1317,11 +1320,6 @@ void seat_set_focus_layer(struct sway_seat *seat,
+ 		return;
+ 	}
+ 	assert(layer->surface->mapped);
+-	if (layer->current.layer >= ZWLR_LAYER_SHELL_V1_LAYER_TOP &&
+-			layer->current.keyboard_interactive
+-			== ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
+-		seat->has_exclusive_layer = true;
+-	}
+ 	if (seat->focused_layer == layer) {
+ 		return;
+ 	}
