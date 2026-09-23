@@ -18,17 +18,17 @@ let
         # status (Charging, "Not charging" while plugged in but topped
         # off, Unknown, ...) -- that's its default case, not just "Charging".
         case "$st" in
-          Discharging | discharging) stat_word="" ;;
-          Full | high) stat_word="" ;;
-          *) stat_word="AC" ;;
+        Discharging | discharging) stat_word="" ;;
+        Full | high) stat_word="" ;;
+        *) stat_word="AC" ;;
         esac
         echo "♥ $stat_word $cap" | tr -s ' '
         ;;
       cpu)
         # two /proc/stat samples 1s apart -> real (not load-avg-proxied) CPU%
-        read -r _ a b c i d e f g _ _ < /proc/stat
+        read -r _ a b c i d e f g _ _ </proc/stat
         sleep 1
-        read -r _ a2 b2 c2 i2 d2 e2 f2 g2 _ _ < /proc/stat
+        read -r _ a2 b2 c2 i2 d2 e2 f2 g2 _ _ </proc/stat
         t1=$((a + b + c + i + d + e + f + g))
         t2=$((a2 + b2 + c2 + i2 + d2 + e2 + f2 + g2))
         awk -v i1="$i" -v i2="$i2" -v t1="$t1" -v t2="$t2" \
@@ -256,7 +256,7 @@ in
       // ponytail: only covers `.../pi`/`.../claude` and `.../pi <args>`/
       // `.../claude <args>` shapes; a user-typed `-c` still becomes
       // `--continue -c` (harmless, both mean "continue").
-      post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
+      // post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
 
       // tmux-style prefix: C-a enters locked (prefix-following) mode
       keybinds {
