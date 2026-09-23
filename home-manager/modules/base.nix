@@ -73,7 +73,6 @@
     gopass
 
     # other tools
-    bumblebee-status
     tectonic
     unstable.cook-cli
     unstable.babelfish

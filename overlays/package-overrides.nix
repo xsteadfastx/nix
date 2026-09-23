@@ -90,15 +90,6 @@ in
   airmtp = inputs.airmtp.packages.${system}.default;
   compose2nix = inputs.compose2nix.packages.${system}.default;
 
-  bumblebee-status = prev.bumblebee-status.override {
-    # Add the plugins we actually use in this configuration.
-    plugins = p: [
-      p.cpu
-      p.nic
-      p.pipewire
-    ];
-  };
-
   # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
   # an Epson rpm via `rpm2cpio X | cpio -idmv`; stdenv sets `pipefail`, and
   # cpio exits after the archive trailer while rpm2cpio is still writing, so

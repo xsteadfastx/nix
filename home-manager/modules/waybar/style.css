@@ -1,0 +1,152 @@
+/*
+ * Waybar — Dracula.
+ *
+ * The palette and the base rules (`window#waybar`, workspaces, clock) are taken
+ * verbatim from the official port, github.com/dracula/waybar, so this is a real
+ * Dracula theme rather than an ad-hoc one. Only three things differ from
+ * upstream, all marked below:
+ *   1. font-family swapped to JetBrainsMono Nerd Font (upstream asks Iosevka,
+ *      which is not what this session uses).
+ *   2. the module list below (upstream ships a Hyprland-oriented config).
+ *   3. inline @define-color, because upstream splits colours into colors.css
+ *      and we ship a single file.
+ * Upstream's own colors.css is reproduced here unchanged -- if Dracula ever
+ * revises the palette, sync it from there.
+ *
+ * History: this replaced a hand-built powerline (custom/separatorN modules
+ * rendering U+E0B0 with colour swapped to their neighbours). That worked but
+ * read badly -- with the palette below every second segment sat on the bar
+ * colour, so the row looked like irregular islands. Module separation is done
+ * with CSS instead (inset left border, see below).
+ */
+
+/* ── Official Dracula palette (dracula/waybar colors.css, verbatim) ─────── */
+@define-color background-darker rgba(30, 31, 41, 230);
+@define-color background #282a36;
+@define-color selection #44475a;
+@define-color foreground #f8f8f2;
+@define-color comment #6272a4;
+@define-color cyan #8be9fd;
+@define-color green #50fa7b;
+@define-color orange #ffb86c;
+@define-color pink #ff79c6;
+@define-color purple #bd93f9;
+@define-color red #ff5555;
+@define-color yellow #f1fa8c;
+
+/* ── Base (upstream, font swapped) ──────────────────────────────────────── */
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 12px;
+    min-height: 0;
+}
+
+window#waybar {
+    opacity: 0.9;
+    background: @background-darker;
+    color: @foreground;
+    border-bottom: 2px solid @background;
+}
+
+#workspaces button {
+    padding: 0 10px;
+    background: @background;
+    color: @foreground;
+}
+
+#workspaces button:hover {
+    box-shadow: inherit;
+    text-shadow: inherit;
+    background-image: linear-gradient(0deg, @selection, @background-darker);
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+    background-image: linear-gradient(0deg, @purple, @selection);
+}
+
+#workspaces button.urgent {
+    background-image: linear-gradient(0deg, @red, @background-darker);
+}
+
+/* ── Our modules: padding + separator between the values ────────────────── */
+/*
+ * `margin: 5px 0` together with `border-left` produces a divider that is inset
+ * top and bottom, instead of a full-height rule across the bar. The border is
+ * on the *left* of each module, so it separates it from the module before it.
+ */
+#cpu,
+#memory,
+#disk,
+#network,
+#battery,
+#wireplumber,
+#clock,
+#custom-swaync,
+#tray {
+    padding: 0 10px;
+    margin: 5px 0;
+    border-left: 1px solid @selection;
+    color: @foreground;
+}
+
+/* Upstream gives the clock a @background fill; keep that, with our padding. */
+#clock {
+    background: @background;
+    padding: 0 10px;
+}
+
+/* ── Notification centre button ─────────────────────────────────────────── */
+#custom-swaync {
+    color: @purple;
+}
+
+/* ── Tray (nm-applet / syncthingtray / flameshot …) ─────────────────────── */
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    background: @red;
+}
+
+/* ── Binding-mode indicator ─────────────────────────────────────────────── */
+#mode {
+    background: @red;
+    color: @foreground;
+    padding: 0 8px;
+    margin: 3px 2px;
+    border-radius: 6px;
+}
+
+/* ── State colours ──────────────────────────────────────────────────────── */
+/* Foreground only -- a coloured background cuts across the bar. */
+#battery.warning {
+    color: @yellow;
+}
+
+#battery.critical {
+    color: @red;
+}
+
+#battery.charging,
+#battery.plugged,
+#battery.full {
+    color: @green;
+}
+
+#network.disconnected {
+    color: @red;
+}
+
+/* ── Tooltips ───────────────────────────────────────────────────────────── */
+tooltip {
+    background: @background-darker;
+    border: 1px solid @selection;
+}
+
+tooltip label {
+    color: @foreground;
+}

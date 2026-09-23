@@ -39,10 +39,18 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     unzip $src -d jbm
     mkdir -p $out/share/fonts/truetype/NerdFonts
     for f in jbm/fonts/ttf/*.ttf; do
+      # --complete is load-bearing: font-patcher defaults EVERY optional glyph
+      # set to False and only turns them all on with --complete. Without it we
+      # got just the default set (powerline e0a0-e0b3, codicons e5fa-e6bb,
+      # seti/devicons e700-e958) and NO Font Awesome -- so every icon in the
+      # Font Awesome range (microchip f2db, memory f538, hdd f0a0, wifi f1eb,
+      # bell f0f3, clock f017, battery f240-f244 ...) rendered as tofu in the
+      # bar. Verified by dumping the charset with fc-query: f000-f2ff absent.
       fontforge --lang=py -script $nerdFontsSrc/font-patcher "$f" \
+        --complete \
         --outputdir $out/share/fonts/truetype/NerdFonts
       # Mono variant (single-width glyphs) for powerline/status bars.
-      fontforge --lang=py -script $nerdFontsSrc/font-patcher "$f" --mono \
+      fontforge --lang=py -script $nerdFontsSrc/font-patcher "$f" --complete --mono \
         --outputdir $out/share/fonts/truetype/NerdFonts
     done
     runHook postBuild
