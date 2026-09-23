@@ -51,9 +51,9 @@ in
 
   # A file named `default.kdl` in the layout dir overrides zellij's built-in
   # default layout. Needed to swap the plain status-bar/tab-bar plugins for
-  # zjstatus's powerline bar (dracula, matching tmux/default.nix's
-  # tmux-powerline look: icon, tabs, then battery/cpu/ram/clock segments
-  # chained with powerline arrows).
+  # zjstatus's bar (dracula): icon, tabs, then battery/cpu/ram/clock segments,
+  # flat -- no powerline arrows, matching waybar/neovim. Each segment is just
+  # colored text on the one flat $dim bar background, not its own block.
   #
   # The swap_tiled_layout / swap_floating_layout blocks below are zellij's
   # OWN built-ins, copied verbatim from `zellij setup --dump-swap-layout
@@ -168,31 +168,29 @@ in
                     color_cyan   "#8be9fd"
                     color_blue   "#6272a4"
 
-                    format_left   "#[fg=$dim,bg=$green,bold]  🐧  #[fg=$green,bg=$dim]{tabs}"
+                    format_left   "#[fg=$green,bg=$dim,bold]  🐧  #[fg=$fg,bg=$dim]{tabs}"
                     format_center ""
                     format_right  "{command_battery}{command_cpu}{command_ram}{datetime}"
                     format_space  "#[bg=$dim]"
 
                     border_enabled "false"
 
-                    // : U+E0B0 nerd-font powerline arrow. fg = the color it's leaving,
-                    // bg = the color it's entering — that paints the triangular cut.
                     tab_normal "#[fg=$fg,bg=$dim] {index} {name} "
-                    tab_active "#[fg=$dim,bg=$purple]#[fg=$bg,bg=$purple,bold] {index} {name} #[fg=$purple,bg=$dim]"
+                    tab_active "#[fg=$purple,bg=$dim,bold] {index} {name} "
 
                     command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
-                    command_battery_format   "#[fg=$dim,bg=$pink]#[fg=$bg,bg=$pink,bold] {stdout} #[fg=$pink,bg=$orange]"
+                    command_battery_format   "#[fg=$pink,bg=$dim,bold] {stdout} "
                     command_battery_interval "15"
 
                     command_cpu_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics cpu"
-                    command_cpu_format   "#[fg=$bg,bg=$orange,bold] {stdout} #[fg=$orange,bg=$cyan]"
+                    command_cpu_format   "#[fg=$orange,bg=$dim,bold] {stdout} "
                     command_cpu_interval "5"
 
                     command_ram_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics ram"
-                    command_ram_format   "#[fg=$bg,bg=$cyan,bold] {stdout} #[fg=$cyan,bg=$blue]"
+                    command_ram_format   "#[fg=$cyan,bg=$dim,bold] {stdout} "
                     command_ram_interval "15"
 
-                    datetime          "#[fg=$fg,bg=$blue,bold]  {format} "
+                    datetime          "#[fg=$blue,bg=$dim,bold]  {format} "
                     datetime_format   "%H:%M:%S %d/%m/%Y"
                     datetime_timezone "Europe/Berlin"
                 }
