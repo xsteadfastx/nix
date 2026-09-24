@@ -17,14 +17,19 @@ let
 
   mednafenBase = "${pkgs.mednafen}/bin/mednafen -sound.device sexyal-literal-default";
 
-  # ponytail: systemd-inhibit only blocks logind idle; the screensaver is
-  # xss-lock off the X11 saver, so suspend that too while playing. No exec:
-  # the shell must survive to run the EXIT trap that restores the timeout
-  # (xset s on would reset it to the 600s server default, not our 60s).
+  # X11 leftover from the i3 days: xss-lock/xset controlled the X11
+  # screensaver, which doesn't exist under sway -- calling xset against
+  # XWayland wouldn't touch swayidle's real lock timeout at all, so that half
+  # was already dead weight, not just unported. systemd-inhibit alone still
+  # does real work (blocks logind's own idle/sleep action).
+  # ponytail: swayidle's timeout isn't suppressed by anything here anymore --
+  # gamepad input doesn't count as activity, so a controller-only session can
+  # still get screen-locked mid-game. The correct fix is a client that holds
+  # a Wayland idle-inhibit-unstable-v1 lock for the game's lifetime; wlinhibit
+  # (nixpkgs) looks like the fit but its own README calls it "fundamentally
+  # broken" on compositors with correct protocol support, so it's not wired
+  # in here. Revisit if this actually bites.
   inhibit = who: cmd: ''
-    timeout=$(${pkgs.xset}/bin/xset q | ${pkgs.gawk}/bin/awk '/timeout:/{print $2}')
-    ${pkgs.xset}/bin/xset s off
-    trap '${pkgs.xset}/bin/xset s "$timeout"' EXIT
     ${pkgs.systemd}/bin/systemd-inhibit --who="${who}" --why="Gaming" ${cmd}
   '';
 
