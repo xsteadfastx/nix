@@ -1,7 +1,6 @@
 _: {
   imports = [
     ./ipu7.nix
-    # ./smokeping.nix
     ./caddy
     ./configuration.nix
     ./coding-agent.nix

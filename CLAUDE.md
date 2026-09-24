@@ -150,7 +150,6 @@ The hosts defined in this repo (`hosts/`):
 - `coltrane` — runs the pi agent and its MCP servers (configured in `hosts/coltrane/coding-agent.nix`), including the read-only Grafana MCP.
 - `dipper`
 - `phil`
-- `troy`
 
 > Note: any telemetry/hosts referenced by the Grafana MCP live outside this repo (the MCP's URL/token are sops secrets, not stored here).
 

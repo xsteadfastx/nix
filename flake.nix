@@ -51,12 +51,10 @@
       nixosModules.base = import ./modules/base;
       nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
       nixosModules.home-manager = import ./modules/home-manager;
-      nixosModules.lix = import ./modules/lix;
       nixosModules.ssh = import ./modules/ssh;
       nixosModules.tlsrouter = import ./modules/tlsrouter;
       nixosModules.users = import ./modules/users;
       nixosModules.vm-variant = import ./modules/vm-variant;
-      homeManagerModules.liliumVoyager = import ./home-manager/modules/lilium-voyager.nix;
       overlays.default = import ./overlays { inherit inputs; };
     }
     // inputs.flake-utils.lib.eachDefaultSystem (

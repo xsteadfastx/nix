@@ -17,7 +17,7 @@ This repository contains a multi-host NixOS configuration using the **coltrane**
 ## Code Organization & Architecture
 
 - **`flake.nix`** – Top‑level flake definition. Declares inputs, outputs, and the `nixosConfigurations` attribute.
-- **`hosts/`** – One directory per machine (`coltrane`, `abed`, `dipper`, `phil`, `troy`). Each host is self-contained: its own `configuration.nix`, `hardware-configuration.nix`, service modules, and `secrets.nix`. No cross-host imports.
+- **`hosts/`** – One directory per machine (`coltrane`, `abed`, `dipper`, `phil`). Each host is self-contained: its own `configuration.nix`, `hardware-configuration.nix`, service modules, and `secrets.nix`. No cross-host imports.
 - **`modules/`** – Reusable NixOS and Home Manager modules shared across hosts (e.g., `base/`, `coding-agent/`).
 - **`overlays/`** – Nixpkgs overlays (`default.nix` for personal packages, `coding-agent.nix` sourcing pi/MCP from unstable).
 - **`home-manager/m arv.nix`** – Per-user Home Manager configuration.
