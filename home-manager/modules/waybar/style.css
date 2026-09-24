@@ -71,7 +71,11 @@ window#waybar {
 }
 
 #workspaces button.urgent {
-    background-image: linear-gradient(0deg, @red, @background-darker);
+    /* Same reasoning as .focused/.active above: solid, not the
+       fade-to-@background-darker gradient, so an urgent workspace is one
+       unmistakable red block. */
+    background-image: none;
+    background: @red;
 }
 
 /* ── Our modules: padding + separator between the values ────────────────── */
