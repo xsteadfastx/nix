@@ -10,7 +10,6 @@
     "flake.lock"
     "hosts/.+/secrets.yaml"
     "home-manager/secrets.yaml"
-    "home-manager/modules/tmux/.tmux-dracula/.+$"
   ];
 
   hooks = {

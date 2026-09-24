@@ -5,7 +5,7 @@
 let
   # Backing shell commands for the zjstatus powerline segments below — no
   # native zellij/zjstatus widget for battery/cpu/ram, so shell out (same as
-  # tmux-dracula's plugins do).
+  # any tmux status plugin does).
   statusbarMetrics = pkgs.writeShellApplication {
     name = "zellij-statusbar-metrics";
     text = ''
@@ -13,10 +13,9 @@ let
       battery)
         cap=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo "")
         st=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "")
-        # matches .tmux-dracula/battery.sh exactly: blank only while
-        # actually discharging or at a full charge; AC for every other
-        # status (Charging, "Not charging" while plugged in but topped
-        # off, Unknown, ...) -- that's its default case, not just "Charging".
+        # blank only while actually discharging or at a full charge; AC for
+        # every other status (Charging, "Not charging" while plugged in but
+        # topped off, Unknown, ...) -- the default case, not just "Charging".
         case "$st" in
         Discharging | discharging) stat_word="" ;;
         Full | high) stat_word="" ;;
