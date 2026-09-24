@@ -36,31 +36,49 @@ let
         # polls -- so a same-formula 1s spot-sample here used to disagree
         # with it, sometimes by a lot during a burst. Caching the previous
         # /proc/stat reading gives the same ~5s window waybar uses.
+        #
+        # Two more waybar details, read off its cpu_usage/linux.cpp and
+        # measured against it: it counts iowait as idle
+        # (`idle_time = times[3] + times[4]`), and it truncates the percentage
+        # (`uint16_t tmp = 100 * ...`). Counting bare idle read 33% where
+        # waybar read 10% in the same 5s window -- iowait is ~20% of the ticks
+        # on this laptop whenever nix hammers the disk.
+        # Deliberately not matched: waybar sums all ten /proc/stat fields, so
+        # it double-counts guest/guest_nice (guest time is already inside
+        # user); both are 0 here, so this keeps the first eight.
         state="''${XDG_RUNTIME_DIR:-/tmp}/zellij-statusbar-cpu-stat"
         read -r _ a b c i d e f g _ _ </proc/stat
         if [ -f "$state" ]; then
           read -r a1 b1 c1 i1 d1 e1 f1 g1 <"$state"
           t1=$((a1 + b1 + c1 + i1 + d1 + e1 + f1 + g1))
           t2=$((a + b + c + i + d + e + f + g))
-          awk -v i1="$i1" -v i2="$i" -v t1="$t1" -v t2="$t2" \
-            'BEGIN { d = t2 - t1; printf " %.0f%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
+          awk -v i1="$((i1 + d1))" -v i2="$((i + d))" -v t1="$t1" -v t2="$t2" \
+            'BEGIN { d = t2 - t1; printf " %d%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
         else
           echo " ..."
         fi
         echo "$a $b $c $i $d $e $f $g" >"$state"
         ;;
       ram)
-        # MemTotal - MemAvailable, matching waybar's memory module formula
-        # exactly -- free -g used a different "used" definition (and rounded
-        # to whole GB), so the two bars used to disagree on the same state.
+        # MemTotal - (MemAvailable + ZFS ARC), matching waybar's memory
+        # module formula exactly -- memory/linux.cpp sets
+        # `memfree = MemAvailable + zfs_size`, because the ARC is a reclaimable
+        # cache, not consumed RAM. On this ZFS-root laptop the ARC is ~15 GiB
+        # of 31 GiB, so counting it as used read 81% where waybar read 33%.
+        # free -g used a different "used" definition again (and rounded to
+        # whole GB).
         # Reported as a bare percentage, not usedGB/totalGB -- waybar's
         # memory module (`{percentage}%`) is the same kind of number as its
         # own cpu module, and zellij's cpu case above; GB/GB was a different
         # unit from both.
-        awk '
+        # arcstats `size` is bytes; waybar divides by 1024 in integer math.
+        # The `|| echo 0` keeps `set -e` (writeShellApplication) from killing
+        # the segment on a machine without ZFS, where the file is absent.
+        arc=$(awk '$1 == "size" { printf "%d", $3 / 1024 }' /proc/spl/kstat/zfs/arcstats 2>/dev/null || echo 0)
+        awk -v arc="''${arc:-0}" '
           /^MemTotal:/     { total = $2 }
           /^MemAvailable:/ { avail = $2 }
-          END               { printf "󰍛 %.0f%%", (total - avail) / total * 100 }
+          END               { printf "󰍛 %d%%", (total - avail - arc) / total * 100 }
         ' /proc/meminfo
         ;;
       esac
