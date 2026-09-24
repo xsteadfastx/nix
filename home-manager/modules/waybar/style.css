@@ -138,6 +138,14 @@ window#waybar {
     background: @red;
 }
 
+/* ── Now playing (centred) ─────────────────────────────────────────────── */
+/* No `border-left` like the right-hand cluster: it stands alone in the
+   middle, so a divider would only separate it from empty bar. */
+#mpris {
+    padding: 0 10px;
+    color: @foreground;
+}
+
 /* ── Binding-mode indicator ─────────────────────────────────────────────── */
 #mode {
     background: @red;
