@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   nixosConfig,
   pkgs,
@@ -31,6 +32,7 @@ let
     wifi = glyph ''\uDB81\uDDA9''; # md-wifi              (astral)
     ethernet = glyph ''\uDB80\uDE00''; # md-ethernet          (astral)
     disconnected = glyph ''\uDB81\uDDAA''; # md-wifi_off          (astral)
+    vpn = glyph ''\uDB81\uDD82''; # md-vpn               (astral)
     bell = glyph ''\uDB80\uDC9A''; # md-bell              (astral)
     clock = glyph ''\uDB82\uDD54''; # md-clock             (astral)
     volume = glyph ''\uDB81\uDD7E''; # md-volume_high       (astral)
@@ -73,6 +75,29 @@ lib.mkIf cfg.desktop {
   # the session bus can get the daemon started.
   services.playerctld.enable = true;
 
+  # Waybar does not heal itself, so systemd does it:
+  #
+  # - Restart on config change, never reload. Home Manager's default sends
+  #   SIGUSR2 on a switch, and waybar's in-process reload leaks state
+  #   (duplicate tray hosts, "already registered").
+  # - Bound to wireplumber. The `wireplumber` module never reconnects after
+  #   the audio stack restarts (or is killed -- `pkill pi` matches pipewire),
+  #   and sits at 0% forever. BindsTo stops waybar with it; Upholds on the
+  #   session target starts it straight back, which in turn pulls the audio
+  #   stack back up.
+  # ponytail: if wireplumber cannot start at all the bar is gone too; drop
+  # BindsTo for Wants if that ever bites.
+  systemd.user.services.waybar.Unit = {
+    X-Reload-Triggers = lib.mkForce [ ];
+    X-Restart-Triggers = [
+      "${config.xdg.configFile."waybar/config".source}"
+      "${config.xdg.configFile."waybar/style.css".source}"
+    ];
+    BindsTo = [ "wireplumber.service" ];
+    After = [ "wireplumber.service" ];
+  };
+  systemd.user.targets.sway-session.Unit.Upholds = [ "waybar.service" ];
+
   programs.waybar = {
     enable = true;
     package = pkgs.waybar;
@@ -109,7 +134,10 @@ lib.mkIf cfg.desktop {
           "disk"
           "battery"
           "wireplumber"
-          "network"
+          "network#wifi"
+          "network#nic"
+          "network#tailscale"
+          "network#wobcom"
           "clock"
           "custom/swaync"
           "tray"
@@ -126,12 +154,13 @@ lib.mkIf cfg.desktop {
           # workspace buttons and the right-hand cluster (which is ~735px on its
           # own), while an unchecked YouTube title runs to ~670px and clips that
           # cluster. Bounding the individual tags rather than the whole label is
-          # what keeps the elapsed time: 26 title + 14 artist + the trailing
-          # "[mm:ss/mm:ss]" renders at ~355px, leaving ~115px of slack for the
-          # tray to grow into.
-          title-len = 26;
-          artist-len = 14;
-          dynamic-len = 58;
+          # what keeps the elapsed time. 26 title + 14 artist rendered at
+          # ~355px (~6px/char); the tailscale + wobcom indicators then took
+          # ~135px of the ~115px slack. 14 + 6 sheds ~120px: ~235px, ~100px
+          # slack with both VPNs up.
+          title-len = 14;
+          artist-len = 6;
+          dynamic-len = 36;
           # Position/length are truncated LAST here, not first: the default
           # importance order (title, artist, album, position, length) sacrifices
           # the elapsed time the moment a title is long -- with a plain dynamic
@@ -203,14 +232,51 @@ lib.mkIf cfg.desktop {
 
         # bumblebee's nic module needed an exclude list (ip6tnl, veth, vir,
         # docker, br, lo, cni0, flannel.1, cali, vxlan.calico, w1nd50r) to hide
-        # container/virtual interfaces. Waybar's network module follows the
-        # default route, so that list is simply gone.
-        network = {
+        # container/virtual interfaces.
+        #
+        # One module per physical interface, each pinned with `interface`.
+        # Unpinned, the module follows the default route and sticks on
+        # "offline" once that route bounces (resume, dock events) while ppp0 /
+        # tailscale0 are up -- the 2026-09-24 manual-restart. Pinned, it
+        # tracks its own interface through drops. `#network` CSS still
+        # applies: `network#wifi` is `#network.wifi`.
+        "network#wifi" = {
+          interface = "wlp*";
           interval = 3;
           format-wifi = " ${icons.wifi} {essid} {signalStrength}%";
-          format-ethernet = " ${icons.ethernet} {ifname}";
           format-disconnected = " ${icons.disconnected} offline";
           tooltip-format = "{ifname} via {gwaddr}";
+        };
+        # Wired (dock NIC): hidden unless it is actually up -- an empty format
+        # makes waybar hide the module.
+        "network#nic" = {
+          interface = "enp*";
+          interval = 3;
+          format-ethernet = " ${icons.ethernet} {ifname}";
+          format-linked = "";
+          format-disconnected = "";
+          tooltip-format = "{ifname} via {gwaddr}";
+        };
+        # Tailscale: shown while tailscale0 holds an address. `tailscale down`
+        # keeps the tun but drops its IPs -- "linked", hidden like "down".
+        "network#tailscale" = {
+          interface = "tailscale0";
+          interval = 3;
+          format-ethernet = " ${icons.vpn} ts";
+          format-linked = "";
+          format-disconnected = "";
+          tooltip-format = "{ifname} {ipaddr}";
+        };
+        # wobcom VPN (openfortivpn -> pppd -> ppp0, started by `wobcom-vpn`).
+        # pppd removes ppp0 on hangup, so the module is only there while the
+        # tunnel is up -- and vanishing is the hint that it dropped.
+        "network#wobcom" = {
+          interface = "ppp0";
+          interval = 3;
+          format-ethernet = " ${icons.vpn} wobcom";
+          format-linked = "";
+          format-disconnected = "";
+          tooltip-format = "{ifname} {ipaddr}";
         };
 
         # {icon} steps through format-icons by charge level.
