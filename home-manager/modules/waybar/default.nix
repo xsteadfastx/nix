@@ -100,17 +100,16 @@ lib.mkIf cfg.desktop {
         # supply is the daemon those actions are sent to.
         modules-center = [ "mpris" ];
 
-        # Mirrors the old bumblebee module order:
-        #   cpu memory disk nic battery pipewire datetime
-        # (nic -> network, pipewire -> wireplumber, datetime -> clock), then the
+        # The old bumblebee bar's modules -- nic -> network, pipewire ->
+        # wireplumber, datetime -> clock -- in our own order, then the
         # notification-centre button and the tray.
         modules-right = [
           "cpu"
           "memory"
           "disk"
-          "network"
           "battery"
           "wireplumber"
+          "network"
           "clock"
           "custom/swaync"
           "tray"
