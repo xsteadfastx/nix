@@ -83,9 +83,6 @@ let
       esac
     '';
   };
-
-  # Auto-renames tabs to the focused pane's running command (falls back to
-  # cwd) -- zellij has no built-in equivalent of tmux's automatic-rename.
 in
 {
   # zellij writes an auto-generated default config.kdl on first run; force ours
@@ -279,6 +276,93 @@ in
     end
   '';
 
+  programs.fish.functions = {
+    # Zellij tab names: the running command while one runs, the directory when
+    # the shell is idle -- tmux's automatic-rename, driven from the shell. This
+    # is the community pattern (haseebmajid.dev's zellij status bar post is the
+    # version most people copy; zellij.fish and the zjstatus discussions do the
+    # same thing).
+    #
+    # NOT a zellij plugin: `PaneUpdate` is only sent on pane-level operations
+    # (zellij-server/src/screen.rs), while command changes reach plugins as
+    # `CommandChanged` from the pty thread -- which is why `imsuck/tab-rename`
+    # and every other title-polling plugin re-asserts stale names (zellij#5482,
+    # the same trap the old tab-rename poller here died on).
+    #
+    # NOT `onVariable = "PWD"` any more: that fired in *every* pane, so a
+    # background `cd` renamed the tab out from under whatever the focused pane
+    # was doing and a split tab flapped between its shells' cwds. Both hooks
+    # below only run in the pane a command was typed in, and zellij_tab_rename
+    # drops the rename unless that pane is still its tab's focused one.
+    #
+    # Plain `rename-tab` renames whichever tab the *client* is looking at, so a
+    # long command finishing in a tab you have since left would rename the tab
+    # you are on. Resolve this pane's own tab id and target that instead.
+    zellij_tab_rename = {
+      argumentNames = [ "name" ];
+      description = "rename the zellij tab holding this pane, if it is focused there";
+      body = ''
+        set -q ZELLIJ_PANE_ID; or return
+        # columns: TAB_ID ... PANE_ID TYPE TITLE FOCUSED FLOATING EXITED
+        set -l m (command zellij action list-panes -t -s 2>/dev/null \
+            | string match -r -g "^(\d+)\s.*\sterminal_$ZELLIJ_PANE_ID\s.*\s(true|false)\s+\S+\s+\S+\$")
+        test "$m[2]" = true; or return
+        command zellij action rename-tab --tab-id $m[1] -- "$name" 2>/dev/null
+      '';
+    };
+
+    zellij_tab_name = {
+      description = "name the zellij tab after the current directory";
+      body = ''
+        set -q ZELLIJ; or return
+        set -l name (basename $PWD)
+        test "$PWD" = "$HOME"; and set name "~"
+        zellij_tab_rename "$name"
+      '';
+    };
+
+    # Before a command runs: show what is about to run.
+    zellij_tab_running = {
+      onEvent = "fish_preexec";
+      description = "name the zellij tab after the running command";
+      body = ''
+        set -q ZELLIJ; or return
+        set -l words (string split -n " " -- $argv[1])
+        test -n "$words[1]"; or return
+        # `sudo nixos-rebuild switch` should read as nixos-rebuild, not sudo.
+        # `FOO=1 make` should read as make.
+        while test (count $words) -gt 1
+            contains -- $words[1] sudo doas command env nohup
+            or string match -q -- "*=*" $words[1]
+            or break
+            set -e words[1]
+        end
+        set -l cmd (basename -- $words[1])
+        # Near-instant commands would only flicker the tab name; the postexec
+        # hook restores the directory right after them anyway.
+        contains -- $cmd cd ls ll la clear pwd exit; and return
+        zellij_tab_rename "$cmd"
+      '';
+    };
+
+    # After a command finishes: back to the directory. Without this a tab keeps
+    # showing the last command forever (that is what the copied-around snippets
+    # do -- they only reset on a `z`/zoxide jump).
+    zellij_tab_idle = {
+      onEvent = "fish_postexec";
+      description = "restore the zellij tab name to the current directory";
+      body = ''
+        set -q ZELLIJ; or return
+        zellij_tab_name
+      '';
+    };
+  };
+
+  # new tab/pane: start out named after the cwd (see zellij_tab_rename)
+  programs.fish.interactiveShellInit = ''
+    zellij_tab_name
+  '';
+
   programs.zellij = {
     enable = true;
     settings = {
@@ -396,8 +480,8 @@ in
           }
       }
 
-      // Tab names are set by the shell (`wip` etc. via `zellij action
-      // rename-tab`). The old tab-rename wasm poller was removed: zellij
+      // Tab names are set by the shell (fish's zellij_tab_* hooks: running
+      // command, else cwd). The old tab-rename wasm poller was removed: zellij
       // (zellij-org/zellij#5482) never delivers a PaneUpdate for later OSC
       // title changes, so it kept re-asserting stale names every interval.
       load_plugins {
