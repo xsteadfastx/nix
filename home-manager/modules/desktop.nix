@@ -26,7 +26,6 @@ in
       pkgs.calibre
       pkgs.handbrake
       # pkgs.unstable.makemkv
-      pkgs.unstable.arandr
       pkgs.unstable.evince
       pkgs.unstable.gimp
       pkgs.unstable.libmediainfo
