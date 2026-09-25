@@ -199,7 +199,7 @@
   bindsym XF86AudioMute exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && ${pkgs.libnotify}/bin/notify-send -a "volume" -u low -h string:x-canonical-private-synchronous:volume "Volume" "Muted"
 
   # lock
-  bindsym Control+mod1+l exec ${pkgs.swaylock-effects}/bin/swaylock -f
+  bindsym Control+mod1+l exec ${pkgs.swaylock}/bin/swaylock -f
 
   # bluetooth manager (blueman's tray icon won't render in swaybar — its SNI
   # properties are unsupported — so launch the manager directly)

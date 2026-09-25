@@ -14,34 +14,26 @@ lib.mkIf cfg.desktop {
     timeouts = [
       {
         timeout = 300;
-        command = "${pkgs.swaylock-effects}/bin/swaylock -f";
+        command = "${pkgs.swaylock}/bin/swaylock -f";
       }
     ];
-    events.before-sleep = "${pkgs.swaylock-effects}/bin/swaylock -f";
+    events.before-sleep = "${pkgs.swaylock}/bin/swaylock -f";
   };
 
-  # Upstream dracula/swaylock theme, verbatim except for `font`: the theme's
-  # README targets swaylock-effects (blur/vignette/screenshot/clock/indicator/
-  # grace/fade-in do NOT exist in plain swaylock 1.8.x), so the package stays
-  # swaylock-effects. Keys are the config-file names, hyphenated -- the
-  # unhyphenated spellings (keyhl-color, ...) made swaylock exit with
-  # "unrecognized option" before ever drawing a lock screen.
-  # ponytail: `grace = 2` unlocks on any keypress for the first 2s (mouse/touch
-  # disabled by the two grace-no-* flags). That is upstream Dracula's behaviour,
-  # not a hardening regression -- drop grace if the lock must bite immediately.
+  # Colors from the upstream dracula/swaylock theme on plain swaylock. The
+  # theme targets swaylock-effects, but that fork is unmaintained (last push
+  # 2024-03) and its `screenshot` busy-loops at 100% CPU with several outputs
+  # (jirutka/swaylock-effects#46, #67): after an overnight suspend it drew the
+  # ring on eDP-1 only, left the externals black and never read the password.
+  # Dropped with it: clock/screenshot/blur/vignette/grace/fade-in.
   programs.swaylock = {
     enable = true;
-    package = pkgs.swaylock-effects;
     settings = {
       daemonize = true;
       show-failed-attempts = true;
-      clock = true;
-      screenshot = true;
-      effect-blur = "13x13";
-      effect-vignette = "0.5:0.5";
       color = "6272A4";
       font = "JetBrainsMono Nerd Font";
-      indicator = true;
+      indicator-idle-visible = true;
       indicator-radius = 200;
       indicator-thickness = 20;
       line-color = "282A36";
@@ -64,12 +56,6 @@ lib.mkIf cfg.desktop {
       line-clear-color = "8BE9FD";
       line-wrong-color = "282A36";
       bs-hl-color = "8BE9FD";
-      grace = 2;
-      grace-no-mouse = true;
-      grace-no-touch = true;
-      datestr = "%a, %B %e";
-      timestr = "%I:%M %p";
-      fade-in = "0.4"; # string, not float: HM's toString turns 0.4 into 0.400000
       ignore-empty-password = true;
     };
   };
