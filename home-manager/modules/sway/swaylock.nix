@@ -36,7 +36,7 @@ lib.mkIf cfg.desktop {
       color = "000000";
       font = "JetBrainsMono Nerd Font";
       indicator-idle-visible = true;
-      indicator-radius = 200;
+      indicator-radius = 100;
       indicator-thickness = 20;
       line-color = "282A36";
       ring-color = "BD93F9";
