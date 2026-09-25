@@ -44,9 +44,6 @@
 
     typos = {
       enable = true;
-      excludes = [
-        "home-manager/modules/aerc/aerc.conf"
-      ];
       # The repo's own typos config, so both stages (pre-commit and commit-msg)
       # read the same file. Without this the pre-commit stage gets a generated
       # config and .typos.toml only applies to commit messages.
