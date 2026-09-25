@@ -235,6 +235,15 @@ in
                     tab_fullscreen_indicator "□ "
                     tab_sync_indicator       "  "
                     tab_floating_indicator   "󰉈 "
+                    // zellij's visual_bell flags a tab with a bell in it, but
+                    // zjstatus only renders that if the tab format asks for it:
+                    // {bell_indicator} is substituted only when tab_bell_indicator
+                    // is set, and the bell formats are used only when they exist.
+                    // Without these keys a background-tab bell is invisible.
+                    // Pink block, matching mode_locked's style.
+                    tab_bell_indicator       "󰂚 "
+                    tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
+                    tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
 
                     command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
                     command_battery_format   "#[fg=$pink,bg=$dim,bold] {stdout} "
