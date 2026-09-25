@@ -388,6 +388,21 @@ in
       # dracula-border pane frames (full border around each pane)
       pane_frames = true;
       pane_frame_style = "full";
+      # The visual bell: a BEL from a pane flashes that pane's frame and the
+      # tab frame, and marks the tab's bell flag -- which is what zjstatus's
+      # tab_bell_indicator (layouts/default.kdl) renders as the pink bell.
+      # 0.45.1 already defaults this to true
+      # (`new_config.options.visual_bell.unwrap_or(true)`,
+      # zellij-server/src/lib.rs), so this only pins it locally.
+      #
+      # Worth knowing why an in-pane bell reads as "not really working":
+      # check_and_handle_bell_notifications (zellij-server/src/tab/mod.rs)
+      # skips the *focused* pane, so the pane you are looking at gets no
+      # persistent marker, only the flash -- and
+      # clear_bell_for_focused_pane drops a pending one whenever focus changes.
+      # The pink tab badge sticks for mail that arrives while you are looking
+      # at another tab, which is the case that actually needs signalling.
+      visual_bell = true;
       # ponytail: simple options go in structured `settings`; the keybinds block
       # is raw KDL via extraConfig (home-manager's documented workaround —
       # yaml->kdl conversion of nested keybinds is unreliable).
