@@ -31,7 +31,9 @@ lib.mkIf cfg.desktop {
     settings = {
       daemonize = true;
       show-failed-attempts = true;
-      color = "6272A4";
+      # Deliberate deviation from the dracula theme: its #6272A4 fills all three
+      # outputs with grey-blue, which reads as a washed-out wall behind the ring.
+      color = "000000";
       font = "JetBrainsMono Nerd Font";
       indicator-idle-visible = true;
       indicator-radius = 200;
