@@ -47,17 +47,24 @@
       Playwright Extension bridges the MCP server to your logged-in tab.
       **Approve the connect page** once per session; subsequent calls reuse the
       connection.
-    - **If a *fresh* temp-profile browser opens instead of using your existing
-      one** (the "opens a new browser" bug): the nixpkgs `playwright-mcp`
-      wrapper forced `PLAYWRIGHT_MCP_ISOLATED=1` (it does so whenever
-      `PLAYWRIGHT_MCP_USER_DATA_DIR` is unset), and since playwright-mcp 0.0.76
-      `isolated` is checked *before* `extension`, so it wins and disables
-      extension mode. **Fix (in `~/nix`)**: set `PLAYWRIGHT_MCP_USER_DATA_DIR`
-      in the server env (a tmpfs sentinel path; `PLAYWRIGHT_MCP_ISOLATED=0`
-      alone does NOT work — the wrapper re-forces it). See `~/nix/CLAUDE.md` →
-      "Playwright Extension Mode". After editing: `sudo nixos-rebuild switch`,
-      then **restart pi** — a lazy MCP reconnect does *not* respawn the server
-      with new env.
+    - **"Opens a new browser with an error" (playwright-core ≥1.63 regression,
+      root-caused & fixed 2026-09-25):** the nixpkgs `playwright-mcp` wrapper
+      forces `PLAYWRIGHT_MCP_ISOLATED=1` unless `PLAYWRIGHT_MCP_USER_DATA_DIR`
+      is set (`isolated` is evaluated *before* `extension`, silently disabling
+      extension mode). The old workaround set that var to a throwaway tmpfs
+      sentinel — **but since playwright-core 1.63 it is no longer inert**: the
+      value is also passed to `createExtensionBrowser` as the connect-page
+      browser's `--user-data-dir`, *overriding* `PWTEST_EXTENSION_USER_DATA_DIR`,
+      so the sentinel launches a fresh, extension-less profile. **Fix**: set
+      `PLAYWRIGHT_MCP_USER_DATA_DIR` to the **same real profile** as
+      `PWTEST_EXTENSION_USER_DATA_DIR` (`/home/marv/.config/chromium`) —
+      non-empty (defeats the forced `ISOLATED=1`) *and* correct (the connect
+      page opens in your logged-in Profile 1). NB: with `--executable-path` set,
+      the "Extension not found" guard is skipped, so the failure is silent. This
+      is set in the `coding-agent` module (`modules/coding-agent/core.nix`), not
+      here. See `~/nix/CLAUDE.md` → "Playwright Extension Mode". After editing:
+      `sudo nixos-rebuild switch`, then **restart pi** — a lazy MCP reconnect
+      does *not* respawn the server with new env.
     - **Extension must be installed in Profile 1** (Web Store id
       `mmlmfjhmonkocbjadbfplnigmagldckm`). Home Manager's
       `programs.chromium.extensions` only seeds a *fresh* profile, so on the
