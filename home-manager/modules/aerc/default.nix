@@ -77,6 +77,21 @@ in
         # *selected* (mail arriving in another folder while you look elsewhere
         # is silent), and only while aerc runs -- its IMAP IDLE connection is
         # what notices the mail.
+        #
+        # One caveat that is not in the docs, and that kept this hook silent
+        # for as long as the config has existed: it needs `check-mail` set in
+        # accounts.conf. aerc fires it from a message store update whose
+        # `Recent` flag is set, and Gmail does not implement \Recent at all
+        # (Google's own docs: unsupported) -- see upstream todo ~rjarry/aerc#297.
+        # So the only thing that can mark a message new is aerc's own fallback
+        # in worker/imap/fetch.go: an *unread* message whose IMAP INTERNALDATE
+        # is younger than the account's check-mail interval. check-mail defaults
+        # to 0 (`0` = disable the poll, per aerc-accounts(5)), which makes that
+        # window zero and the fallback a no-op -- no Recent, no hook, ever.
+        # Hence `check-mail = 5m` in the accounts.conf note further down: it is
+        # what makes the notification fire, not just a poll interval. One
+        # notification per message, so a deliberately long window also means a
+        # burst of them for old unread mail on startup.
         mail-received = ''notify-send -a aerc "[$AERC_ACCOUNT/$AERC_FOLDER] New mail from $AERC_FROM_NAME" "$AERC_SUBJECT"'';
       };
     };
@@ -310,7 +325,9 @@ in
   # What it holds -- `sops -d --extract '["aerc-accounts.conf"]'
   # home-manager/secrets.yaml`: one [Personal] account, Gmail IMAP in, SMTP via
   # mail.your-server.de out, both credentials through `gopass show` commands
-  # rather than inline secrets, Gmail Sent/All Mail roles, cache-headers on.
+  # rather than inline secrets, Gmail Sent/All Mail roles, cache-headers on,
+  # and `check-mail = 5m` -- which is load-bearing for the mail-received hook
+  # above, not just a polling interval. Do not drop it; see that note.
   sops.secrets."aerc-accounts.conf" = {
     path = "${home}/.config/aerc/accounts.conf";
   };
