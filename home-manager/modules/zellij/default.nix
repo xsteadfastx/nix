@@ -425,20 +425,44 @@ in
       // `--continue -c` (harmless, both mean "continue").
       // post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
 
-      // tmux-style prefix: C-a enters locked (prefix-following) mode
+      // tmux-style prefix: C-a enters locked (prefix-following) mode, and
+      // Ctrl-a is the only key zellij owns -- see the unbind below.
       keybinds {
-          // zellij's own default binds bare Ctrl-t (shared_except "tab"
-          // "locked") to enter Tab mode from every other mode, including
-          // normal -- so it swallows the keystroke before fish's fzf
-          // Ctrl-T (insert-file) binding ever sees it. Tab mode is still
-          // reachable via the prefix ("Ctrl a" then "t", tmux-style).
-          unbind "Ctrl t"
+          // zellij's defaults claim Ctrl-{b,g,h,n,o,p,q,s,t} in every mode but
+          // "locked" (its own shared_except "locked" block), so the pane's app
+          // never sees them. That is what ate neovim's <C-n>/<C-p> (blink-cmp
+          // completion select) and <C-b> (its documentation scroll), plus vim's
+          // <C-o> and <C-h> in insert mode. A *top-level* unbind drops a key
+          // from every mode and is applied after all binds (zellij-utils/
+          // src/kdl/mod.rs, unbind_keys_in_all_modes) -- which is also why the
+          // modes below are re-bound on other keys: a global unbind would strip
+          // a Ctrl-<same key> bind written further down. Bare Ctrl-t was already
+          // unbound for fish's fzf Ctrl-T (insert-file); it is part of the rule
+          // now rather than a special case.
+          unbind "Ctrl b" "Ctrl g" "Ctrl h" "Ctrl n" "Ctrl o" "Ctrl p" "Ctrl q" "Ctrl s" "Ctrl t"
 
           normal {
               bind "Ctrl a" { SwitchToMode "locked"; }
           }
           locked {
-              bind "Ctrl g" "Esc" { SwitchToMode "Normal"; }
+              // Esc leaves locked mode; bare Ctrl-g used to do the same, but it
+              // belongs to the app now.
+              bind "Esc" { SwitchToMode "Normal"; }
+
+              // zellij's own modes, prefixed now: r/m are the continuous ones
+              // (h/j/k/l or arrows act repeatedly, Esc leaves), the rest are
+              // one-shot entries. Pane mode is left out on purpose -- it only
+              // re-exposes what the prefix already has (h/j/k/l focus, x close,
+              // z fullscreen, splits, Alt-f floating), and inside it `z` means
+              // "toggle pane frames", a different job from the Ctrl-a z in
+              // muscle memory.
+              bind "r" { SwitchToMode "Resize"; } // arrows/hjkl resize until Esc
+              bind "m" { SwitchToMode "Move"; }   // arrows/hjkl move the pane; n/p rotate
+              bind "[" { SwitchToMode "Scroll"; } // tmux's prefix-[ copy mode
+              bind "s" { SwitchToMode "Scroll"; }
+              bind "t" { SwitchToMode "Tab"; }     // tab overview
+              // The way out of zellij itself: prefix + d only detaches.
+              bind "q" { Quit; }
 
               // splits (mirror tmux: v = split-window -h (right), H = split-window (down))
               bind "v" { NewPane "Right"; SwitchToMode "Normal"; }
@@ -462,9 +486,6 @@ in
               // windows -> tabs
               bind "c" { NewTab; SwitchToMode "Normal"; }
               bind "," { SwitchToMode "RenameTab"; }
-              // tab overview -- prefixed only (see the top-level unbind above:
-              // bare Ctrl-t is freed for fish's fzf Ctrl-T binding).
-              bind "t" { SwitchToMode "Tab"; }
               bind "n" { GoToNextTab; SwitchToMode "Normal"; }
               bind "p" { GoToPreviousTab; SwitchToMode "Normal"; }
               bind "1" { GoToTab 1; SwitchToMode "Normal"; }
