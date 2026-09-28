@@ -13,12 +13,15 @@ in
     extraPackages = with pkgs.unstable; [
       bash-language-server
       buf
+      cargo
       cook-cli # `cook lsp` — Cooklang language server
       gopls
       lua-language-server
       nil
       pkgs.golangci-lint-langserver
       pkgs.python3Packages.python-lsp-server
+      rust-analyzer
+      rustc
       typos
       typos-lsp
       vscode-langservers-extracted
@@ -149,6 +152,7 @@ in
         	"buf_ls",
         	"golangci_lint_ls",
         	"pylsp",
+        	"rust_analyzer",
         	"typos_lsp",
         }
         for _, lsp in ipairs(generic_servers) do
