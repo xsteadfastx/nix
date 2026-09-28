@@ -22,11 +22,24 @@ in
 
     extraConfig = {
       ui = {
-        # The styleset is written to ~/.config/aerc/stylesets by `stylesets`
-        # below, which is already on aerc's default styleset search path; the
-        # old `stylesets-dirs=~/.config/aerc` existed only because the file used
-        # to sit loose at the top of the config dir.
-        styleset-name = "dracula";
+        # Not a file in this repo: aerc ships this styleset itself, at
+        # $out/share/aerc/stylesets/dracula, which is on aerc's default
+        # styleset search path (~/.config/aerc/stylesets first, then the
+        # build-time share dir). The repo carried a verbatim copy of
+        # github.com/dracula/aerc until it was measured against the bundled
+        # one: the copy was 14 lines shorter, had no [viewer] section at all
+        # (so quoted replies and patches read flat), and set
+        # default.bg=#20212b against ghostty's Dracula #282a36, painting aerc
+        # a different shade than the terminal around it.
+        # Cost of leaning on it: if an aerc bump ever drops the file, aerc
+        # refuses to start ("Can't find styleset") -- loud, and one line to fix
+        # by pointing stylesets-dirs somewhere else. Not worth owning here.
+        #
+        # styleset-name takes a comma-separated list and later files win, so
+        # the bundled set stays bundled and the local delta is `stylesets.unread`
+        # below -- it repaints unread mail, which the bundled dracula leaves
+        # #ffffff + bold, i.e. "just bold" on a list that is white anyway.
+        styleset-name = "dracula,unread";
         # Threading client-side rather than trusting the server's THREAD
         # (aerc's upstream defaults, kept rather than dropped).
         threading-enabled = true;
@@ -67,6 +80,19 @@ in
         mail-received = ''notify-send -a aerc "[$AERC_ACCOUNT/$AERC_FOLDER] New mail from $AERC_FROM_NAME" "$AERC_SUBJECT"'';
       };
     };
+
+    # Loaded after the bundled dracula (see styleset-name above), so only the
+    # differences from it belong here. Raw text, not attrs: as attrs the keys
+    # would come out alphabetised, and dracula's `*.default=true` (which resets
+    # styles) is not order-independent of the specific rules around it.
+    stylesets.unread = ''
+      # Dracula green on unread mail, in the list and in the folder list. The
+      # bundled dracula paints it #ffffff + bold, which reads as plain bold
+      # next to the white read rows; this is the colour mail had before we
+      # dropped the vendored copy of the styleset.
+      msglist_unread.fg=#50fa7b
+      dirlist_unread.fg=#50fa7b
+    '';
 
     # tmux-flavoured binds on top of aerc's defaults. `global` is the section
     # without a heading (aerc's own convention), hence the module's special
@@ -263,76 +289,6 @@ in
       };
     };
 
-    # Ordered style rules, so this stays raw text: as attrs the keys would come
-    # out alphabetised, and `*.default=true` (which resets styles) is not
-    # order-independent of the specific rules around it.
-    stylesets.dracula = ''
-      #
-      # aerc dracula styleset
-      #
-      # This styleset uses the terminal defaults as its fallback.
-      # More information on how to configure the styleset can be found in
-      # the aerc-stylesets(7) manpage. Please read the manual before
-      # modifying or creating a styleset.
-      #
-
-      *.default=true
-
-      default.bg=#20212b
-
-      title.reverse=true
-      header.bold=true
-      header.fg=#8be9fd
-
-      *error.bold=true
-      error.fg=#ff5555
-      warning.fg=#f1fa8c
-      success.fg=#50fa7b
-
-      statusline*.default=true
-      statusline_default.reverse=true
-      statusline_error.fg=#ff5555
-      statusline_error.reverse=true
-      statusline_default.fg=#303030
-      statusline_default.bg=#af87ff
-
-      dirlist_default.selected.fg=#f8f8f2
-      dirlist_default.selected.bg=#44475a
-      dirlist_recent.selected.fg=#44475a
-      dirlist_recent.selected.bg=#f8f8f2
-      dirlist_unread.fg=#50fa7b
-      dirlist_unread.selected.fg=#50fa7b
-      dirlist_unread.selected.bg=#44475a
-
-      msglist_default.selected.fg=#44475a
-      msglist_default.selected.bg=#f8f8f2
-      msglist_unread.bold=true
-      msglist_unread.fg=#50fa7b
-      msglist_unread.selected.bg=#44475a
-      msglist_read.selected.fg=#f8f8f2
-      msglist_read.selected.bg=#44475a
-      msglist_marked.fg=#f1fa8c
-      msglist_marked.selected.fg=#f1fa8c
-      msglist_marked.selected.bg=#44475a
-      msglist_deleted.fg=#ff5555
-      msglist_result.fg=#8be9fd
-      msglist_result.selected.bg=#44475a
-
-      msglist_deleted.selected.reverse=toggle
-
-      completion_pill.reverse=true
-
-      tab.reverse=true
-      border.reverse = true
-      tab.bg=#9c7adf
-      tab.fg=#303030
-      tab.selected.bg=#303030
-      tab.selected.fg=#9c7adf
-      border.fg=#20212b
-
-      selector_focused.reverse=true
-      selector_chooser.bold=true
-    '';
   };
 
   # accounts.conf is the one file here that Nix does not render: aerc refuses to
