@@ -4,7 +4,7 @@
 }:
 let
   # Backing shell commands for the zjstatus powerline segments below — no
-  # native zellij/zjstatus widget for battery/cpu/ram, so shell out (same as
+  # native zellij/zjstatus widget for battery/cpu/ram/disk, so shell out (same
   # any tmux status plugin does).
   statusbarMetrics = pkgs.writeShellApplication {
     name = "zellij-statusbar-metrics";
@@ -80,6 +80,16 @@ let
           END               { printf "󰍛 %d%%", (total - avail - arc) / total * 100 }
         ' /proc/meminfo
       	;;
+      disk)
+      	# waybar's disk module (src/modules/disk.cpp) counts root-reserved
+      	# blocks as used: its percentage_used is
+      	# (f_blocks - f_bfree) * 100 / f_blocks, truncated by uint math. `df`'s
+      	# Use% divides by (used + f_bavail) instead, so it reads one point high
+      	# on this ZFS root (11% where waybar reads 10%). stat -f prints the
+      	# statvfs fields waybar itself reads: %b = f_blocks, %f = f_bfree (%a
+      	# is f_bavail, the one not to use).
+      	stat -f --format='%b %f' / | awk '{ printf "󰋊 %d%%", ($1 - $2) * 100 / $1 }'
+      	;;
       esac
     '';
   };
@@ -93,7 +103,7 @@ in
   # default layout. Needed to swap the plain status-bar/tab-bar plugins for
   # zjstatus's bar (dracula, modeled on zjstatus's own "simple" example:
   # https://github.com/dj95/zjstatus/blob/main/examples/simple.kdl): mode +
-  # session name, then tabs on the left; battery/cpu/ram/clock on the right,
+  # session name, then tabs on the left; battery/cpu/ram/disk/clock on the right,
   # divided by a thin dim divider instead of the example's "::". Flat --
   # no powerline arrows, matching waybar/neovim. Each segment is just
   # colored text on the one flat $dim bar background, not its own block.
@@ -214,9 +224,9 @@ in
                     format_left   "{mode}#[fg=$bg,bg=$purple,bold] {session} #[fg=$fg,bg=$dim]{tabs}"
                     format_center ""
                     // order matches waybar's modules-right: cpu, memory,
-                    // battery, clock (its disk/network have no zellij
-                    // equivalent, so they're just skipped here).
-                    format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
+                    // disk, battery, clock (its network modules have no
+                    // zellij equivalent, so they're just skipped here).
+                    format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_disk}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
                     format_space  "#[bg=$dim]"
 
                     border_enabled "false"
@@ -256,6 +266,10 @@ in
                     command_ram_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics ram"
                     command_ram_format   "#[fg=$cyan,bg=$dim,bold] {stdout} "
                     command_ram_interval "15"
+
+                    command_disk_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics disk"
+                    command_disk_format   "#[fg=$green,bg=$dim,bold] {stdout} "
+                    command_disk_interval "30"
 
                     datetime          "#[fg=$blue,bg=$dim,bold] 󰥔 {format} "
                     datetime_format   "%H:%M:%S %d/%m/%Y"
