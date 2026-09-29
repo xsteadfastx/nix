@@ -88,10 +88,25 @@ in
         # is younger than the account's check-mail interval. check-mail defaults
         # to 0 (`0` = disable the poll, per aerc-accounts(5)), which makes that
         # window zero and the fallback a no-op -- no Recent, no hook, ever.
-        # Hence `check-mail = 5m` in the accounts.conf note further down: it is
-        # what makes the notification fire, not just a poll interval. One
-        # notification per message, so a deliberately long window also means a
-        # burst of them for old unread mail on startup.
+        # Hence `check-mail = 1m` in the accounts.conf note further down: it is
+        # what makes the notification fire, not just a poll interval. The same
+        # value is both things, so it also bounds how late the notification can
+        # be: aerc only fetches a folder's headers when that folder is selected
+        # (IDLE) or when the poll refetches it, and handleCheckMailMessage only
+        # sets Refetch for `w.selected` -- the poll over the *other* folders
+        # updates their unread counts and fetches nothing, so it can neither
+        # fire this hook nor rescue a missed one. What the interval really caps
+        # is the IDLE path: if the connection drops a message, the next poll
+        # picks it up only while it is younger than the window. 1m holds that
+        # to a minute, and likewise shrinks the startup burst to unread mail
+        # from the last minute.
+        #
+        # One more trap, this one not about timing: the fallback above is gated
+        # on `cacheEnabled && imapw.cache != nil` (fetch.go), and aerc's header
+        # cache is a leveldb directory only one process can hold open. Start a
+        # second aerc on the same account and it loses the lock, gets
+        # `cache = nil`, and silently never fires this hook at all -- the
+        # notification then depends on which instance happens to own the lock.
         mail-received = ''notify-send -a aerc "[$AERC_ACCOUNT/$AERC_FOLDER] New mail from $AERC_FROM_NAME" "$AERC_SUBJECT"'';
       };
     };
@@ -326,7 +341,7 @@ in
   # home-manager/secrets.yaml`: one [Personal] account, Gmail IMAP in, SMTP via
   # mail.your-server.de out, both credentials through `gopass show` commands
   # rather than inline secrets, Gmail Sent/All Mail roles, cache-headers on,
-  # and `check-mail = 5m` -- which is load-bearing for the mail-received hook
+  # and `check-mail = 1m` -- which is load-bearing for the mail-received hook
   # above, not just a polling interval. Do not drop it; see that note.
   sops.secrets."aerc-accounts.conf" = {
     path = "${home}/.config/aerc/accounts.conf";
