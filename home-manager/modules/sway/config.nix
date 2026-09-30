@@ -156,8 +156,11 @@
   # reload the configuration file. sway's reload re-applies its own (unset)
   # output config, wiping whatever kanshi last set and leaving outputs in
   # connector-enumeration order until something re-triggers it -- confirmed
-  # live, twice. Restart kanshi right after so it always self-heals.
-  bindsym $mod+Shift+c exec ${pkgs.sway}/bin/swaymsg reload && systemctl --user restart kanshi
+  # live, twice. It also drops the `workspace N output X` assignments, which
+  # live in sway's in-memory config only. So restart kanshi (re-arrange) *and*
+  # sway-outputs (re-pin, which re-creates the assignments) right after, and it
+  # always self-heals.
+  bindsym $mod+Shift+c exec ${pkgs.sway}/bin/swaymsg reload && systemctl --user restart kanshi sway-outputs
 
   # exit sway (logs you out of your Wayland session)
   bindsym $mod+Shift+e exec ${pkgs.sway}/bin/swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' '${pkgs.sway}/bin/swaymsg exit'
@@ -249,7 +252,4 @@
   # no longer needs it: swaync is Wayland-native, and satty replaced
   # flameshot, which used to be the other reason this stayed on.
   xwayland enable
-
-  # AUTOSTART
-  exec sway-autostart
 ''

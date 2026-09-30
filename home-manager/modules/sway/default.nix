@@ -40,6 +40,21 @@ let
   # independent of the connector names xe/MST shuffles around. Arrangement
   # (modes + positions) is kanshi's job (see services.kanshi below); this only
   # moves workspaces: ws1 -> middle, ws2 -> laptop (left), ws3 -> right.
+  #
+  # `--watch` stays resident and re-pins on every output hotplug. Two things
+  # make that actually hold, both of which the old `exec sway-autostart` got
+  # wrong -- it swallowed one event at session start and then sat dead for the
+  # rest of the session, which is why docking at work never re-pinned:
+  #
+  #   * `-m` (monitor). Without it swaymsg exits after the FIRST response
+  #     (`do { ... } while (monitor)` in swaymsg/main.c; its man page: "Monitor
+  #     for responses until killed instead of exiting after the first
+  #     response"). The first output event arrives at session start, as kanshi
+  #     applies the profile -- so the watcher's lifetime was a couple of
+  #     seconds, every session.
+  #   * the systemd unit below, not `exec ... &`: an unsupervised child has no
+  #     restart, so that first-and-only exit was silent and final (the same
+  #     lesson applets.nix spells out for the tray applets).
   sway-outputs = pkgs.writeShellScriptBin "sway-outputs" ''
     set -euo pipefail
     jq=${pkgs.jq}/bin/jq
@@ -63,11 +78,30 @@ let
     # Move workspaces: sway auto-creates one per output in connector order, so
     # `workspace N output X` alone only sets the default and wouldn't relocate
     # them. Restore focus afterwards so a hotplug doesn't jump your view.
+    #
+    # The `workspace N output X` assignments (no focus change, verified in
+    # sway 1.12's commands/workspace.c) are what make `$mod+1` open the middle
+    # monitor and keep an *empty* ws1 from being destroyed when you switch away
+    # -- without them a fresh ws1 is created on whatever output has focus. They
+    # live in sway's in-memory config, so a `swaymsg reload` drops them until
+    # the next re-pin (see the $mod+Shift+c keybind, which restarts this unit).
     focused="$($jq -r '[.[] | select(.focused) | .name][0] // empty' <<<"$($swaymsg -t get_workspaces -r)")"
+    [ -n "$laptop" ] && swaymsg "workspace 2 output \"$laptop\"" 2>/dev/null || true
+    [ -n "$middle" ] && swaymsg "workspace 1 output \"$middle\"" 2>/dev/null || true
+    [ -n "$right" ] && swaymsg "workspace 3 output \"$right\"" 2>/dev/null || true
     [ -n "$laptop" ] && swaymsg "workspace 2; move workspace to output \"$laptop\"" 2>/dev/null || true
     [ -n "$middle" ] && swaymsg "workspace 1; move workspace to output \"$middle\"" 2>/dev/null || true
     [ -n "$right" ] && swaymsg "workspace 3; move workspace to output \"$right\"" 2>/dev/null || true
     [ -n "$focused" ] && swaymsg "workspace \"$focused\"" 2>/dev/null || true
+
+    # resident mode: `-m` keeps swaymsg subscribed for the life of the unit
+    # (see the note on sway-outputs above -- without it this exits on the first
+    # event). `-r` gives one compact line per event, so one re-pin per hotplug.
+    # When the socket goes away the pipeline fails, the unit restarts, and it
+    # exits when sway-session.target stops (Unit.PartOf).
+    if [ "''${1:-}" = --watch ]; then
+      "$swaymsg" -m -t subscribe -r '["output"]' | while read -r _; do sway-outputs; done
+    fi
   '';
 in
 {
@@ -153,18 +187,21 @@ in
       pkgs.wl-clipboard
       sway-outputs
       sway-window-switch
-      (pkgs.writeShellScriptBin "sway-autostart" ''
-        set -u
-        # nm-applet, syncthingtray, blueman (on-demand via $mod+b), dunst, waybar
-        # and swaync are all systemd user services or keybinds now -- nothing
-        # left here to background/pkill. Just the workspace pinning.
-
-        # pin workspaces once, then re-pin on every monitor hotplug (kanshi
-        # meanwhile owns the actual output arrangement)
-        sway-outputs
-        (${pkgs.sway}/bin/swaymsg -t subscribe '["output"]' | while read -r _; do sway-outputs; done) &
-      '')
     ];
+
+    # Workspace pinning: runs once at session start (pins what's there), then
+    # re-pins on every monitor hotplug. This is all that `sway-autostart` did.
+    systemd.user.services.sway-outputs = {
+      Unit.PartOf = [ "sway-session.target" ];
+      Install.WantedBy = [ "sway-session.target" ];
+      Service = {
+        ExecStart = "${sway-outputs}/bin/sway-outputs --watch";
+        Restart = "always";
+        # Every pin command answers with pretty-printed JSON (~30 journal lines
+        # per hotplug). The journal doesn't want it; errors still reach stderr.
+        StandardOutput = "null";
+      };
+    };
 
     # wofi/waybar/swaync configs are shared via home-manager/modules/{wofi,waybar,swaync}.
   };

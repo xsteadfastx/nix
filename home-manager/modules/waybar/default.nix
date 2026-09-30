@@ -184,7 +184,7 @@ lib.mkIf cfg.desktop {
         # The module swaybar never had: Waybar speaks StatusNotifierItem
         # properly, which is why blueman's tray icon ("its SNI properties are
         # unsupported", per ../sway/config.nix) could never render there. The
-        # applets themselves are still launched from sway-autostart.
+        # applets themselves are systemd user units (../sway/applets.nix).
         tray = {
           icon-size = 18;
           spacing = 8;
