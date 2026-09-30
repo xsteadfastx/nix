@@ -28,7 +28,7 @@ host is its own site and gets its own). Federation is open
 
 State lives in `/var/lib/tuwunel` (RocksDB + media) and
 `/var/lib/mautrix-<bridge>/` (session DB + generated config), all under restic's
-daily backup — see [`backup.nix`](../hosts/dipper/backup.nix).
+daily backup.
 
 ## Adding a Matrix user
 
@@ -220,6 +220,7 @@ journalctl -u mautrix-whatsapp -f        # or -signal / -slack / -telegram
 | Bridge stops sending on Slack after a while | Slack rotated the `xoxc-` token / `d` cookie. | `login token <xoxc-…> <xoxd-…>` again in the `@slackbot` DM. |
 | Login command seems ignored — no visible answer | The bot *did* reply; the answer is a notice in the DM. Telegram in particular asks which flow you want. | Scroll the DM, or reply `login qr`. |
 
-Note: **`/var/lib/mautrix-slack` is not in the restic path list** (only
-tuwunel and the Telegram/WhatsApp/Signal bridge state are). Losing it costs a
-Slack re-login, not a re-pair.
+All of it is covered by restic's daily backup (see
+[`backup.nix`](../hosts/dipper/backup.nix)): `/var/lib/tuwunel` and every
+`/var/lib/mautrix-<bridge>` directory. A restore therefore does not require
+re-pairing the bridges.
