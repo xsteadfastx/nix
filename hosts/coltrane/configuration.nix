@@ -46,26 +46,6 @@
   hardware.enableAllFirmware = true;
 
   # Bootloader.
-  # MeshCore/CP210x USB-UART bridge (10c4:ea60): Chromium Web Serial is broken
-  # on NixOS in two ways, both worked around by pre-setting the tty on plug-in:
-  #
-  # 1. Baud rate (glibc >= 2.42): B115200 is now the plain number 115200, but
-  #    Chromium still does `c_cflag &= ~CBAUD; c_cflag |= B115200` + raw
-  #    TCSETS2, which yields CBAUD=B0. The chip then keeps its previous speed
-  #    (9600 on a fresh plug) and the app times out ("Failed to fetch device
-  #    info"). Pre-set 115200 so the ignored speed change doesn't matter.
-  #    ponytail: only covers 115200; a flasher switching baud mid-flash still
-  #    breaks. Real fix: patch Chromium to use BOTHER + c_ospeed.
-  # 2. VMIN=0 (left by pyserial: esptool, meshcore-cli, ...; the kernel keeps
-  #    termios per tty index across unplug until reboot): Chromium inherits it,
-  #    a non-blocking read() returns 0, and Chromium reports "The device has
-  #    been lost". Restore min 1 time 0. Re-plug after using a pyserial tool.
-  #
-  # ModemManager's 80-mm-candidate.rules also AT-probes every USB-serial tty
-  # as a possible modem and races the reset -- ignore this device.
-  services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1", RUN+="${pkgs.coreutils}/bin/stty -F $devnode 115200 min 1 time 0"
-  '';
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;

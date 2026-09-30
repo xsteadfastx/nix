@@ -9,6 +9,7 @@ _: {
     ./fix-isy-hub.nix
     ./fix-kernel.nix
     ./hardware-configuration.nix
+    ./meshcore.nix
     ./ollama.nix
     ./podman.nix
     ./paperless.nix
