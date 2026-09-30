@@ -229,6 +229,18 @@ in
                     format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_disk}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
                     format_space  "#[bg=$dim]"
 
+                    // No format_hide_on_overlength: it drops a whole part (all
+                    // 55 cols of metrics+clock) the moment one col doesn't fit,
+                    // and the parts never actually overlap -- zjstatus appends
+                    // left + get_spacer + right, and the spacer is
+                    // `cols.saturating_sub(left+right)` (src/config.rs), so
+                    // zero means right starts flush against left and merely runs
+                    // off the right edge. The clip already eats the clock's
+                    // date/seconds first, which is the graceful version. The
+                    // long-name bug is handled at the source instead: the name
+                    // bound in zellij_tab_rename (fish) -- zjstatus itself never
+                    // truncates a tab name.
+
                     border_enabled "false"
 
                     // mode + session get their own solid-color chip (not just
@@ -326,6 +338,12 @@ in
       description = "rename the zellij tab holding this pane, if it is focused there";
       body = ''
         set -q ZELLIJ_PANE_ID; or return
+        # Bound the name here, at the one funnel both setters below route
+        # through, not in each of them: zjstatus never truncates a tab name and
+        # its tabs widget is unbounded, so a single long name (a deep directory,
+        # a store path `zellij_tab_running` reduced to its basename) eats the
+        # right half of the bar. Keep the head -- the part that identifies it.
+        test (string length -- $name) -gt 20; and set name (string sub -l 19 -- $name)"…"
         # columns: TAB_ID ... PANE_ID TYPE TITLE FOCUSED FLOATING EXITED
         set -l m (command zellij action list-panes -t -s 2>/dev/null \
             | string match -r -g "^(\d+)\s.*\sterminal_$ZELLIJ_PANE_ID\s.*\s(true|false)\s+\S+\s+\S+\$")
