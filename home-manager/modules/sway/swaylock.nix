@@ -11,13 +11,28 @@ lib.mkIf cfg.desktop {
   # swayidle as a systemd user service (auto-restart).
   services.swayidle = {
     enable = true;
+    # Timeouts are seconds of input inactivity. swayidle skips them while a
+    # client holds an idle-inhibit (video playback, browser fullscreen), so a
+    # running film never blanks the screen out from under you.
     timeouts = [
       {
         timeout = 300;
         command = "${pkgs.swaylock}/bin/swaylock -f";
       }
+      {
+        # Screen off 5 min after the lock: sway's own `output * power off`.
+        # `*` is quoted because swayidle runs the command through `sh -c`.
+        timeout = 600;
+        command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
+        resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
+      }
     ];
-    events.before-sleep = "${pkgs.swaylock}/bin/swaylock -f";
+    events = {
+      before-sleep = "${pkgs.swaylock}/bin/swaylock -f";
+      # power-off can survive a suspend/resume; force the outputs back on so a
+      # wake doesn't land on a black screen that only lights up on a keypress.
+      after-resume = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
+    };
   };
 
   # Colors from the upstream dracula/swaylock theme on plain swaylock. The
