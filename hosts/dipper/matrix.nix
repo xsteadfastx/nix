@@ -83,7 +83,11 @@ in
       # Caddy listener; SNI differs, so tlsrouter routes www.${domain} here.
       www.${domain}:${toString clientPort} {
         root * ${elementWeb}
-        try_files {path} /index.html
+        # The extra `{path}/index.html` matters: Caddy's try_files only probes
+        # files, not directories, so `/usercontent/` (Element's sandboxed
+        # download iframe target) would otherwise fall through to the SPA shell
+        # and file downloads would silently do nothing.
+        try_files {path} {path}/index.html /index.html
         encode gzip
         file_server
       }

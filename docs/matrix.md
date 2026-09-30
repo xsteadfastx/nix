@@ -218,6 +218,7 @@ journalctl -u mautrix-whatsapp -f        # or -signal / -slack / -telegram
 | `404`/`401` from the homeserver while registering | `appservice.address` is wrong — it must be the bridge's own listener port, and the registered `url` must match it. | Fix the address, redeploy, `!admin appservices unregister <id>`, register again. |
 | `network_api_hash not found` despite a valid secret | Env var name wrong: it must use `__` for `.` (`..._NETWORK__API_HASH`). | Fix the var name in the sops env file. |
 | Bridge stops sending on Slack after a while | Slack rotated the `xoxc-` token / `d` cookie. | `login token <xoxc-…> <xoxd-…>` again in the `@slackbot` DM. |
+| Clicking an attachment in Element web does nothing — no download, no error | `/usercontent/` (the sandboxed iframe that turns the blob into a download) is serving the SPA shell instead of Element's 425-byte wrapper. Caddy's `try_files` probes files only, so a directory request falls through to `/index.html`. | The `www.` site needs `try_files {path} {path}/index.html /index.html` (see `matrix.nix`). Check with `curl -s https://www.matrix.xsfx.dev/usercontent/` — it must be the small wrapper loading `../bundles/<hash>/usercontent.js`, not the ~4.6 KB app HTML. |
 | Login command seems ignored — no visible answer | The bot *did* reply; the answer is a notice in the DM. Telegram in particular asks which flow you want. | Scroll the DM, or reply `login qr`. |
 
 All of it is covered by restic's daily backup (see
