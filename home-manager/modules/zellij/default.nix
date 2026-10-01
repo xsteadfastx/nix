@@ -1,8 +1,271 @@
 {
   pkgs,
+  lib,
   ...
 }:
 let
+  # Glyphs, the Dracula palette and every metric's colour/threshold, shared with
+  # the waybar bar so the two cannot disagree -- see
+  # home-manager/lib/statusbar.nix. Here they are rendered into zjstatus'
+  # dialect: the layout's color_* vars, the command_*_format strings, and the
+  # shell script's glyphs/colours.
+  statusbar = import ../../lib/statusbar.nix { inherit lib; };
+  segments = statusbar.segments;
+  char = statusbar.char;
+
+  # zjstatus names palette entries for itself: $bg/$dim/$fg, and a short name
+  # per colour (its own examples and docs use `blue` for Dracula's @comment).
+  zjVars = {
+    bg = statusbar.palette.background;
+    dim = statusbar.palette.selection;
+    fg = statusbar.palette.foreground;
+    green = statusbar.palette.green;
+    purple = statusbar.palette.purple;
+    pink = statusbar.palette.pink;
+    orange = statusbar.palette.orange;
+    cyan = statusbar.palette.cyan;
+    blue = statusbar.palette.comment;
+  };
+  # Cosmetic only (KDL is whitespace-insensitive): line 1 of the interpolated
+  # block inherits the layout line's own indentation, so only the rest need it,
+  # and only because the layout string indents it to 20 - the 4 spaces Nix
+  # strips from the string's common indent.
+  indent = "                ";
+  zjColorLines = lib.concatStringsSep ("\n" + indent) (
+    lib.mapAttrsToList (name: hex: "color_${name} " + lib.strings.escapeNixString hex) zjVars
+  );
+
+  # A metric's zjstatus format: its palette colour, bold, on the bar's $dim.
+  metricFormat = segment: "#[fg=$" + segments.${segment}.color + ",bg=$dim,bold] {stdout} ";
+
+  # The shell script prints a raw SGR when a value crosses a threshold (zjstatus
+  # parses `#[fg=...]` only in its own format string, never in a command's
+  # stdout), so each warning/critical/status colour needs its `r;g;b`.
+  sgrOf = segment: state: statusbar.sgr statusbar.palette.${(statusbar.stateOf segment state).color};
+
+  # Thresholds the script compares against, and the SGR parameters it prints
+  # when a value crosses one.
+  at = segment: state: (statusbar.stateOf segment state).at;
+  battery = segments.battery;
+
+  # zellij's own UI colours -- panes, frames, tab bar, tables/lists, exit codes,
+  # multiplayer cursors. Not a palette: zellij's theme schema is one block per
+  # component, each naming base/background/emphasis_0..3, so this is the role
+  # assignment table, with the colours themselves taken from the palette above
+  # (null = zellij's "terminal default", what the frame/exit-code backgrounds
+  # use). Spelled out because a plugin cannot read a theme -- zellij-tile
+  # exposes none -- so the bar needs its own colour_* vars too.
+  #
+  # Components and their order follow the theme this replaced; the generator
+  # below emits exactly the `themes { custom-dracula { ... } }` block that used
+  # to be typed out here as 94 `r g b` triplets.
+  #
+  # Deliberately *not* zellij's bundled `dracula` theme, nor dracula/zellij:
+  # both paint panes with #000000, which is not a Dracula colour (the spec has
+  # nothing darker than Background #282a36, and even its AnsiBlack is #21222c),
+  # and neither uses Selection #44475a or Purple #bd93f9 at all. Every value in
+  # the table below is a spec colour, which is the same "dracula, not void" call
+  # the layout comment above makes.
+  themeColors = [
+    {
+      name = "text_unselected";
+      roles = {
+        base = "foreground";
+        background = "background";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "text_selected";
+      roles = {
+        base = "foreground";
+        background = "selection";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "ribbon_unselected";
+      roles = {
+        base = "foreground";
+        background = "selection";
+        emphasis_0 = "red";
+        emphasis_1 = "orange";
+        emphasis_2 = "cyan";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "ribbon_selected";
+      roles = {
+        base = "background";
+        background = "purple";
+        emphasis_0 = "background";
+        emphasis_1 = "selection";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "table_title";
+      roles = {
+        base = "green";
+        background = "background";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "table_cell_selected";
+      roles = {
+        base = "foreground";
+        background = "selection";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "table_cell_unselected";
+      roles = {
+        base = "foreground";
+        background = "background";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "list_selected";
+      roles = {
+        base = "foreground";
+        background = "selection";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "list_unselected";
+      roles = {
+        base = "foreground";
+        background = "background";
+        emphasis_0 = "orange";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "frame_unselected";
+      roles = {
+        base = "selection";
+        background = null;
+        emphasis_0 = "selection";
+        emphasis_1 = "selection";
+        emphasis_2 = "selection";
+        emphasis_3 = "selection";
+      };
+    }
+    {
+      name = "frame_selected";
+      roles = {
+        base = "purple";
+        background = null;
+        emphasis_0 = "purple";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "pink";
+      };
+    }
+    {
+      name = "frame_highlight";
+      roles = {
+        base = "pink";
+        background = null;
+        emphasis_0 = "pink";
+        emphasis_1 = "cyan";
+        emphasis_2 = "green";
+        emphasis_3 = "orange";
+      };
+    }
+    {
+      name = "exit_code_success";
+      roles = {
+        base = "green";
+        background = null;
+        emphasis_0 = "green";
+        emphasis_1 = "green";
+        emphasis_2 = "green";
+        emphasis_3 = "green";
+      };
+    }
+    {
+      name = "exit_code_error";
+      roles = {
+        base = "red";
+        background = null;
+        emphasis_0 = "red";
+        emphasis_1 = "red";
+        emphasis_2 = "red";
+        emphasis_3 = "red";
+      };
+    }
+    {
+      name = "multiplayer_user_colors";
+      roles = {
+        player_1 = "pink";
+        player_2 = "cyan";
+        player_3 = "green";
+        player_4 = "yellow";
+        player_5 = "purple";
+        player_6 = "orange";
+        player_7 = "red";
+        player_8 = "selection";
+        player_9 = "cyan";
+        player_10 = "pink";
+      };
+    }
+  ];
+  themeRoleOrder = [
+    "base"
+    "background"
+    "emphasis_0"
+    "emphasis_1"
+    "emphasis_2"
+    "emphasis_3"
+  ]
+  ++ map (n: "player_${toString n}") (lib.range 1 10);
+  themeValue =
+    color:
+    if color == null then
+      "0" # zellij's terminal default
+    else
+      lib.concatStringsSep " " (map toString (statusbar.rgb statusbar.palette.${color}));
+  themeKdl = lib.concatStringsSep "\n        " (
+    map (
+      component:
+      component.name
+      + " {\n"
+      + lib.concatStringsSep "\n" (
+        map (role: "            ${role} ${themeValue component.roles.${role}}") (
+          lib.filter (role: lib.hasAttr role component.roles) themeRoleOrder
+        )
+      )
+      + "\n        }"
+    ) themeColors
+  );
+
   # Backing shell commands for the zjstatus powerline segments below — no
   # native zellij/zjstatus widget for battery/cpu/ram/disk, so shell out (same
   # any tmux status plugin does).
@@ -13,20 +276,68 @@ let
       battery)
       	cap=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo "")
       	st=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "")
-      	# blank only while actually discharging or at a full charge; AC for
-      	# every other status (Charging, "Not charging" while plugged in but
-      	# topped off, Unknown, ...) -- the default case, not just "Charging".
+      	# blank only while actually discharging or at a full charge; the AC
+      	# word -- from the same entry in home-manager/lib/statusbar.nix that
+      	# waybar's format-charging / format-not-charging / format-plugged print
+      	# -- for every other status (Charging, "Not charging" while plugged in
+      	# but topped off, Unknown, ...). The default case, not just "Charging".
       	case "$st" in
       	Discharging | discharging) stat_word="" ;;
       	Full | high) stat_word="" ;;
-      	*) stat_word="AC" ;;
+      	*) stat_word="${battery.word}" ;;
       	esac
-      	# same 5-icon bucketing as waybar's battery format-icons/states:
-      	# cap/20 (0-19/20-39/40-59/60-79/80-100), capped at the last icon.
-      	icons=(    )
-      	idx=$((''${cap:-0} / 20))
-      	[ "$idx" -gt 4 ] && idx=4
-      	echo "''${icons[$idx]} $stat_word $cap" | tr -s ' '
+      	# Same icons and bucketing as waybar's battery format-icons: cap/n
+      	# (0-19/20-39/40-59/60-79/80-100 for the five below), capped at the last
+      	# icon. Icons, thresholds and colours all come from
+      	# home-manager/lib/statusbar.nix.
+      	icons=(${lib.concatMapStringsSep " " char battery.icons})
+      	idx=$((''${cap:-0} / ${toString (100 / (lib.length battery.icons))}))
+      	last=${toString ((lib.length battery.icons) - 1)}
+      	[ "$idx" -gt "$last" ] && idx=$last
+      	# Same colours as waybar's battery CSS, from the same data: its
+      	# charging/full/plugged classes green, then warning (<=${toString (at "battery" "warning")}%) yellow
+      	# and critical (<=${toString (at "battery" "critical")}%) red. Green is decided first because waybar's
+      	# CSS paints a charging battery green even while the charge is low, and
+      	# waybar's classes are not the raw sysfs status -- src/modules/battery.cpp
+      	# resolves it: a status of "Unknown" goes through the AC adapter (full at
+      	# 100%, else plugged while the adapter is online), and "Discharging" or
+      	# "Not charging" become "Plugged" whenever the adapter is online -- the TLP
+      	# charge-threshold case, which is why waybar gives Plugged priority. The
+      	# adapter is looked up by the names it goes by (AC, ADP1); waybar takes the
+      	# last /sys/class/power_supply node that has an online file, which the USB-C
+      	# port nodes also satisfy.
+      	ac=""
+      	for d in /sys/class/power_supply/AC /sys/class/power_supply/ADP*; do
+      		[ -e "$d/online" ] && ac="$d" && break
+      	done
+      	plugged=""
+      	if [ -n "$ac" ] && [ "$(cat "$ac/online" 2>/dev/null)" = 1 ] \
+      		&& [ "$(cat "$ac/status" 2>/dev/null)" != Discharging ]; then
+      		plugged=1
+      	fi
+      	case "$st" in
+      	"" | Unknown | unknown)
+      		if [ "''${cap:-0}" -eq 100 ]; then eff=Full
+      		elif [ -n "$plugged" ]; then eff=Plugged
+      		else eff=Discharging; fi
+      		;;
+      	Discharging | "Not charging")
+      		if [ -n "$plugged" ]; then eff=Plugged; else eff="$st"; fi
+      		;;
+      	*) eff="$st" ;;
+      	esac
+      	esc=$(printf '\033')
+      	sgr=""
+      	case "$eff" in
+      	Charging | Full | Plugged) sgr="''${esc}[${sgrOf "battery" "charging"}m" ;;
+      	*)
+      		if [ -n "$cap" ]; then
+      			[ "$cap" -le ${toString (at "battery" "warning")} ] && sgr="''${esc}[${sgrOf "battery" "warning"}m"
+      			[ "$cap" -le ${toString (at "battery" "critical")} ] && sgr="''${esc}[${sgrOf "battery" "critical"}m"
+      		fi
+      		;;
+      	esac
+      	echo "''${sgr}''${icons[$idx]} $stat_word $cap" | tr -s ' '
       	;;
       cpu)
       	# Delta since the LAST invocation, not an internal 1s sleep-sample:
@@ -52,7 +363,7 @@ let
       		t1=$((a1 + b1 + c1 + i1 + d1 + e1 + f1 + g1))
       		t2=$((a + b + c + i + d + e + f + g))
       		awk -v i1="$((i1 + d1))" -v i2="$((i + d))" -v t1="$t1" -v t2="$t2" \
-      			'BEGIN { d = t2 - t1; printf " %d%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
+      			'BEGIN { d = t2 - t1; printf "${char segments.cpu.glyph} %d%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
       	else
       		echo " ..."
       	fi
@@ -77,7 +388,7 @@ let
       	awk -v arc="''${arc:-0}" '
           /^MemTotal:/     { total = $2 }
           /^MemAvailable:/ { avail = $2 }
-          END               { printf "󰍛 %d%%", (total - avail - arc) / total * 100 }
+          END               { printf "${char segments.memory.glyph} %d%%", (total - avail - arc) / total * 100 }
         ' /proc/meminfo
       	;;
       disk)
@@ -88,7 +399,19 @@ let
       	# on this ZFS root (11% where waybar reads 10%). stat -f prints the
       	# statvfs fields waybar itself reads: %b = f_blocks, %f = f_bfree (%a
       	# is f_bavail, the one not to use).
-      	stat -f --format='%b %f' / | awk '{ printf "󰋊 %d%%", ($1 - $2) * 100 / $1 }'
+      	pct=$(stat -f --format='%b %f' / | awk '{ printf "%d", ($1 - $2) * 100 / $1 }')
+      	# Same thresholds and colours as waybar's disk `states`, from the same data.
+      	# zjstatus parses `#[fg=...]` only in the format string it is handed
+      	# (src/render.rs `from_format_string`), never in a command's stdout, so the
+      	# colour switch has to ride along in this script's stdout as a raw SGR
+      	# sequence. Safe because zjstatus wraps that stdout in the format's own SGR
+      	# and resets after it (`format_string`): only fg is overridden here, bg=$dim
+      	# and bold survive, and the next format part sets its own colours anyway.
+      	esc=$(printf '\033')
+      	sgr=""
+      	if [ "$pct" -ge ${toString (at "disk" "warning")} ]; then sgr="''${esc}[${sgrOf "disk" "warning"}m"; fi
+      	if [ "$pct" -ge ${toString (at "disk" "critical")} ]; then sgr="''${esc}[${sgrOf "disk" "critical"}m"; fi
+      	printf '%s${char segments.disk.glyph} %d%%' "$sgr" "$pct"
       	;;
       esac
     '';
@@ -211,15 +534,7 @@ in
             children
             pane size=1 borderless=true {
                 plugin location="file:${pkgs.unstable.zellijPlugins.zjstatus}" {
-                    color_bg     "#282a36"
-                    color_dim    "#44475a"
-                    color_fg     "#f8f8f2"
-                    color_green  "#50fa7b"
-                    color_purple "#bd93f9"
-                    color_pink   "#ff79c6"
-                    color_orange "#ffb86c"
-                    color_cyan   "#8be9fd"
-                    color_blue   "#6272a4"
+                    ${zjColorLines}
 
                     format_left   "{mode}#[fg=$bg,bg=$purple,bold] {session} #[fg=$fg,bg=$dim]{tabs}"
                     format_center ""
@@ -268,22 +583,22 @@ in
                     tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
 
                     command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
-                    command_battery_format   "#[fg=$pink,bg=$dim,bold] {stdout} "
+                    command_battery_format   "${metricFormat "battery"}"
                     command_battery_interval "15"
 
                     command_cpu_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics cpu"
-                    command_cpu_format   "#[fg=$orange,bg=$dim,bold] {stdout} "
+                    command_cpu_format   "${metricFormat "cpu"}"
                     command_cpu_interval "5"
 
                     command_ram_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics ram"
-                    command_ram_format   "#[fg=$cyan,bg=$dim,bold] {stdout} "
+                    command_ram_format   "${metricFormat "memory"}"
                     command_ram_interval "15"
 
                     command_disk_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics disk"
-                    command_disk_format   "#[fg=$green,bg=$dim,bold] {stdout} "
+                    command_disk_format   "${metricFormat "disk"}"
                     command_disk_interval "30"
 
-                    datetime          "#[fg=$blue,bg=$dim,bold] 󰥔 {format} "
+                    datetime          "#[fg=$blue,bg=$dim,bold] ${char segments.clock.glyph} {format} "
                     datetime_format   "%H:%M:%S %d/%m/%Y"
                     datetime_timezone "Europe/Berlin"
                 }
@@ -566,138 +881,18 @@ in
           // color is configurable; the plugin passively watches PaneUpdate, no
           // wrapper or remote changes needed.
           "file:${pkgs.unstable.zellij-ssh-tint}" {
-              color "#ff5555"
+              // Dracula red, from the same table as everything else here.
+              color "${statusbar.palette.red}"
           }
       }
 
-      // full dracula (v2) — all UI components, with #44475a instead of pure
-      // black so panes/status bar read as dracula, not void.
+      // All UI components, with the spec's Background/Foreground/Selection
+      // instead of pure black-and-white: zellij's bundled dracula paints panes
+      // #000000 and drops Selection and Purple entirely. Values come from
+      // home-manager/lib/statusbar.nix (see themes/themeColors there).
       themes {
           custom-dracula {
-              text_unselected {
-                  base 248 248 242
-                  background 40 42 54
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              text_selected {
-                  base 248 248 242
-                  background 68 71 90
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              ribbon_unselected {
-                  base 248 248 242
-                  background 68 71 90
-                  emphasis_0 255 85 85
-                  emphasis_1 255 184 108
-                  emphasis_2 139 233 253
-                  emphasis_3 255 121 198
-              }
-              ribbon_selected {
-                  base 40 42 54
-                  background 189 147 249
-                  emphasis_0 40 42 54
-                  emphasis_1 68 71 90
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              table_title {
-                  base 80 250 123
-                  background 40 42 54
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              table_cell_selected {
-                  base 248 248 242
-                  background 68 71 90
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              table_cell_unselected {
-                  base 248 248 242
-                  background 40 42 54
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              list_selected {
-                  base 248 248 242
-                  background 68 71 90
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              list_unselected {
-                  base 248 248 242
-                  background 40 42 54
-                  emphasis_0 255 184 108
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              frame_unselected {
-                  base 68 71 90
-                  background 0
-                  emphasis_0 68 71 90
-                  emphasis_1 68 71 90
-                  emphasis_2 68 71 90
-                  emphasis_3 68 71 90
-              }
-              frame_selected {
-                  base 189 147 249
-                  background 0
-                  emphasis_0 189 147 249
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 121 198
-              }
-              frame_highlight {
-                  base 255 121 198
-                  background 0
-                  emphasis_0 255 121 198
-                  emphasis_1 139 233 253
-                  emphasis_2 80 250 123
-                  emphasis_3 255 184 108
-              }
-              exit_code_success {
-                  base 80 250 123
-                  background 0
-                  emphasis_0 80 250 123
-                  emphasis_1 80 250 123
-                  emphasis_2 80 250 123
-                  emphasis_3 80 250 123
-              }
-              exit_code_error {
-                  base 255 85 85
-                  background 0
-                  emphasis_0 255 85 85
-                  emphasis_1 255 85 85
-                  emphasis_2 255 85 85
-                  emphasis_3 255 85 85
-              }
-              multiplayer_user_colors {
-                  player_1 255 121 198
-                  player_2 139 233 253
-                  player_3 80 250 123
-                  player_4 241 250 140
-                  player_5 189 147 249
-                  player_6 255 184 108
-                  player_7 255 85 85
-                  player_8 68 71 90
-                  player_9 139 233 253
-                  player_10 255 121 198
-              }
+              ${themeKdl}
           }
       }
     '';

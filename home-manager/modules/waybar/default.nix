@@ -9,42 +9,80 @@ let
   cfg = nixosConfig.features;
   swayncClient = "${pkgs.unstable.swaynotificationcenter}/bin/swaync-client";
 
-  # Nerd Font glyph from its codepoint, via JSON's \u escape.
-  #
-  # Two reasons this indirection exists:
-  #  1. A literal glyph written straight into this file silently became an
-  #     empty string once (waybar got `format: ""` -- no icon at all), so glyphs
-  #     never appear literally here.
-  #  2. JSON's \u takes exactly four hex digits, so codepoints above U+FFFF --
-  #     which is most of the Material Design set -- have to be written as a
-  #     UTF-16 surrogate pair. The pairs below were generated, not hand-rolled.
-  #
-  # Every codepoint here was checked against the built font's charset
-  # (fc-query), which is why the icons work at all: this font only gained the
-  # Font Awesome / Material ranges once `--complete` was passed to
-  # font-patcher (see pkgs/jetbrainsmono-nerdfont-zero.nix).
-  glyph = body: builtins.fromJSON ''"${body}"'';
+  # Glyphs, the Dracula palette, and the colour/threshold of every metric both
+  # bars show -- see home-manager/lib/statusbar.nix. This module renders them
+  # into waybar's dialect (config JSON + CSS); the zellij module renders the
+  # same values into zjstatus' (layout KDL + the metrics script), which is what
+  # keeps the two bars looking the same.
+  statusbar = import ../../lib/statusbar.nix { inherit lib; };
 
-  icons = {
-    cpu = glyph ''\uF2DB''; # fa-microchip
-    memory = glyph ''\uDB80\uDF5B''; # md-memory            (astral)
-    disk = glyph ''\uDB80\uDECA''; # md-harddisk          (astral)
-    wifi = glyph ''\uDB81\uDDA9''; # md-wifi              (astral)
-    ethernet = glyph ''\uDB80\uDE00''; # md-ethernet          (astral)
-    disconnected = glyph ''\uDB81\uDDAA''; # md-wifi_off          (astral)
-    vpn = glyph ''\uDB81\uDD82''; # md-vpn               (astral)
-    bell = glyph ''\uDB80\uDC9A''; # md-bell              (astral)
-    clock = glyph ''\uDB82\uDD54''; # md-clock             (astral)
-    volume = glyph ''\uDB81\uDD7E''; # md-volume_high       (astral)
-    muted = glyph ''\uDB81\uDD81''; # md-volume_off        (astral)
-    music = glyph ''\uDB81\uDF5A''; # md-music             (astral)
-    pause = glyph ''\uDB80\uDFE4''; # md-pause             (astral)
-    batteryEmpty = glyph ''\uF244''; # fa-battery-empty
-    batteryQ1 = glyph ''\uF243''; # fa-battery-quarter
-    batteryHalf = glyph ''\uF242''; # fa-battery-half
-    batteryQ3 = glyph ''\uF241''; # fa-battery-three-quarters
-    batteryFull = glyph ''\uF240''; # fa-battery-full
-  };
+  # Glyphs waybar has and the zellij bar does not (network, volume, mpris):
+  # segments of its own, so their glyphs live here. Codepoints written as hex
+  # strings, same as the shared ones -- see statusbar.nix for why (nixfmt) and
+  # for the font-charset check every codepoint here went through.
+  glyph = lib.fromHexString;
+  icons = lib.mapAttrs (_: statusbar.char) (
+    statusbar.icons
+    // {
+      wifi = glyph "F05A9"; # md-wifi
+      ethernet = glyph "F0200"; # md-ethernet
+      disconnected = glyph "F05AA"; # md-wifi_off
+      vpn = glyph "F0582"; # md-vpn
+      bell = glyph "F009A"; # md-bell
+      volume = glyph "F057E"; # md-volume_high
+      muted = glyph "F0581"; # md-volume_off
+      music = glyph "F075A"; # md-music
+      pause = glyph "F03E4"; # md-pause
+    }
+  );
+
+  # Battery label: one plain format and one carrying the AC word, applied per
+  # status class. Same word as the zellij bar's metrics script, from the same
+  # entry in statusbar.nix.
+  batteryFormats = {
+    format = " {icon} {capacity}%";
+    format-full = " {icon} {capacity}%";
+  }
+  // lib.listToAttrs (
+    map (
+      class: lib.nameValuePair "format-${class}" " {icon} ${statusbar.segments.battery.word} {capacity}%"
+    ) statusbar.segments.battery.wordClasses
+  );
+
+  # style.css holds the layout and the waybar-only colours; the palette and the
+  # metric colour rules are generated from the same data the zellij bar renders
+  # from, so the two cannot drift. Prepended, not appended: @define-color has to
+  # precede its uses (GTK resolves at parse time).
+  styleCss = pkgs.writeText "waybar-style.css" (
+    lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: hex: "@define-color ${name} ${hex};") statusbar.palette
+    )
+    + "\n"
+    + builtins.readFile ./style.css
+    + "\n"
+    # Appended so they win over the shared `color: @foreground` in style.css's
+    # module block (same specificity, source order decides).
+    + lib.concatStringsSep "\n" (lib.mapAttrsToList segmentCss statusbar.segments)
+    + "\n"
+  );
+
+  # `#cpu { color: @orange; }` plus one rule per state. `classes` is waybar's
+  # own class name where it differs from the state name (a plugged battery is
+  # `#battery.charging` / `.plugged` / `.full`).
+  segmentCss =
+    _: segment:
+    lib.concatStringsSep "\n" (
+      [ "#${segment.waybar} {\n    color: @${segment.color};\n}" ]
+      ++ map (
+        state:
+        let
+          classes = state.classes or [ state.name ];
+        in
+        "${
+          lib.concatMapStringsSep ",\n" (class: "#${segment.waybar}.${class}") classes
+        } {\n    color: @${state.color};\n}"
+      ) (segment.states or [ ])
+    );
 in
 lib.mkIf cfg.desktop {
   # The bar, replacing swaybar + bumblebee-status.
@@ -52,7 +90,8 @@ lib.mkIf cfg.desktop {
   # Flat Dracula with icons. Powerline was built first and then dropped: with
   # Dracula's palette every second segment sat on the bar colour, so the row
   # read as irregular islands and a green "plugged" battery slab cut across it.
-  # See style.css for the palette.
+  # See home-manager/lib/statusbar.nix for the palette and the segment
+  # colours; style.css holds the layout and the waybar-only colours.
   #
   # `mode = "dock"` is the real mode now: always visible, standard systemd-run
   # waybar like everyone else's setup, not sway hide/reveal-managing it via
@@ -102,7 +141,7 @@ lib.mkIf cfg.desktop {
     enable = true;
     package = pkgs.waybar;
     systemd.enable = true;
-    style = ./style.css;
+    style = styleCss;
 
     settings = {
       mainBar = {
@@ -228,6 +267,11 @@ lib.mkIf cfg.desktop {
           path = "/";
           format = " ${icons.disk} {percentage_used}%";
           tooltip-format = "{used} / {total} GiB";
+          # waybar only emits a state class when `states` exists
+          # (src/ALabel.cpp getState), so without this the segment never
+          # changes colour; the classes' colours are generated into style.css
+          # from the same thresholds.
+          states = statusbar.statesFor "disk";
         };
 
         # bumblebee's nic module needed an exclude list (ip6tnl, veth, vir,
@@ -279,23 +323,16 @@ lib.mkIf cfg.desktop {
           tooltip-format = "{ifname} {ipaddr}";
         };
 
-        # {icon} steps through format-icons by charge level.
+        # {icon} steps through format-icons by charge level. The formats come
+        # from batteryFormats above: waybar swaps the whole format per status
+        # class, and the classes that mean "on mains" also print the AC word the
+        # zellij bar prints (both from home-manager/lib/statusbar.nix).
         battery = {
           interval = 30;
-          format = " {icon} {capacity}%";
-          format-charging = " {icon} {capacity}%";
-          format-icons = [
-            icons.batteryEmpty
-            icons.batteryQ1
-            icons.batteryHalf
-            icons.batteryQ3
-            icons.batteryFull
-          ];
-          states = {
-            warning = 30;
-            critical = 15;
-          };
-        };
+          format-icons = map statusbar.char statusbar.segments.battery.icons;
+          states = statusbar.statesFor "battery";
+        }
+        // batteryFormats;
 
         wireplumber = {
           format = " ${icons.volume} {volume}%";

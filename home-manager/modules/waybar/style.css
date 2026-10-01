@@ -8,10 +8,15 @@
  *   1. font-family swapped to JetBrainsMono Nerd Font (upstream asks Iosevka,
  *      which is not what this session uses).
  *   2. the module list below (upstream ships a Hyprland-oriented config).
- *   3. inline @define-color, because upstream splits colours into colors.css
- *      and we ship a single file.
- * Upstream's own colors.css is reproduced here unchanged -- if Dracula ever
- * revises the palette, sync it from there.
+ *   3. the palette and the metric colour rules are generated, not written here
+ *      -- they come from home-manager/lib/statusbar.nix, the same values the
+ *      zellij status bar renders from, and default.nix prepends/appends them
+ *      to this file. This file is the layout and the waybar-only colours
+ *      (`#mode`, workspaces, tray, tooltips, ...), which use the palette by
+ *      name (@red, @purple, ...) exactly as upstream does.
+ * Upstream's own colors.css is reproduced in that generated part unchanged --
+ * if Dracula ever revises the palette, sync home-manager/lib/statusbar.nix
+ * from there.
  *
  * History: this replaced a hand-built powerline (custom/separatorN modules
  * rendering U+E0B0 with colour swapped to their neighbours). That worked but
@@ -21,18 +26,8 @@
  */
 
 /* ── Official Dracula palette (dracula/waybar colors.css, verbatim) ─────── */
-@define-color background-darker rgba(30, 31, 41, 230);
-@define-color background #282a36;
-@define-color selection #44475a;
-@define-color foreground #f8f8f2;
-@define-color comment #6272a4;
-@define-color cyan #8be9fd;
-@define-color green #50fa7b;
-@define-color orange #ffb86c;
-@define-color pink #ff79c6;
-@define-color purple #bd93f9;
-@define-color red #ff5555;
-@define-color yellow #f1fa8c;
+/* Generated: default.nix prepends the @define-color lines from
+   home-manager/lib/statusbar.nix. */
 
 /* ── Base (upstream, font swapped) ──────────────────────────────────────── */
 * {
@@ -117,29 +112,13 @@ window#waybar {
 }
 
 /*
- * Streamlined with zellij's status bar (home-manager/modules/zellij/default.nix):
- * same metric, same colour, on both bars -- battery pink, cpu orange, memory
- * cyan, clock the blue-grey zellij calls "blue" (Dracula's own name for it is
- * @comment). #battery's state colours below still win: `.warning`/`.critical`
- * are more specific than the bare `#battery` here.
+ * The metric colours (cpu/memory/disk/battery/clock, plus battery's and disk's
+ * warning/critical steps) are generated too -- same values on both bars, from
+ * home-manager/lib/statusbar.nix. They are appended, so they win over the
+ * `color: @foreground` every module gets in the block above.
  */
-#battery {
-    color: @pink;
-}
 
-#cpu {
-    color: @orange;
-}
-
-#memory {
-    color: @cyan;
-}
-
-#clock {
-    color: @comment;
-}
-
-/* ── Notification centre button ─────────────────────────────────────────── */
+/* ── Notification centre button ──────────────────────────────────────────── */
 #custom-swaync {
     color: @purple;
 }
@@ -171,21 +150,9 @@ window#waybar {
 }
 
 /* ── State colours ──────────────────────────────────────────────────────── */
-/* Foreground only -- a coloured background cuts across the bar. */
-#battery.warning {
-    color: @yellow;
-}
-
-#battery.critical {
-    color: @red;
-}
-
-#battery.charging,
-#battery.plugged,
-#battery.full {
-    color: @green;
-}
-
+/* Foreground only -- a coloured background cuts across the bar. Battery's own
+   states are generated (they are mirrored on the zellij bar); this one has no
+   zellij counterpart. */
 #network.disconnected {
     color: @red;
 }
