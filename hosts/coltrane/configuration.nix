@@ -305,16 +305,24 @@
 
   services.resolved.enable = true;
 
-  # Garbage: daily over 30d, but DON'T catch up after sleep.
-  # nix.gc.persistent (default true) makes a gc missed while the laptop is asleep
-  # fire the moment you wake it (~3 min CPU + GBs of disk read right after
-  # lid-open). Setting it false skips the catch-up; the 5..15G min/max-free in
-  # modules/base still auto-GC on low space, so a skipped scan can't grow the store.
-  nix.gc = {
+  # Garbage: fast-nix-gc instead of nix.gc — same daily 30d generation window,
+  # same schedule, but seconds per run instead of minutes. Stock nix-gc spends
+  # 1m45–4m30 just walking the reference graph on this ~118k-path store, even
+  # when it deletes nothing.
+  # On a laptop the timer never actually fires at midnight anyway: it stays
+  # active while suspended, the 00:00 elapse passes, and systemd fires it on
+  # resume — 22 of the last 25 nix-gc runs started in the same second as
+  # `PM: suspend exit`. Persistent= only covers the timer being *inactive*
+  # (powered off / not yet started): true catches up on the next boot, false
+  # skips it. A seconds-long run is cheap enough to catch up.
+  nix.gc.automatic = false; # service unit stays defined, but has no timer
+
+  services.fast-nix-gc = {
+    enable = true;
     automatic = true;
     dates = "daily";
-    options = "--delete-older-than 30d";
-    persistent = false;
+    deleteOlderThan = "30d";
+    persistent = true;
   };
 
   # dell dockingstation

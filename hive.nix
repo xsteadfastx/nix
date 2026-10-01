@@ -51,6 +51,7 @@
       ./hosts/coltrane
 
       inputs.disko.nixosModules.disko
+      inputs.fast-nix-gc.nixosModules.default
       inputs.home-manager.nixosModules.home-manager
       inputs.nixos-hardware.nixosModules.dell-xps-13-9350
       inputs.self.nixosModules.coding-agent

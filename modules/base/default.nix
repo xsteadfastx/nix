@@ -40,7 +40,7 @@
   };
 
   nix.gc = {
-    automatic = true;
+    automatic = lib.mkDefault true;
     dates = lib.mkDefault "weekly";
     options = lib.mkDefault "--delete-older-than 14d";
   };

@@ -16,6 +16,8 @@
     compose2nix.url = "github:aksiksi/compose2nix";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
+    fast-nix-gc.inputs.nixpkgs.follows = "nixpkgs";
+    fast-nix-gc.url = "github:Mic92/fast-nix-gc";
     flake-utils.url = "github:numtide/flake-utils";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
