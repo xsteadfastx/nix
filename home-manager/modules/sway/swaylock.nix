@@ -6,6 +6,11 @@
 }:
 let
   cfg = nixosConfig.features;
+
+  # swaylock takes bare uppercase hex, the palette table (statusbar.nix) holds
+  # the spec spellings.
+  statusbar = import ../../lib/statusbar.nix { inherit lib; };
+  hex = name: lib.toUpper (lib.removePrefix "#" statusbar.palette.${name});
 in
 lib.mkIf cfg.desktop {
   # swayidle as a systemd user service (auto-restart).
@@ -35,7 +40,7 @@ lib.mkIf cfg.desktop {
     };
   };
 
-  # Colors from the upstream dracula/swaylock theme on plain swaylock. The
+  # Colours from the upstream dracula/swaylock theme, on plain swaylock. The
   # theme targets swaylock-effects, but that fork is unmaintained (last push
   # 2024-03) and its `screenshot` busy-loops at 100% CPU with several outputs
   # (jirutka/swaylock-effects#46, #67): after an overnight suspend it drew the
@@ -46,33 +51,39 @@ lib.mkIf cfg.desktop {
     settings = {
       daemonize = true;
       show-failed-attempts = true;
-      # Deliberate deviation from the dracula theme: its #6272A4 fills all three
-      # outputs with grey-blue, which reads as a washed-out wall behind the ring.
-      color = "000000";
+      # The theme's `color=6272A4` (the spec's Comment), restored. The black
+      # deviation was for a lock screen that sat as a flat grey-blue wall behind
+      # the ring for as long as the machine was idle; swayidle now powers the
+      # outputs off 600s after the lock (see the timeouts above), so the wall is
+      # only on screen until then -- and after a resume, which is the same few
+      # minutes.
+      color = hex "comment";
       font = "JetBrainsMono Nerd Font";
       indicator-idle-visible = true;
       indicator-radius = 100;
       indicator-thickness = 20;
-      line-color = "282A36";
-      ring-color = "BD93F9";
-      inside-color = "282A36";
-      key-hl-color = "50FA7B";
+      line-color = hex "background";
+      ring-color = hex "purple";
+      inside-color = hex "background";
+      key-hl-color = hex "green";
+      # Fully transparent separator (8-digit hex, alpha last) -- not a palette
+      # colour.
       separator-color = "00000000";
-      text-color = "F8F8F2";
+      text-color = hex "foreground";
       text-caps-lock-color = "";
-      line-ver-color = "BD93F9";
-      ring-ver-color = "BD93F9";
-      inside-ver-color = "282A36";
-      text-ver-color = "8BE9FD";
-      ring-wrong-color = "FF5555";
-      text-wrong-color = "FF5555";
-      inside-wrong-color = "282A36";
-      inside-clear-color = "282A36";
-      text-clear-color = "8BE9FD";
-      ring-clear-color = "8BE9FD";
-      line-clear-color = "8BE9FD";
-      line-wrong-color = "282A36";
-      bs-hl-color = "8BE9FD";
+      line-ver-color = hex "purple";
+      ring-ver-color = hex "purple";
+      inside-ver-color = hex "background";
+      text-ver-color = hex "cyan";
+      ring-wrong-color = hex "red";
+      text-wrong-color = hex "red";
+      inside-wrong-color = hex "background";
+      inside-clear-color = hex "background";
+      text-clear-color = hex "cyan";
+      ring-clear-color = hex "cyan";
+      line-clear-color = hex "cyan";
+      line-wrong-color = hex "background";
+      bs-hl-color = hex "cyan";
       ignore-empty-password = true;
     };
   };
