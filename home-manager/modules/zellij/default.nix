@@ -800,7 +800,7 @@ in
               // (h/j/k/l or arrows act repeatedly, Esc leaves), the rest are
               // one-shot entries. Pane mode is left out on purpose -- it only
               // re-exposes what the prefix already has (h/j/k/l focus, x close,
-              // z fullscreen, splits, Alt-f floating), and inside it `z` means
+              // z fullscreen, splits, f floating), and inside it `z` means
               // "toggle pane frames", a different job from the Ctrl-a z in
               // muscle memory.
               bind "r" { SwitchToMode "Resize"; } // arrows/hjkl resize until Esc
@@ -817,6 +817,15 @@ in
               // tmux defaults: " = split down (vertical), % = split right (horizontal)
               bind "\"" { NewPane "Down"; SwitchToMode "Normal"; }
               bind "%" { NewPane "Right"; SwitchToMode "Normal"; }
+
+              // floating layer, on the prefix (tmux has no equivalent, so this
+              // is the one non-tmux key here). Toggle means "open a floating
+              // window" and "hide it again": tab/mod.rs toggle_floating_panes
+              // spawns a new floating pane when the layer holds none
+              // (last_selectable_floating_pane_id() == None), else it just
+              // hides/shows and refocuses what is already there. The default
+              // Alt-f still does the same thing unprefixed.
+              bind "f" { ToggleFloatingPanes; SwitchToMode "Normal"; }
 
               // vim pane navigation
               bind "h" { MoveFocus "Left"; SwitchToMode "Normal"; }
