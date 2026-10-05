@@ -129,7 +129,19 @@ lib.mkIf cfg.desktop {
         # browser.sessionstore.resume_from_crash and max_resumed_crashes are
         # deliberately absent: both are only consulted when startup.page != 3.
         "browser.startup.page" = 3;
+        # userChrome.css is ignored without this.
+        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
       };
+      # The "Show sidebar" launcher. No pref can turn it off: sidebar.revamp
+      # injects it into the navbar's default placements, and removing it in the
+      # UI would only live in browser.uiCustomization.state -- a blob user.js
+      # re-applies on every start, which would wipe real toolbar customisations.
+      # Firefox's own CSS hides this element with exactly this declaration.
+      userChrome = ''
+        #sidebar-button {
+          display: none !important;
+        }
+      '';
     };
   };
 
