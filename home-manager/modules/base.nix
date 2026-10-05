@@ -57,7 +57,7 @@
         --parse-metadata "%(album_artist,channel,creator,artist|Unknown)s:%(album_artist)s" \
         -o "%(album,playlist_title|Unknown)s/%(track_number,playlist_index)02d - %(title)s.%(ext)s" \
         --no-overwrites --concurrent-fragments 4 \
-        --cookies-from-browser chromium \
+        --cookies-from-browser firefox \
         "$1"
     '')
 

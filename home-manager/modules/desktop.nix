@@ -9,7 +9,8 @@ let
 in
 {
   imports = [
-    ./chromium.nix
+    # ./chromium.nix
+    ./firefox.nix
     ./fonts
     ./ghostty.nix
     ./gtk
@@ -48,12 +49,11 @@ in
     ++ lib.optional nixosConfig.services.syncthing.enable pkgs.unstable.syncthingtray
   );
 
-  home.sessionVariables.DEFAULT_BROWSER = "chromium";
+  home.sessionVariables.DEFAULT_BROWSER = "firefox";
 
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = lib.mkIf cfg.desktop {
-    "x-scheme-handler/http" = [ "chromium-browser.desktop" ];
-    "x-scheme-handler/https" = [ "chromium-browser.desktop" ];
-    "x-scheme-handler/ftp" = [ "chromium-browser.desktop" ];
+    "x-scheme-handler/http" = [ "firefox.desktop" ];
+    "x-scheme-handler/https" = [ "firefox.desktop" ];
   };
 }
