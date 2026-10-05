@@ -222,32 +222,40 @@
       chromePath = "/home/marv/.nix-profile/bin/chromium";
       userDataDir = "/home/marv/.config/chromium";
     };
-    # Mozilla's own Firefox MCP, attached to a *running* Firefox over WebDriver
-    # BiDi + Marionette. This is the only way to drive Firefox with the profile
-    # and logins you actually browse with -- Playwright cannot: its attach paths
-    # are CDP (`--extension`, `--cdp-endpoint`), and CDP was removed from
-    # Firefox in 141, so Firefox only speaks BiDi there. The daily Firefox opens
-    # both agent ports on every launch (home-manager/modules/firefox.nix), so
-    # "look at that tab" just works.
+    # Mozilla's own Firefox MCP. Without --connect-existing it launches its own
+    # Firefox and drives it over WebDriver BiDi + Marionette; Playwright cannot
+    # drive Firefox at all (its attach paths are CDP, and CDP was removed from
+    # Firefox in 141, so Firefox only speaks BiDi there).
     #
-    # Security (accepted 2026-10-05): Marionette (2828) and BiDi (9222) listen
-    # unauthenticated on localhost, Marionette privileged -- anything local that
-    # can reach them can drive the browser and read its sessions. Mozilla's
-    # SECURITY.md advises against this on a real profile; on this single-user
-    # laptop, processes running as marv can read the profile anyway.
+    # It deliberately does NOT attach to the daily Firefox: Marionette sets
+    # navigator.webdriver = true on every page and Mozilla's README warns that
+    # this "can trigger bot detection on sites protected by Cloudflare, Akamai,
+    # etc." (2026-10-05: Cloudflare `cf-mitigated: challenge` loops ending in a
+    # block on slapmagazine.com). So the daily driver stays clean
+    # (home-manager/modules/firefox.nix: plain pkgs.firefox, no wrapper flags)
+    # and the agent gets its own browser. --profilePath keeps that browser
+    # persistent instead of a fresh temp profile per session. The MCP never uses
+    # the path directly: it appends `firefox_devtools_mcp_profile/` (and warns if
+    # the parent looks like a real Firefox profile), so the real profile is
+    # ~/.firefox-devtools-mcp/firefox_devtools_mcp_profile/ -- and the logins the
+    # agent needs survive across sessions. (0.9.9 has no --auto-profile yet.)
+    #
+    # Security: Marionette and BiDi listen unauthenticated on localhost, so
+    # while this window runs, anything local can drive it and read its sessions.
+    # That is exactly why it is a separate profile -- it holds only the logins
+    # given to it there, never the daily ones (Mozilla's SECURITY.md).
     extra.firefox = {
       # nixpkgs-unstable only: not in the pinned 26.05 stable tree.
       bin = pkgs.unstable.firefox-devtools-mcp;
       command = "firefox-devtools-mcp";
-      # No --marionette-port: 2828 is the server's default and Firefox's own
-      # (greprefs marionette.port). The only port that has to be named is in the
-      # launcher (home-manager/modules/firefox.nix), which opens it.
-      # --enable-script: evaluate_script, without which framed legacy apps
-      # (primion) are opaque -- the snapshot does not descend into <frame>s.
-      # Adds no reach: Marionette can already run script in any page.
+      # No --marionette-port: 2828 is Firefox's own default (greprefs
+      # marionette.port). --enable-script: evaluate_script, without which framed
+      # legacy apps (primion) are opaque -- the snapshot does not descend into
+      # <frame>s.
       args = [
-        "--connect-existing"
         "--enable-script"
+        "--profilePath"
+        "/home/marv/.firefox-devtools-mcp"
       ];
     };
     memory = {
