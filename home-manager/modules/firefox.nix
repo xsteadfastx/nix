@@ -16,20 +16,19 @@ lib.mkIf cfg.desktop {
     configPath = "${config.xdg.configHome}/mozilla/firefox";
     policies = {
       DefaultDownloadDirectory = "\${home}/tmp";
-      DisableAccounts = false;
       DisableFirefoxStudies = true;
-      DisablePocket = true;
       DisableTelemetry = true;
       DisplayBookmarksToolbar = "never";
       DontCheckDefaultBrowser = true;
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
       FirefoxHome = {
-        # Only the search box on a new tab; every content section is off:
+        # Only the search box on a new tab; every content section is off. Pocket
+        # and SponsoredPocket are the legacy aliases for Stories and
+        # SponsoredStories -- policies.sys.mjs sets the same two prefs for both
+        # spellings -- so only one of each is needed.
         Search = true;
         Highlights = false;
-        Pocket = false;
-        SponsoredPocket = false;
         Stories = false;
         SponsoredStories = false;
         TopSites = false;
@@ -68,18 +67,13 @@ lib.mkIf cfg.desktop {
         Fingerprinting = true;
       };
       Preferences = {
-        "browser.newtabpage.activity-stream.showSponsored" = false;
-        "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
-        "browser.newtabpage.activity-stream.system.showSponsored" = false;
-        "browser.topsites.contile.enabled" = false;
-        "extensions.pocket.enabled" = false;
-        # Trending searches and the new tab's ad feed have no policy yet, so they
-        # are locked prefs. Off at the source (no tiles/spocs request is made),
-        # not merely hidden.
+        # Trending searches have no policy yet, so this is the only place they
+        # can be switched off. Everything else that used to be listed here is
+        # already covered by the FirefoxHome policy above -- which sets and
+        # locks the very same prefs (policies.sys.mjs, FirefoxHome handler) --
+        # and the sections those other prefs belonged to are off and locked.
         "browser.urlbar.trending.featureGate" = false;
         "browser.urlbar.suggest.trending" = false;
-        "browser.newtabpage.activity-stream.unifiedAds.tiles.enabled" = false;
-        "browser.newtabpage.activity-stream.unifiedAds.spocs.enabled" = false;
       };
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis
@@ -120,12 +114,12 @@ lib.mkIf cfg.desktop {
     profiles.default = {
       settings = {
         "browser.aboutConfig.showWarning" = false;
-        "browser.compactmode.show" = true;
-        # Actually *use* compact density: 0=normal, 1=compact, 2=touch. The line
-        # above only reveals the option in Settings; this selects it. Mostly
-        # toolbarbutton/urlbar spacing — the tabs and toolbar rows stay.
+        # Actually *use* compact density: 0=normal, 1=compact, 2=touch. No
+        # browser.compactmode.show here: that only reveals the density toggle in
+        # Settings, and this pref is re-applied from user.js every start, so the
+        # toggle could never stick anyway. Mostly toolbarbutton/urlbar spacing --
+        # the tabs and toolbar rows stay.
         "browser.uidensity" = 1;
-        "extensions.autoDisableScopes" = 0;
         "signon.rememberSignons" = false;
         # Resume where you left off — clean quit, reboot (the session manager
         # sets resume_session_once on logout) and crash alike. 3 = "show my
@@ -144,7 +138,7 @@ lib.mkIf cfg.desktop {
   # themselves install from upstream, and Violentmonkey keeps them updated via
   # their @updateURL). Open the generated page once and click them in:
   #
-  #   file:///home/marv/.local/share/mb-userscripts/index.html
+  #   file://~/.local/share/mb-userscripts/index.html
   #
   # Edit the list to change what you run.
   home.file.".local/share/mb-userscripts/index.html".text =
