@@ -242,7 +242,13 @@
       # No --marionette-port: 2828 is the server's default and Firefox's own
       # (greprefs marionette.port). The only port that has to be named is in the
       # launcher (home-manager/modules/firefox.nix), which opens it.
-      args = [ "--connect-existing" ];
+      # --enable-script: evaluate_script, without which framed legacy apps
+      # (primion) are opaque -- the snapshot does not descend into <frame>s.
+      # Adds no reach: Marionette can already run script in any page.
+      args = [
+        "--connect-existing"
+        "--enable-script"
+      ];
     };
     memory = {
       enable = true;
