@@ -53,6 +53,7 @@
       nixosModules.base = import ./modules/base;
       nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
       nixosModules.home-manager = import ./modules/home-manager;
+      nixosModules.lix = import ./modules/lix;
       nixosModules.ssh = import ./modules/ssh;
       nixosModules.tlsrouter = import ./modules/tlsrouter;
       nixosModules.users = import ./modules/users;
