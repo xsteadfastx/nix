@@ -15,6 +15,21 @@ lib.mkIf cfg.desktop {
     # the commit message), and ~/.mozilla now only carries native-messaging-hosts.
     configPath = "${config.xdg.configHome}/mozilla/firefox";
     policies = {
+      # Firefox 157 ships a profile-backup service that is *on* by default
+      # (browser.backup.enabled = true) and, when its scheduler runs, walks the
+      # profile's sqlite files page by page in the background
+      # (sqlite.pages_per_step 50 / step_delay_ms 50) and retries up to 10 times
+      # on failure. Those prefs sit in 157's Nimbus FeatureManifest, so a rollout
+      # can turn automatic backups on with no user action.
+      #
+      # Off and locked, because two things make it worse than it looks:
+      #  - the policy below only covers enabled/archive/restore, NOT
+      #    scheduled.enabled (policies.sys.mjs:497), so the scheduler needs the
+      #    extra locked pref further down;
+      #  - per bug 2059450, browser.backup.enabled is only a lazy-load flag: any
+      #    other BackupService.init() call (loading Settings -> Account and
+      #    Sync, for instance) starts the service regardless of this policy.
+      BrowserDataBackup = false;
       DefaultDownloadDirectory = "\${home}/tmp";
       DisableFirefoxStudies = true;
       DisableTelemetry = true;
@@ -74,6 +89,10 @@ lib.mkIf cfg.desktop {
         # and the sections those other prefs belonged to are off and locked.
         "browser.urlbar.trending.featureGate" = false;
         "browser.urlbar.suggest.trending" = false;
+        # Not covered by the BrowserDataBackup policy above (its handler locks
+        # enabled/archive/restore only) and the pref a Nimbus rollout would flip
+        # to make profile backups automatic. Locked, like the rest.
+        "browser.backup.scheduled.enabled" = false;
       };
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis
