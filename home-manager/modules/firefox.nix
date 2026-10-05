@@ -154,6 +154,12 @@ lib.mkIf cfg.desktop {
         # the tabs and toolbar rows stay.
         "browser.uidensity" = 1;
         "signon.rememberSignons" = false;
+        # GPU canvas (the CanvasRenderer thread) was the biggest Firefox source of
+        # order-8/9 TTM allocations on xe; under fragmentation those feed the
+        # kswapd -> xe shrinker -> rebind loop that lagged the whole desktop
+        # (2026-10-05 trace). Kernel fix is 7.1.6+/7.1.8; ZFS pins us to 6.18.
+        # Drop this once the kernel moves past that.
+        "gfx.canvas.accelerated" = false;
         # Resume where you left off — clean quit, reboot (the session manager
         # sets resume_session_once on logout) and crash alike. 3 = "show my
         # windows and tabs from last time": SessionStartup then reports
