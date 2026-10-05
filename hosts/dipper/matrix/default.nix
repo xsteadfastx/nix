@@ -27,12 +27,26 @@ let
         "m.identity_server" = {
           base_url = "";
         }; # no identity/3PID server
+        # Force the MatrixRTC/Element Call path. The widget is bundled with
+        # element-web (widgets/element-call), so no separate host is needed. The
+        # legacy 1:1 stack would want coturn + turn_uris on tuwunel, which we
+        # deliberately don't run.
+        "element_call".use_exclusively = true;
       };
     };
   };
 in
 {
-  # Federation + client API both need inbound TCP.
+  # MatrixRTC (LiveKit + lk-jwt + TURN/TLS) lives in its own module; the bridges
+  # are option modules, kept separate so they can be reused by another host.
+  imports = [
+    ./turn.nix
+    ./mautrix-telegram-go.nix
+    ./mautrix-slack.nix
+  ];
+
+  # Federation + client API both need inbound TCP. The MatrixRTC ports are opened
+  # in turn.nix, next to the services that need them.
   networking.firewall.allowedTCPPorts = [
     443
     8448
@@ -51,6 +65,13 @@ in
       allow_registration = false; # <-- registration CLOSED again after creating @marv account
       allow_encryption = true;
       allow_federation = true;
+      # Element X reads the RTC focus from
+      # /_matrix/client/unstable/org.matrix.msc4143/rtc/transports, which tuwunel
+      # builds from livekit_url. `client` is required alongside it.
+      well_known = {
+        client = "https://${domain}";
+        livekit_url = "https://${domain}/livekit/jwt";
+      };
       # Conduit-family design: persists room state, not the full event timeline,
       # so the DB stays bounded (no Synapse-style unbounded growth).
     };
@@ -65,19 +86,50 @@ in
     email = "marv@xsfx.dev";
     extraConfig = ''
       ${domain}:${toString clientPort}, ${domain}:${toString federPort} {
+        # `handle` blocks are mutually exclusive and evaluated in written order,
+        # so the specific paths come first and the homeserver catch-all last.
+
+        # MatrixRTC. The bundled Element Call widget asks
+        # `<livekit_service_url>/sfu/get`, and rtc_foci below advertises that URL
+        # with the /livekit/jwt prefix -- so strip the prefix: lk-jwt serves
+        # /sfu/get and /get_token at its root.
+        # The ports come from the modules themselves (turn.nix), never a second
+        # copy of the number, so the target cannot drift from the listener.
+        handle_path /livekit/jwt/* {
+          reverse_proxy 127.0.0.1:${toString config.services.lk-jwt-service.port}
+        }
+        # LiveKit signalling (the websocket itself is at /rtc) and its HTTP API.
+        handle /rtc* {
+          reverse_proxy 127.0.0.1:${toString config.services.livekit.settings.port}
+        }
+        handle /twirp* {
+          reverse_proxy 127.0.0.1:${toString config.services.livekit.settings.port}
+        }
+
         # Matrix discovery: tuwunel doesn't serve well-known, so Caddy does.
-        # Needed so browsers (Element/app.element.io) can discover the homeserver.
+        # Needed so browsers (Element/app.element.io) can discover the homeserver,
+        # and for rtc_foci -- Element Web reads the call focus from here, not from
+        # tuwunel's transports endpoint.
         @wkclient path /.well-known/matrix/client
         @wkserver path /.well-known/matrix/server
-        respond @wkclient `{"m.homeserver":{"base_url":"https://${domain}"}}`
-        respond @wkserver `{"m.server":"${domain}:${toString federPort}"}`
-        header @wkclient {
-          Access-Control-Allow-Origin "*"
-          Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-          Access-Control-Allow-Headers "X-Requested-With, Content-Type, Authorization"
-          Content-Type "application/json"
+        handle @wkclient {
+          header {
+            Access-Control-Allow-Origin "*"
+            Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+            Access-Control-Allow-Headers "X-Requested-With, Content-Type, Authorization"
+            Content-Type "application/json"
+          }
+          respond `{"m.homeserver":{"base_url":"https://${domain}"},"org.matrix.msc4143.rtc_foci":[{"type":"livekit","livekit_service_url":"https://${domain}/livekit/jwt"}]}`
         }
-        reverse_proxy 127.0.0.1:${toString hsPort}
+        handle @wkserver {
+          respond `{"m.server":"${domain}:${toString federPort}"}`
+        }
+
+        # Everything else (/_matrix, /_synapse, appservice callbacks) is the
+        # homeserver.
+        handle {
+          reverse_proxy 127.0.0.1:${toString hsPort}
+        }
       }
       # Self-hosted Element web client. Served same-origin through the same
       # Caddy listener; SNI differs, so tlsrouter routes www.${domain} here.

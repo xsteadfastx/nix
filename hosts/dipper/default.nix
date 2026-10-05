@@ -4,9 +4,7 @@ _: {
     ./configuration.nix
     ./disko.nix
     ./hardware-configuration.nix
-    ./matrix.nix
-    ./mautrix-telegram-go.nix
-    ./mautrix-slack.nix
+    ./matrix
     ./network.nix
     ./secrets.nix
     ./tlsrouter.nix
