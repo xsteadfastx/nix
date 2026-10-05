@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   codingAgent.enable = true;
 
@@ -221,6 +221,28 @@
       enable = true;
       chromePath = "/home/marv/.nix-profile/bin/chromium";
       userDataDir = "/home/marv/.config/chromium";
+    };
+    # Mozilla's own Firefox MCP, attached to a *running* Firefox over WebDriver
+    # BiDi + Marionette. This is the only way to drive Firefox with the profile
+    # and logins you actually browse with -- Playwright cannot: its attach paths
+    # are CDP (`--extension`, `--cdp-endpoint`), and CDP was removed from
+    # Firefox in 141, so Firefox only speaks BiDi there. The daily Firefox opens
+    # both agent ports on every launch (home-manager/modules/firefox.nix), so
+    # "look at that tab" just works.
+    #
+    # Security (accepted 2026-10-05): Marionette (2828) and BiDi (9222) listen
+    # unauthenticated on localhost, Marionette privileged -- anything local that
+    # can reach them can drive the browser and read its sessions. Mozilla's
+    # SECURITY.md advises against this on a real profile; on this single-user
+    # laptop, processes running as marv can read the profile anyway.
+    extra.firefox = {
+      # nixpkgs-unstable only: not in the pinned 26.05 stable tree.
+      bin = pkgs.unstable.firefox-devtools-mcp;
+      command = "firefox-devtools-mcp";
+      # No --marionette-port: 2828 is the server's default and Firefox's own
+      # (greprefs marionette.port). The only port that has to be named is in the
+      # launcher (home-manager/modules/firefox.nix), which opens it.
+      args = [ "--connect-existing" ];
     };
     memory = {
       enable = true;

@@ -1,6 +1,7 @@
 {
   config,
   nixosConfig,
+  pkgs,
   lib,
   ...
 }:
@@ -10,6 +11,19 @@ in
 lib.mkIf cfg.desktop {
   programs.firefox = {
     enable = true;
+    # The remote agents the Firefox DevTools MCP attaches to (see
+    # hosts/coltrane/coding-agent.nix), on every launch so an agent can look at
+    # the tabs actually open. Neither is a pref: the Remote Agent (BiDi, 9222)
+    # only starts from --remote-debugging-port (RemoteAgent.sys.mjs) and the MCP
+    # needs it next to Marionette (2828). Accepted trade-off on this single-user
+    # laptop: both listen unauthenticated on localhost, Marionette privileged,
+    # and Firefox marks itself as automated (navigator.webdriver, robot icon).
+    package = pkgs.firefox.overrideAttrs (old: {
+      makeWrapperArgs = old.makeWrapperArgs ++ [
+        "--add-flags"
+        "--marionette --remote-debugging-port 9222"
+      ];
+    });
     # home-manager 26.05 moved this default under XDG. Adopted 2026-10-05: the
     # profile was moved from ~/.mozilla/firefox to here at the same time (see
     # the commit message), and ~/.mozilla now only carries native-messaging-hosts.
