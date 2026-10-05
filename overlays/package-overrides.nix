@@ -76,6 +76,8 @@ in
 
   meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
 
+  meshy = prev.callPackage ../pkgs/meshy/package.nix { };
+
   meshtui2 = prev.python3Packages.callPackage ../pkgs/meshtui2/package.nix { };
 
   meshtuiProfile = profileBinOnly "meshtui" final.meshtui;

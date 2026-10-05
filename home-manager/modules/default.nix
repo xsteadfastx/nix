@@ -6,7 +6,7 @@
     ./kodi.nix
     ./lilium-voyager.nix
     ./matrix.nix
-    ./meshtui.nix
+    ./meshcore.nix
     ./neovim
     ./secrets.nix
     ./wobcom.nix
