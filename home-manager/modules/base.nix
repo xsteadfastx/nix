@@ -88,23 +88,6 @@
     unstable.w3m
     unstable.yaegi
 
-    # vpn
-    (writeShellScriptBin "wobcom-vpn" ''
-      set -e
-      if [ -n "''${ZELLIJ:-}" ]; then
-        zellij action rename-tab wobcom-vpn
-      elif [ -n "''${TMUX:-}" ]; then
-        tmux rename-window wobcom-vpn
-      fi
-      sudo ${unstable.openfortivpn}/bin/openfortivpn \
-      	vpn.wobcom.de \
-      	--trusted-cert 7a3f29e18c303c26080671cd1c0925ba2ae7c229c50eef6222d6f1453596e88d \
-      	--trusted-cert c815544ef4367147ab4bc564430efd72258eb2f6e1d634503c2f48c7b77da544 \
-      	--trusted-cert  53867d23d82092af1800dd1b1555025a50a3d8ab97746247ed95d1080b20d71e \
-      	-u mpreuss \
-      	-p $(${gopass}/bin/gopass show -o websites/id.wobcom.de/marvin.preuss@wobcom.de)
-    '')
-
     # ssh
     unstable.sshfs
 

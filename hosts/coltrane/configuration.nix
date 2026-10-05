@@ -17,6 +17,15 @@
   features.wobcom = true;
   features.desktop = true;
 
+  # openfortivpn starts pppd without LCP echo, so a tunnel that outlives the
+  # network (suspend) stays "up" over a dead socket: openfortivpn never notices,
+  # keeps ppp0 + its pppd alive, and every later `wobcom-vpn` hangs until the
+  # stale process is pkill'd by hand. Tear it down before sleeping; `wobcom-vpn`
+  # reconnects on demand after resume.
+  powerManagement.powerDownCommands = ''
+    ${pkgs.procps}/bin/pkill -x openfortivpn || true
+  '';
+
   home-manager.users.marv = {
     imports = [ ../../home-manager/marv.nix ];
   };
