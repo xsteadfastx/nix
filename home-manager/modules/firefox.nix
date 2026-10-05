@@ -180,6 +180,12 @@ lib.mkIf cfg.desktop {
         #sidebar-button {
           display: none !important;
         }
+        /* The agent ports are always open (see package above), so Firefox would
+           stripe the urlbar red forever (urlbar.css, :root[remotecontrol]).
+           The robot icon stays as the reminder. */
+        :root[remotecontrol] .urlbar-background {
+          background-image: none !important;
+        }
       '';
     };
   };
