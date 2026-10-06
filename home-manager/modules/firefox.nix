@@ -24,6 +24,23 @@ lib.mkIf cfg.desktop {
     # the commit message), and ~/.mozilla now only carries native-messaging-hosts.
     configPath = "${config.xdg.configHome}/mozilla/firefox";
     policies = {
+      # Firefox's AI features, all of them: sidebar chatbot, link-preview key
+      # points, smart tab groups, smart windows, on-device speech recognition,
+      # PDF alt-text generation, translations. `Default` applies to every
+      # feature unless a feature key overrides it, and Locked keeps a Nimbus
+      # rollout from turning any of them back on. `Default` also lands on
+      # browser.ai.control.default, which is what any feature not yet invented
+      # falls back to (SpeechRecognitionFeature.sys.mjs, #resolvedControlState).
+      #
+      # This is the policy to use: the older GenerativeAI policy (same four
+      # prefs, no translations/pdfAltText/speech) is *ignored* whenever
+      # AIControls is present -- "Ignoring GenerativeAI policy in favor of
+      # AIControls", Policies.sys.mjs. Restart Firefox for it to take effect;
+      # the schema marks it restart-required.
+      AIControls.Default = {
+        Value = "blocked";
+        Locked = true;
+      };
       # Firefox 157 ships a profile-backup service that is *on* by default
       # (browser.backup.enabled = true) and, when its scheduler runs, walks the
       # profile's sqlite files page by page in the background
