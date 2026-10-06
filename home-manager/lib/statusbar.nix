@@ -39,11 +39,9 @@ let
   # U+FFFF -- most of the Material Design set -- have to be written as a UTF-16
   # surrogate pair; hand-writing those is how a glyph once silently turned into
   # an empty string and waybar got `format: ""`.
-  # ponytail: this is the pure-Nix way to get from a codepoint back to a
-  # character -- there is no lib helper for it (nixpkgs lib has `charToInt`,
-  # nothing in the other direction, checked on master). The only alternative is
-  # writing the glyphs literally, which loses the codepoints the fc-query note
-  # below depends on. Leave it.
+  # ponytail: no codepoint->char in nixpkgs lib (charToInt only, checked on
+  # master), and literal glyphs would lose the codepoints the fc-query note
+  # depends on. Leave it.
   hex4 = n: lib.fixedWidthString 4 "0" (lib.toUpper (lib.toHexString n));
   jsonEscape =
     cp:

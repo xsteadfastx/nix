@@ -1,3 +1,6 @@
+# ponytail: backport of NixOS/nixpkgs#390619 -- when it merges, drop this module
+# with pkgs/tlsrouter, the flake's package + nixosModule and dipper's package
+# override. Kept byte-comparable to the PR until then.
 {
   config,
   lib,

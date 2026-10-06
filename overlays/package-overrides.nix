@@ -56,9 +56,11 @@ in
   mautrix-telegram = prev.callPackage ../pkgs/mautrix-telegram.nix { };
 
   # Go (bridgev2) mautrix-slack pinned past the "missing version data" login
-  # bug (mautrix/slack#95, merged; lands in v0.2608.0). nixpkgs still ships
-  # 0.2605/0.2607 — both before that fix — so token-login aborts before the real
-  # credential check. Use v0.2609.0 instead.
+  # bug (mautrix/slack#95, merged; lands in v0.2608.0), which aborts token-login
+  # before the real credential check.
+  # ponytail: the 26.05 pin ships 26.04 and unstable 26.09.1; dipper uses the
+  # default mkPackageOption (the pin), so this stays until the pin passes
+  # v0.2608.0.
   mautrix-slack = prev.mautrix-slack.overrideAttrs rec {
     version = "26.09";
     tag = "v0.2609.0";
@@ -140,6 +142,8 @@ in
   # the pipe intermittently dies with SIGPIPE (exit 141) even though
   # extraction succeeded. That race flakes nixos-rebuild/CI (see
   # NixOS/nixpkgs#541364).
+  # ponytail: fixed upstream in NixOS/nixpkgs#556059 (merged, in unstable, scoped
+  # per pipe). Kept only for the 26.05 pin.
   #
   # We drop pipefail for the install phase. This is SAFE against shipping a
   # broken package: cpio is the LAST command in the pipe, so without

@@ -4,6 +4,9 @@
   ...
 }:
 {
+  # Per-host capability switches: a host opts into the subsystems it runs, so a
+  # future machine can take a subset -- and features.wobcom stays off anywhere
+  # that is not the work machine. Host-scoped, not per-user.
   options.features = {
     games = lib.mkEnableOption "enable games";
     kodi = lib.mkEnableOption "enable kodi";
