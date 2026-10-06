@@ -1,4 +1,5 @@
 {
+  mkHetznerTinyVm = import ./hetzner-tiny-vm.nix;
   mkNodeExporter = ip: {
     services.prometheus.exporters.node = {
       enable = true;

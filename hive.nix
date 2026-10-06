@@ -32,6 +32,7 @@
     imports = [
       ./hosts/abed
 
+      (inputs.self.lib.mkHetznerTinyVm "2a01:4f8:c0c:b07c::1/64")
       (inputs.self.lib.mkNodeExporter "100.113.26.112")
       inputs.disko.nixosModules.disko
       inputs.self.nixosModules.ssh
@@ -72,6 +73,7 @@
     imports = [
       ./hosts/dipper
 
+      (inputs.self.lib.mkHetznerTinyVm "2a01:4f8:1c1c:1f0a::1/64")
       (inputs.self.lib.mkNodeExporter "100.124.197.13")
       inputs.disko.nixosModules.disko
       inputs.self.nixosModules.ssh
