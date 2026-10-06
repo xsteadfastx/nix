@@ -22,24 +22,22 @@
 # `meshcore` is overridden to a newer version than nixpkgs ships, because
 # jsaveker requires >= 2.3.9.1.
 let
-  meshcorePkg = (
-    meshcore.overridePythonAttrs (old: {
-      version = "2.3.10";
-      src = fetchFromGitHub {
-        owner = "meshcore-dev";
-        repo = "meshcore_py";
-        tag = "v2.3.10";
-        hash = "sha256-NzFPtlSnZpJDHDfMUbBWMQ90XIuMmqCfm8073GJjYlQ=";
-      };
-      patches = [ ];
-      # nixpkgs runtimeDepsCheck false-positives on this newer version's metadata
-      # (reports pycryptodome missing though it's an inherited dep).
-      dontCheckRuntimeDeps = true;
-      # pinned nixpkgs meshcore (2.2.8) predates the pycryptodome dep that 2.3.x
-      # requires at runtime (and it isn't inherited by the override).
-      dependencies = old.dependencies ++ [ pycryptodome ];
-    })
-  );
+  meshcorePkg = meshcore.overridePythonAttrs (old: {
+    version = "2.3.10";
+    src = fetchFromGitHub {
+      owner = "meshcore-dev";
+      repo = "meshcore_py";
+      tag = "v2.3.10";
+      hash = "sha256-NzFPtlSnZpJDHDfMUbBWMQ90XIuMmqCfm8073GJjYlQ=";
+    };
+    patches = [ ];
+    # nixpkgs runtimeDepsCheck false-positives on this newer version's metadata
+    # (reports pycryptodome missing though it's an inherited dep).
+    dontCheckRuntimeDeps = true;
+    # pinned nixpkgs meshcore (2.2.8) predates the pycryptodome dep that 2.3.x
+    # requires at runtime (and it isn't inherited by the override).
+    dependencies = old.dependencies ++ [ pycryptodome ];
+  });
 in
 buildPythonApplication (finalAttrs: {
   pname = "meshtui2";
@@ -84,7 +82,6 @@ buildPythonApplication (finalAttrs: {
     description = "MeshCore and Meshtastic operator suite, gateway, and web companion";
     homepage = "https://meshtui.com";
     license = licenses.mit;
-    maintainers = with maintainers; [ ];
     mainProgram = "meshtui2";
   };
 })

@@ -32,7 +32,7 @@
     imports = [
       ./hosts/abed
 
-      (inputs.self.lib.exporters.mkNodeExporter "100.113.26.112")
+      (inputs.self.lib.mkNodeExporter "100.113.26.112")
       inputs.disko.nixosModules.disko
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
@@ -72,7 +72,7 @@
     imports = [
       ./hosts/dipper
 
-      (inputs.self.lib.exporters.mkNodeExporter "100.124.197.13")
+      (inputs.self.lib.mkNodeExporter "100.124.197.13")
       inputs.disko.nixosModules.disko
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.tlsrouter

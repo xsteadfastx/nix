@@ -24,8 +24,8 @@ buildPythonApplication (finalAttrs: {
   pyproject = true;
 
   src = fetchPypi {
-    pname = finalAttrs.pname;
-    version = finalAttrs.version;
+    inherit (finalAttrs) pname;
+    inherit (finalAttrs) version;
     hash = "sha256-NBiogN2Rmk6H6mJasSXZ8em24RQt0tJbHcAxfKlzT/8=";
   };
 
@@ -44,7 +44,6 @@ buildPythonApplication (finalAttrs: {
     description = "Terminal User Interface for MeshCore companion radios";
     homepage = "https://github.com/ekollof/meshtui";
     license = licenses.mit;
-    maintainers = with maintainers; [ ];
     mainProgram = "meshtui";
   };
 })
