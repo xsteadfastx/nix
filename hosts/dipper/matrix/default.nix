@@ -160,11 +160,9 @@ in
     # /var/lib/mautrix-<b>/*-registration.yaml (see docs: no restart, persisted).
     # ---------------------------------------------------------------------------
 
-    # Telegram skipped for now: my.telegram.org returns generic "ERROR" for this
-    # account (likely rate-limit/2FA), so the API_ID/API_HASH aren't available.
     # WhatsApp & Signal need no secrets (tokens auto-generate; pairing is via QR).
 
-    # Telegram: Go bridgev2 (mautrix-telegram-go). Needs API_ID/API_HASH in sops
+    # Telegram: Go bridgev2 (mautrix-telegram-go), in daily use. Needs API_ID/API_HASH in sops
     # (`mautrix-telegram-env`), read by the bridge as MAUTRIX_TELEGRAM_NETWORK__API_ID
     # / __API_HASH (double underscore = the `.` in config path network.api_id). bridgev2
     # only accepts relay/user/admin (NOT the Python "full").
