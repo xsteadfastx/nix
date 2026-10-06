@@ -1,15 +1,7 @@
-{
-  nixosConfig,
-  lib,
-  ...
-}:
-let
-  cfg = nixosConfig.features;
+_:
 
-  inherit (lib) mkIf;
-in
 {
-  programs.neovim = mkIf cfg.neovim {
+  programs.neovim = {
     initLua =
       # lua
       ''

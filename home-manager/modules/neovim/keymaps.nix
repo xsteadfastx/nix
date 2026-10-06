@@ -1,11 +1,9 @@
-{ nixosConfig, lib, ... }:
+{ lib, ... }:
 let
-  cfg = nixosConfig.features;
-
-  inherit (lib) mkIf mkBefore;
+  inherit (lib) mkBefore;
 in
 {
-  programs.neovim = mkIf cfg.neovim {
+  programs.neovim = {
     initLua =
       mkBefore
         # lua

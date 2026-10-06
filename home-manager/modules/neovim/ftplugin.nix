@@ -1,15 +1,7 @@
-{
-  nixosConfig,
-  lib,
-  ...
-}:
-let
-  cfg = nixosConfig.features;
+_:
 
-  inherit (lib) mkIf;
-in
 {
-  xdg.configFile = mkIf cfg.neovim {
+  xdg.configFile = {
     "nvim/ftplugin/css.lua".text = ''
       vim.opt.tabstop = 2
       vim.opt.expandtab = true

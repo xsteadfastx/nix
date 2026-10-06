@@ -10,7 +10,10 @@ let
   inherit (lib) mkIf;
 in
 {
-  imports = [
+  # Single gate for the whole feature: the fragments are plain modules with no
+  # `mkIf` of their own, imported only when the feature is on (an `imports` list
+  # is the one place a guard belongs).
+  imports = lib.optionals cfg.neovim [
     ./augroups.nix
     ./better-escape.nix
     ./cmp.nix

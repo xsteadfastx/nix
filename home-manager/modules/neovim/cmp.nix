@@ -1,15 +1,7 @@
+{ pkgs, ... }:
+
 {
-  pkgs,
-  nixosConfig,
-  lib,
-  ...
-}:
-let
-  cfg = nixosConfig.features;
-  inherit (lib) mkIf;
-in
-{
-  programs.neovim = mkIf cfg.neovim {
+  programs.neovim = {
     plugins = with pkgs.unstable.vimPlugins; [
       blink-cmp
       friendly-snippets

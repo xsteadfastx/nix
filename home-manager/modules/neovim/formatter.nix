@@ -1,16 +1,7 @@
-{
-  pkgs,
-  nixosConfig,
-  lib,
-  ...
-}:
-let
-  cfg = nixosConfig.features;
+{ pkgs, ... }:
 
-  inherit (lib) mkIf;
-in
 {
-  programs.neovim = mkIf cfg.neovim {
+  programs.neovim = {
     plugins = with pkgs.unstable.vimPlugins; [
       conform-nvim
     ];
