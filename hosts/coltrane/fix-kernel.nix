@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   # Kernel params to stabilize USB and audio on Lunar Lake
   boot.kernelParams = [
     "snd_hda_intel.power_save=0"

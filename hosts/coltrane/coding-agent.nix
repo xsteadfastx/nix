@@ -1,370 +1,374 @@
 { config, pkgs, ... }:
 {
-  codingAgent.enable = true;
+  codingAgent = {
+    enable = true;
 
-  # Per-host soul layer: appended to the module's shared default soul
-  # (modules/coding-agent/soul.md) and written to both ~/.pi/agent/AGENTS.md
-  # and ~/.claude/CLAUDE.md. This is the machine-wide context that used to
-  # live by hand in ~/.claude/CLAUDE.md.
-  codingAgent.soulExtra = ''
-    ## Hard rules (non-negotiable)
+    # Per-host soul layer: appended to the module's shared default soul
+    # (modules/coding-agent/soul.md) and written to both ~/.pi/agent/AGENTS.md
+    # and ~/.claude/CLAUDE.md. This is the machine-wide context that used to
+    # live by hand in ~/.claude/CLAUDE.md.
+    soulExtra = ''
+      ## Hard rules (non-negotiable)
 
-    - **Commit messages follow Conventional Commits** (conventionalcommits.org,
-      v1.0.0): `<type>[optional scope]: <description>`, e.g. `feat:`, `fix:`,
-      `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:`, `perf:`,
-      `style:`. Add a body/footer when useful and `BREAKING CHANGE:` for
-      breaking changes. Every commit you write must conform.
-    - **NEVER use `git commit --no-verify`** (or any flag that skips pre-commit
-      hooks: `--no-verify`, `-n`, `--no-gpg-sign`-style bypasses, `git push
-      --no-verify`, `HUSKY=0`, etc.). Pre-commit hooks exist for a reason; if a
-      hook fails, fix the root cause or surface it to the user — never bypass.
-      This is absolute; do not rationalize "just this once".
-    - **NEVER `git push` yourself.** You may commit locally (never bypassing
-      hooks), but never push to any remote — never `git push`, never open a PR
-      or trigger a push on the user's behalf. The user alone decides what
-      leaves the machine. If you think a push is needed, surface it and let
-      the user run it.
-    - **NEVER deploy for yourself.** You may build, test, and prepare a
-      deployment, but never run the deploy itself — no `nixos-rebuild switch`,
-      no `kubectl apply`, no `docker push`/`docker compose up`, no `terraform
-      apply`, no `colmena apply`, no `systemctl restart` of a service, no
-      production mutation of any kind. The user alone decides when and how something goes live. If a
-      deploy is needed, surface it and let the user run it.
+      - **Commit messages follow Conventional Commits** (conventionalcommits.org,
+        v1.0.0): `<type>[optional scope]: <description>`, e.g. `feat:`, `fix:`,
+        `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:`, `perf:`,
+        `style:`. Add a body/footer when useful and `BREAKING CHANGE:` for
+        breaking changes. Every commit you write must conform.
+      - **NEVER use `git commit --no-verify`** (or any flag that skips pre-commit
+        hooks: `--no-verify`, `-n`, `--no-gpg-sign`-style bypasses, `git push
+        --no-verify`, `HUSKY=0`, etc.). Pre-commit hooks exist for a reason; if a
+        hook fails, fix the root cause or surface it to the user — never bypass.
+        This is absolute; do not rationalize "just this once".
+      - **NEVER `git push` yourself.** You may commit locally (never bypassing
+        hooks), but never push to any remote — never `git push`, never open a PR
+        or trigger a push on the user's behalf. The user alone decides what
+        leaves the machine. If you think a push is needed, surface it and let
+        the user run it.
+      - **NEVER deploy for yourself.** You may build, test, and prepare a
+        deployment, but never run the deploy itself — no `nixos-rebuild switch`,
+        no `kubectl apply`, no `docker push`/`docker compose up`, no `terraform
+        apply`, no `colmena apply`, no `systemctl restart` of a service, no
+        production mutation of any kind. The user alone decides when and how something goes live. If a
+        deploy is needed, surface it and let the user run it.
 
-    ## Playwright MCP — driving the already-open Chromium
+      ## Playwright MCP — driving the already-open Chromium
 
-    The `playwright` MCP server on this machine runs in **extension mode** and
-    drives your already-open Chromium (**Profile 1**), reusing your logged-in
-    sessions. The configuration is defined and explained in
-    `~/nix/hosts/coltrane/coding-agent.nix` (see `~/nix/CLAUDE.md` →
-    "Playwright Extension Mode" for the full reasoning/troubleshooting).
+      The `playwright` MCP server on this machine runs in **extension mode** and
+      drives your already-open Chromium (**Profile 1**), reusing your logged-in
+      sessions. The configuration is defined and explained in
+      `~/nix/hosts/coltrane/coding-agent.nix` (see `~/nix/CLAUDE.md` →
+      "Playwright Extension Mode" for the full reasoning/troubleshooting).
 
-    Operational rules when using `playwright` tools:
+      Operational rules when using `playwright` tools:
 
-    - **First browser call of a session**: the server opens the extension's
-      `connect.html` in your *running* Chromium (via `--executable-path` +
-      `PWTEST_EXTENSION_USER_DATA_DIR` singleton-forwarding), and the installed
-      Playwright Extension bridges the MCP server to your logged-in tab.
-      **Approve the connect page** once per session; subsequent calls reuse the
-      connection.
-    - **"Opens a new browser with an error" (playwright-core ≥1.63 regression,
-      root-caused & fixed 2026-09-25):** the nixpkgs `playwright-mcp` wrapper
-      forces `PLAYWRIGHT_MCP_ISOLATED=1` unless `PLAYWRIGHT_MCP_USER_DATA_DIR`
-      is set (`isolated` is evaluated *before* `extension`, silently disabling
-      extension mode). The old workaround set that var to a throwaway tmpfs
-      sentinel — **but since playwright-core 1.63 it is no longer inert**: the
-      value is also passed to `createExtensionBrowser` as the connect-page
-      browser's `--user-data-dir`, *overriding* `PWTEST_EXTENSION_USER_DATA_DIR`,
-      so the sentinel launches a fresh, extension-less profile. **Fix**: set
-      `PLAYWRIGHT_MCP_USER_DATA_DIR` to the **same real profile** as
-      `PWTEST_EXTENSION_USER_DATA_DIR` (`/home/marv/.config/chromium`) —
-      non-empty (defeats the forced `ISOLATED=1`) *and* correct (the connect
-      page opens in your logged-in Profile 1). NB: with `--executable-path` set,
-      the "Extension not found" guard is skipped, so the failure is silent. This
-      is set in the `coding-agent` module (`modules/coding-agent/core.nix`), not
-      here. See `~/nix/CLAUDE.md` → "Playwright Extension Mode". After editing:
-      `sudo nixos-rebuild switch`, then **restart pi** — a lazy MCP reconnect
-      does *not* respawn the server with new env.
-    - **Extension must be installed in Profile 1** (Web Store id
-      `mmlmfjhmonkocbjadbfplnigmagldckm`). Home Manager's
-      `programs.chromium.extensions` only seeds a *fresh* profile, so on the
-      pre-existing profile it must be installed once by hand from the Chrome Web
-      Store.
-    - **No "accept all tokens" mode.** Extension mode does a strict equality
-      check on a per-profile `PLAYWRIGHT_MCP_EXTENSION_TOKEN`; we use **manual
-      approval** (no token configured). Sending a *wrong* token hard-errors —
-      worse than sending none.
-    - **A killed `playwright-mcp` process is not auto-respawned** by pi's MCP
-      reconnect (it only refreshes cached tool metadata). Restart pi to get a
-      fresh server.
+      - **First browser call of a session**: the server opens the extension's
+        `connect.html` in your *running* Chromium (via `--executable-path` +
+        `PWTEST_EXTENSION_USER_DATA_DIR` singleton-forwarding), and the installed
+        Playwright Extension bridges the MCP server to your logged-in tab.
+        **Approve the connect page** once per session; subsequent calls reuse the
+        connection.
+      - **"Opens a new browser with an error" (playwright-core ≥1.63 regression,
+        root-caused & fixed 2026-09-25):** the nixpkgs `playwright-mcp` wrapper
+        forces `PLAYWRIGHT_MCP_ISOLATED=1` unless `PLAYWRIGHT_MCP_USER_DATA_DIR`
+        is set (`isolated` is evaluated *before* `extension`, silently disabling
+        extension mode). The old workaround set that var to a throwaway tmpfs
+        sentinel — **but since playwright-core 1.63 it is no longer inert**: the
+        value is also passed to `createExtensionBrowser` as the connect-page
+        browser's `--user-data-dir`, *overriding* `PWTEST_EXTENSION_USER_DATA_DIR`,
+        so the sentinel launches a fresh, extension-less profile. **Fix**: set
+        `PLAYWRIGHT_MCP_USER_DATA_DIR` to the **same real profile** as
+        `PWTEST_EXTENSION_USER_DATA_DIR` (`/home/marv/.config/chromium`) —
+        non-empty (defeats the forced `ISOLATED=1`) *and* correct (the connect
+        page opens in your logged-in Profile 1). NB: with `--executable-path` set,
+        the "Extension not found" guard is skipped, so the failure is silent. This
+        is set in the `coding-agent` module (`modules/coding-agent/core.nix`), not
+        here. See `~/nix/CLAUDE.md` → "Playwright Extension Mode". After editing:
+        `sudo nixos-rebuild switch`, then **restart pi** — a lazy MCP reconnect
+        does *not* respawn the server with new env.
+      - **Extension must be installed in Profile 1** (Web Store id
+        `mmlmfjhmonkocbjadbfplnigmagldckm`). Home Manager's
+        `programs.chromium.extensions` only seeds a *fresh* profile, so on the
+        pre-existing profile it must be installed once by hand from the Chrome Web
+        Store.
+      - **No "accept all tokens" mode.** Extension mode does a strict equality
+        check on a per-profile `PLAYWRIGHT_MCP_EXTENSION_TOKEN`; we use **manual
+        approval** (no token configured). Sending a *wrong* token hard-errors —
+        worse than sending none.
+      - **A killed `playwright-mcp` process is not auto-respawned** by pi's MCP
+        reconnect (it only refreshes cached tool metadata). Restart pi to get a
+        fresh server.
 
-    ### Driving framed/JS-heavy apps
-    The a11y `browser_snapshot` does not cross `<frame>`/`<iframe>` boundaries.
-    For framed apps (e.g. legacy enterprise portals), use `browser_evaluate` to
-    read `frame[name=...].contentDocument` (same-origin) and drive the frame's
-    DOM directly — enumerate frames, read their rows/inputs, and set field values
-    with `input`/`change` events before triggering the page's save handler.
+      ### Driving framed/JS-heavy apps
+      The a11y `browser_snapshot` does not cross `<frame>`/`<iframe>` boundaries.
+      For framed apps (e.g. legacy enterprise portals), use `browser_evaluate` to
+      read `frame[name=...].contentDocument` (same-origin) and drive the frame's
+      DOM directly — enumerate frames, read their rows/inputs, and set field values
+      with `input`/`change` events before triggering the page's save handler.
 
-    ## Documentation freshness
+      ## Documentation freshness
 
-    - **If a change alters observable behavior, update its docs in the same
-      change** — README, module docs, anything that describes it. A stale
-      README is a second bug; it lies to the next reader. Before finishing,
-      re-check the README's relevant section against your diff.
-    - **Pure-internal change (no behavior change)?** Name it in the commit
-      body instead of touching docs.
-  '';
+      - **If a change alters observable behavior, update its docs in the same
+        change** — README, module docs, anything that describes it. A stale
+        README is a second bug; it lies to the next reader. Before finishing,
+        re-check the README's relevant section against your diff.
+      - **Pure-internal change (no behavior change)?** Name it in the commit
+        body instead of touching docs.
+    '';
 
-  # Auto-discover models from the live ollama servers on every pi/claude
-  # launch (context windows, reasoning, vision are derived from the API,
-  # not hand-maintained). The local server caps context at 32768 (its
-  # OLLAMA_CONTEXT_LENGTH); wobcom serves full native context.
-  codingAgent.ollamaServers = [
-    {
-      name = "ollama-local";
-      baseUrl = "http://127.0.0.1:11434/v1";
-      apiKey = "ollama";
-    }
-    {
-      name = "ollama-wobcom";
-      baseUrl = "http://ollama.service.wobcom.de:11434/v1";
-      apiKey = "ollama";
-    }
-  ];
-  codingAgent.settings = {
-    autoCompactionEnabled = true;
-    defaultProvider = "ollama-wobcom";
-    defaultModel = "gemma4:31b";
-    theme = "dracula";
-  };
-
-  # Dracula theme override. The module default maps thinking levels to a
-  # rainbow (cyan/green/yellow/orange/pink), which makes the input border a
-  # harsh yellow at `medium`. This replaces it with a coherent cool→warm ramp
-  # (comment → cyan → green → yellow → orange → pink) so the border still
-  # signals thinking level but never lands on a jarring yellow.
-  codingAgent.theme = {
-    "$schema" =
-      "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json";
-    name = "dracula";
-    vars = {
-      bg = "#282a36";
-      currentLine = "#44475a";
-      fg = "#f8f8f2";
-      comment = "#6272a4";
-      cyan = "#8be9fd";
-      green = "#50fa7b";
-      orange = "#ffb86c";
-      pink = "#ff79c6";
-      purple = "#bd93f9";
-      red = "#ff5555";
-      yellow = "#f1fa8c";
-    };
-    colors = {
-      accent = "purple";
-      border = "comment";
-      borderAccent = "purple";
-      borderMuted = "currentLine";
-      success = "green";
-      error = "red";
-      warning = "yellow";
-      muted = "comment";
-      dim = 240;
-      text = "";
-      thinkingText = "comment";
-      selectedBg = "currentLine";
-      userMessageBg = "currentLine";
-      userMessageText = "";
-      customMessageBg = "currentLine";
-      customMessageText = "";
-      customMessageLabel = "purple";
-      toolPendingBg = "#21222c";
-      toolSuccessBg = "#1e2b22";
-      toolErrorBg = "#2d1f22";
-      toolTitle = "purple";
-      toolOutput = "";
-      mdHeading = "purple";
-      mdLink = "cyan";
-      mdLinkUrl = "comment";
-      mdCode = "green";
-      mdCodeBlock = "";
-      mdCodeBlockBorder = "comment";
-      mdQuote = "comment";
-      mdQuoteBorder = "purple";
-      mdHr = "comment";
-      mdListBullet = "pink";
-      toolDiffAdded = "green";
-      toolDiffRemoved = "red";
-      toolDiffContext = "comment";
-      syntaxComment = "comment";
-      syntaxKeyword = "pink";
-      syntaxFunction = "green";
-      syntaxVariable = "fg";
-      syntaxString = "yellow";
-      syntaxNumber = "purple";
-      syntaxType = "cyan";
-      syntaxOperator = "pink";
-      syntaxPunctuation = "fg";
-      # Coherent cool→warm thinking ramp (was a rainbow ending in harsh yellow)
-      thinkingOff = "comment";
-      thinkingMinimal = "comment";
-      thinkingLow = "cyan";
-      thinkingMedium = "green";
-      thinkingHigh = "yellow";
-      thinkingXhigh = "orange";
-      thinkingMax = "pink";
-      bashMode = "orange";
-    };
-    export = {
-      pageBg = "#21222c";
-      cardBg = "#282a36";
-      infoBg = "#44475a";
-    };
-  };
-
-  # MCP servers. A bare entry is enough for non-secret servers: the module's
-  # registry resolves `bin` and `command` from pkgs. Grafana needs its sops
-  # secrets injected — any `*_FILE` env var is auto-translated into the real
-  # var (suffix stripped) at exec time (modules/coding-agent/wrapper.nix).
-  # Calls are locked read-only via `--disable-write`.
-  # MCP servers via the declarative catalog. `git`, `nixos`, `context7` and
-  # `sequential-thinking` are enabled by default (non-secret, hardware-
-  # agnostic), so they need no entry here. Secret-bound and infra servers are
-  # enabled explicitly below; grafana/confluence/youtrack/hemingway are bespoke
-  # and stay as raw `extra` entries.
-  codingAgent.mcpServers = {
-    github = {
-      enable = true;
-      tokenFile = config.sops.secrets."gh-token".path;
-    };
-    playwright = {
-      enable = true;
-      chromePath = "/home/marv/.nix-profile/bin/chromium";
-      userDataDir = "/home/marv/.config/chromium";
-    };
-    # Mozilla's own Firefox MCP. Without --connect-existing it launches its own
-    # Firefox and drives it over WebDriver BiDi + Marionette; Playwright cannot
-    # drive Firefox at all (its attach paths are CDP, and CDP was removed from
-    # Firefox in 141, so Firefox only speaks BiDi there).
-    #
-    # It deliberately does NOT attach to the daily Firefox: Marionette sets
-    # navigator.webdriver = true on every page and Mozilla's README warns that
-    # this "can trigger bot detection on sites protected by Cloudflare, Akamai,
-    # etc." (2026-10-05: Cloudflare `cf-mitigated: challenge` loops ending in a
-    # block on slapmagazine.com). So the daily driver stays clean
-    # (home-manager/modules/firefox.nix: plain pkgs.firefox, no wrapper flags)
-    # and the agent gets its own browser. --profilePath keeps that browser
-    # persistent instead of a fresh temp profile per session. The MCP never uses
-    # the path directly: it appends `firefox_devtools_mcp_profile/` (and warns if
-    # the parent looks like a real Firefox profile), so the real profile is
-    # ~/.firefox-devtools-mcp/firefox_devtools_mcp_profile/ -- and the logins the
-    # agent needs survive across sessions. (0.9.9 has no --auto-profile yet.)
-    #
-    # Security: Marionette and BiDi listen unauthenticated on localhost, so
-    # while this window runs, anything local can drive it and read its sessions.
-    # That is exactly why it is a separate profile -- it holds only the logins
-    # given to it there, never the daily ones (Mozilla's SECURITY.md).
-    extra.firefox = {
-      # nixpkgs-unstable only: not in the pinned 26.05 stable tree.
-      bin = pkgs.unstable.firefox-devtools-mcp;
-      command = "firefox-devtools-mcp";
-      # No --marionette-port: 2828 is Firefox's own default (greprefs
-      # marionette.port). --enable-script: evaluate_script, without which framed
-      # legacy apps (primion) are opaque -- the snapshot does not descend into
-      # <frame>s.
-      args = [
-        "--enable-script"
-        "--profilePath"
-        "/home/marv/.firefox-devtools-mcp"
-      ];
-    };
-    memory = {
-      enable = true;
-      # Absolute (fs.writeFile doesn't mkdir/expand ~).
-      filePath = "/home/marv/.pi/agent/memory.jsonl";
-    };
-    # Self-ingesting session memory: indexes pi+claude transcripts, serves
-    # search_memories/store_memory/refresh to both agents via the shared mcp.json.
-    # embedUrl = local ollama for semantic recall (falls back to hashed embedder
-    # if unreachable). dataDir/sessionsPaths use the module defaults (upstream
-    # activity-mcp now expands `~` and ingests async, so they're safe).
-    activity = {
-      enable = true;
-      # Semantic recall via local ollama (nomic-embed-text; hardcoded model) —
-      # always reachable, no network hop. Falls back to hashed embedder if down.
-      embedUrl = "http://127.0.0.1:11434/v1";
-    };
-    sshPostgres."hemingway-barletta" = {
-      enable = true;
-      host = "barletta";
-      db = "hemingway";
-    };
-    sshPostgres."chirpas-kirchart" = {
-      enable = true;
-      host = "kirchart";
-      db = "chirpas";
-    };
-    sshPostgres."chirpns-kirchart" = {
-      enable = true;
-      host = "kirchart";
-      db = "chirpns";
-    };
-    sshRedis.kirchart = {
-      enable = true;
-      host = "kirchart";
-    };
-    # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
-    # behind Caddy basic_auth). httpBasic builds the Basic auth header via
-    # mcp-proxy; the var names match hemingway's existing env so mcp.json is
-    # unchanged.
-    httpBasic.hemingway = {
-      enable = true;
-      urlFile = config.sops.secrets."mcp-hemingway-url".path;
-      usernameFile = config.sops.secrets."mcp-hemingway-username".path;
-      passwordFile = config.sops.secrets."mcp-hemingway-password".path;
-      command = "hemingway-mcp";
-      urlVar = "HEMINGWAY_SERVICES_API";
-      userVar = "HEMINGWAY_MCP_USERNAME";
-      passVar = "HEMINGWAY_MCP_PASSWORD";
-      urlSuffix = "/mcp";
+    # Auto-discover models from the live ollama servers on every pi/claude
+    # launch (context windows, reasoning, vision are derived from the API,
+    # not hand-maintained). The local server caps context at 32768 (its
+    # OLLAMA_CONTEXT_LENGTH); wobcom serves full native context.
+    ollamaServers = [
+      {
+        name = "ollama-local";
+        baseUrl = "http://127.0.0.1:11434/v1";
+        apiKey = "ollama";
+      }
+      {
+        name = "ollama-wobcom";
+        baseUrl = "http://ollama.service.wobcom.de:11434/v1";
+        apiKey = "ollama";
+      }
+    ];
+    settings = {
+      autoCompactionEnabled = true;
+      defaultProvider = "ollama-wobcom";
+      defaultModel = "gemma4:31b";
+      theme = "dracula";
     };
 
-    # HTTP token/PAT servers (bearer auth, distinct from hemingway's basic
-    # auth). The registry maps the catalog name to bin/command; only args +
-    # env differ per host. secretEnv carries the *_FILE sops paths (auto-\
-    # injected by the secret wrapper); extraEnv holds plain env (GRAFANA_ORG_ID).
-    httpToken = {
-      grafana-viz-mon = {
+    # Dracula theme override. The module default maps thinking levels to a
+    # rainbow (cyan/green/yellow/orange/pink), which makes the input border a
+    # harsh yellow at `medium`. This replaces it with a coherent cool→warm ramp
+    # (comment → cyan → green → yellow → orange → pink) so the border still
+    # signals thinking level but never lands on a jarring yellow.
+    theme = {
+      "$schema" =
+        "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json";
+      name = "dracula";
+      vars = {
+        bg = "#282a36";
+        currentLine = "#44475a";
+        fg = "#f8f8f2";
+        comment = "#6272a4";
+        cyan = "#8be9fd";
+        green = "#50fa7b";
+        orange = "#ffb86c";
+        pink = "#ff79c6";
+        purple = "#bd93f9";
+        red = "#ff5555";
+        yellow = "#f1fa8c";
+      };
+      colors = {
+        accent = "purple";
+        border = "comment";
+        borderAccent = "purple";
+        borderMuted = "currentLine";
+        success = "green";
+        error = "red";
+        warning = "yellow";
+        muted = "comment";
+        dim = 240;
+        text = "";
+        thinkingText = "comment";
+        selectedBg = "currentLine";
+        userMessageBg = "currentLine";
+        userMessageText = "";
+        customMessageBg = "currentLine";
+        customMessageText = "";
+        customMessageLabel = "purple";
+        toolPendingBg = "#21222c";
+        toolSuccessBg = "#1e2b22";
+        toolErrorBg = "#2d1f22";
+        toolTitle = "purple";
+        toolOutput = "";
+        mdHeading = "purple";
+        mdLink = "cyan";
+        mdLinkUrl = "comment";
+        mdCode = "green";
+        mdCodeBlock = "";
+        mdCodeBlockBorder = "comment";
+        mdQuote = "comment";
+        mdQuoteBorder = "purple";
+        mdHr = "comment";
+        mdListBullet = "pink";
+        toolDiffAdded = "green";
+        toolDiffRemoved = "red";
+        toolDiffContext = "comment";
+        syntaxComment = "comment";
+        syntaxKeyword = "pink";
+        syntaxFunction = "green";
+        syntaxVariable = "fg";
+        syntaxString = "yellow";
+        syntaxNumber = "purple";
+        syntaxType = "cyan";
+        syntaxOperator = "pink";
+        syntaxPunctuation = "fg";
+        # Coherent cool→warm thinking ramp (was a rainbow ending in harsh yellow)
+        thinkingOff = "comment";
+        thinkingMinimal = "comment";
+        thinkingLow = "cyan";
+        thinkingMedium = "green";
+        thinkingHigh = "yellow";
+        thinkingXhigh = "orange";
+        thinkingMax = "pink";
+        bashMode = "orange";
+      };
+      export = {
+        pageBg = "#21222c";
+        cardBg = "#282a36";
+        infoBg = "#44475a";
+      };
+    };
+
+    # MCP servers. A bare entry is enough for non-secret servers: the module's
+    # registry resolves `bin` and `command` from pkgs. Grafana needs its sops
+    # secrets injected — any `*_FILE` env var is auto-translated into the real
+    # var (suffix stripped) at exec time (modules/coding-agent/wrapper.nix).
+    # Calls are locked read-only via `--disable-write`.
+    # MCP servers via the declarative catalog. `git`, `nixos`, `context7` and
+    # `sequential-thinking` are enabled by default (non-secret, hardware-
+    # agnostic), so they need no entry here. Secret-bound and infra servers are
+    # enabled explicitly below; grafana/confluence/youtrack/hemingway are bespoke
+    # and stay as raw `extra` entries.
+    mcpServers = {
+      github = {
         enable = true;
+        tokenFile = config.sops.secrets."gh-token".path;
+      };
+      playwright = {
+        enable = true;
+        chromePath = "/home/marv/.nix-profile/bin/chromium";
+        userDataDir = "/home/marv/.config/chromium";
+      };
+      # Mozilla's own Firefox MCP. Without --connect-existing it launches its own
+      # Firefox and drives it over WebDriver BiDi + Marionette; Playwright cannot
+      # drive Firefox at all (its attach paths are CDP, and CDP was removed from
+      # Firefox in 141, so Firefox only speaks BiDi there).
+      #
+      # It deliberately does NOT attach to the daily Firefox: Marionette sets
+      # navigator.webdriver = true on every page and Mozilla's README warns that
+      # this "can trigger bot detection on sites protected by Cloudflare, Akamai,
+      # etc." (2026-10-05: Cloudflare `cf-mitigated: challenge` loops ending in a
+      # block on slapmagazine.com). So the daily driver stays clean
+      # (home-manager/modules/firefox.nix: plain pkgs.firefox, no wrapper flags)
+      # and the agent gets its own browser. --profilePath keeps that browser
+      # persistent instead of a fresh temp profile per session. The MCP never uses
+      # the path directly: it appends `firefox_devtools_mcp_profile/` (and warns if
+      # the parent looks like a real Firefox profile), so the real profile is
+      # ~/.firefox-devtools-mcp/firefox_devtools_mcp_profile/ -- and the logins the
+      # agent needs survive across sessions. (0.9.9 has no --auto-profile yet.)
+      #
+      # Security: Marionette and BiDi listen unauthenticated on localhost, so
+      # while this window runs, anything local can drive it and read its sessions.
+      # That is exactly why it is a separate profile -- it holds only the logins
+      # given to it there, never the daily ones (Mozilla's SECURITY.md).
+      extra.firefox = {
+        # nixpkgs-unstable only: not in the pinned 26.05 stable tree.
+        bin = pkgs.unstable.firefox-devtools-mcp;
+        command = "firefox-devtools-mcp";
+        # No --marionette-port: 2828 is Firefox's own default (greprefs
+        # marionette.port). --enable-script: evaluate_script, without which framed
+        # legacy apps (primion) are opaque -- the snapshot does not descend into
+        # <frame>s.
         args = [
-          "--disable-write"
-          "-debug"
+          "--enable-script"
+          "--profilePath"
+          "/home/marv/.firefox-devtools-mcp"
         ];
-        secretEnv = {
-          GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
-          GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
-        };
-        extraEnv.GRAFANA_ORG_ID = "1";
       };
-      grafana-viz = {
+      memory = {
         enable = true;
-        args = [ "--disable-write" ];
-        secretEnv = {
-          GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
-          GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
-        };
-        extraEnv.GRAFANA_ORG_ID = "1";
+        # Absolute (fs.writeFile doesn't mkdir/expand ~).
+        filePath = "/home/marv/.pi/agent/memory.jsonl";
       };
-      # Confluence Data Center, read-only via PAT.
-      confluence = {
+      # Self-ingesting session memory: indexes pi+claude transcripts, serves
+      # search_memories/store_memory/refresh to both agents via the shared mcp.json.
+      # embedUrl = local ollama for semantic recall (falls back to hashed embedder
+      # if unreachable). dataDir/sessionsPaths use the module defaults (upstream
+      # activity-mcp now expands `~` and ingests async, so they're safe).
+      activity = {
         enable = true;
-        args = [ "--read-only" ];
-        secretEnv = {
-          CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
-          CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
+        # Semantic recall via local ollama (nomic-embed-text; hardcoded model) —
+        # always reachable, no network hop. Falls back to hashed embedder if down.
+        embedUrl = "http://127.0.0.1:11434/v1";
+      };
+      sshPostgres = {
+        "hemingway-barletta" = {
+          enable = true;
+          host = "barletta";
+          db = "hemingway";
+        };
+        "chirpas-kirchart" = {
+          enable = true;
+          host = "kirchart";
+          db = "chirpas";
+        };
+        "chirpns-kirchart" = {
+          enable = true;
+          host = "kirchart";
+          db = "chirpns";
         };
       };
-      # YouTrack remote MCP over StreamableHTTP, Bearer token via mcp-proxy.
-      youtrack = {
+      sshRedis.kirchart = {
         enable = true;
-        args = [
-          "--transport"
-          "streamablehttp"
-          "$YOUTRACK_URL"
-        ];
-        secretEnv = {
-          YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
-          API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
-        };
+        host = "kirchart";
       };
-    };
+      # Hemingway MCP: in-process /mcp on the deployed API (StreamableHTTP,
+      # behind Caddy basic_auth). httpBasic builds the Basic auth header via
+      # mcp-proxy; the var names match hemingway's existing env so mcp.json is
+      # unchanged.
+      httpBasic.hemingway = {
+        enable = true;
+        urlFile = config.sops.secrets."mcp-hemingway-url".path;
+        usernameFile = config.sops.secrets."mcp-hemingway-username".path;
+        passwordFile = config.sops.secrets."mcp-hemingway-password".path;
+        command = "hemingway-mcp";
+        urlVar = "HEMINGWAY_SERVICES_API";
+        userVar = "HEMINGWAY_MCP_USERNAME";
+        passVar = "HEMINGWAY_MCP_PASSWORD";
+        urlSuffix = "/mcp";
+      };
 
-    # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API. URL is a
-    # sops secret, so inject via NETBOX_URL_FILE (secret wrapper strips _FILE).
-    netbox = {
-      enable = true;
-      tokenFile = config.sops.secrets."mcp-netbox-token".path;
-      extraEnv.NETBOX_URL_FILE = config.sops.secrets."mcp-netbox-url".path;
+      # HTTP token/PAT servers (bearer auth, distinct from hemingway's basic
+      # auth). The registry maps the catalog name to bin/command; only args +
+      # env differ per host. secretEnv carries the *_FILE sops paths (auto-\
+      # injected by the secret wrapper); extraEnv holds plain env (GRAFANA_ORG_ID).
+      httpToken = {
+        grafana-viz-mon = {
+          enable = true;
+          args = [
+            "--disable-write"
+            "-debug"
+          ];
+          secretEnv = {
+            GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-url".path;
+            GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-token".path;
+          };
+          extraEnv.GRAFANA_ORG_ID = "1";
+        };
+        grafana-viz = {
+          enable = true;
+          args = [ "--disable-write" ];
+          secretEnv = {
+            GRAFANA_URL_FILE = config.sops.secrets."mcp-grafana-viz-url".path;
+            GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE = config.sops.secrets."mcp-grafana-viz-token".path;
+          };
+          extraEnv.GRAFANA_ORG_ID = "1";
+        };
+        # Confluence Data Center, read-only via PAT.
+        confluence = {
+          enable = true;
+          args = [ "--read-only" ];
+          secretEnv = {
+            CONFLUENCE_URL_FILE = config.sops.secrets."mcp-confluence-url".path;
+            CONFLUENCE_PERSONAL_TOKEN_FILE = config.sops.secrets."mcp-confluence-token".path;
+          };
+        };
+        # YouTrack remote MCP over StreamableHTTP, Bearer token via mcp-proxy.
+        youtrack = {
+          enable = true;
+          args = [
+            "--transport"
+            "streamablehttp"
+            "$YOUTRACK_URL"
+          ];
+          secretEnv = {
+            YOUTRACK_URL_FILE = config.sops.secrets."mcp-youtrack-url".path;
+            API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
+          };
+        };
+      };
+
+      # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API. URL is a
+      # sops secret, so inject via NETBOX_URL_FILE (secret wrapper strips _FILE).
+      netbox = {
+        enable = true;
+        tokenFile = config.sops.secrets."mcp-netbox-token".path;
+        extraEnv.NETBOX_URL_FILE = config.sops.secrets."mcp-netbox-url".path;
+      };
     };
   };
 }

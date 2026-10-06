@@ -15,22 +15,20 @@ let
     pkgs = final.unstable;
   };
 
-  common =
-    { ... }:
-    {
-      fonts.enable = true;
-      gpu.enable = true;
-      waylandProxy.enable = true;
-      bubblewrap = {
-        network = true; # sync / calls
-        # audio in + out (huddles / unlock sounds); display comes via waylandProxy
-        sockets = {
-          pipewire = true;
-          pulse = true;
-        };
-        bind.ro = [ "/etc/machine-id" ];
+  common = _: {
+    fonts.enable = true;
+    gpu.enable = true;
+    waylandProxy.enable = true;
+    bubblewrap = {
+      network = true; # sync / calls
+      # audio in + out (huddles / unlock sounds); display comes via waylandProxy
+      sockets = {
+        pipewire = true;
+        pulse = true;
       };
+      bind.ro = [ "/etc/machine-id" ];
     };
+  };
 in
 {
   # GUI-only 1Password. No browser/CLI bridge, so no cross-sandbox sockets to

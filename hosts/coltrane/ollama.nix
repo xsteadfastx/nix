@@ -158,10 +158,39 @@ let
   '';
 in
 {
-  systemd.user.tmpfiles.rules = [
-    "d %h/.local/share/ollama 0755 - - -"
-    "d %h/.cache/ollama-sycl 0755 - - -"
-  ];
+  systemd.user = {
+    tmpfiles.rules = [
+      "d %h/.local/share/ollama 0755 - - -"
+      "d %h/.cache/ollama-sycl 0755 - - -"
+    ];
+
+    services = {
+      ollama-sycl-build = {
+        description = "Build ollama-sycl image";
+        wantedBy = [ "default.target" ];
+        after = [ "network-online.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = buildScript;
+          TimeoutStartSec = 0;
+        };
+      };
+
+      ollama = {
+        description = "Ollama SYCL";
+        wantedBy = [ "default.target" ];
+        after = [ "ollama-sycl-build.service" ];
+        requires = [ "ollama-sycl-build.service" ];
+        serviceConfig = {
+          ExecStart = runScript;
+          ExecStop = "${podman}/bin/podman stop ollama";
+          Restart = "on-failure";
+          RestartSec = "5s";
+        };
+      };
+    };
+  };
 
   environment.systemPackages = [
     pkgs.ollama
@@ -179,29 +208,4 @@ in
   powerManagement.resumeCommands = ''
     ${config.systemd.package}/bin/systemd-run --no-block --collect ${resumeRestart}
   '';
-
-  systemd.user.services.ollama-sycl-build = {
-    description = "Build ollama-sycl image";
-    wantedBy = [ "default.target" ];
-    after = [ "network-online.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = buildScript;
-      TimeoutStartSec = 0;
-    };
-  };
-
-  systemd.user.services.ollama = {
-    description = "Ollama SYCL";
-    wantedBy = [ "default.target" ];
-    after = [ "ollama-sycl-build.service" ];
-    requires = [ "ollama-sycl-build.service" ];
-    serviceConfig = {
-      ExecStart = runScript;
-      ExecStop = "${podman}/bin/podman stop ollama";
-      Restart = "on-failure";
-      RestartSec = "5s";
-    };
-  };
 }

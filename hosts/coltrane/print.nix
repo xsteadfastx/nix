@@ -32,9 +32,11 @@
   # idempotent; harmless to call when the target is down.
   systemd.timers.cups-update-remote-printer = {
     description = "Update remote IPP printer config via lpadmin";
-    timerConfig.OnBootSec = "5min";
-    timerConfig.OnUnitActiveSec = "6h";
-    timerConfig.RandomizedDelaySec = "1min";
+    timerConfig = {
+      OnBootSec = "5min";
+      OnUnitActiveSec = "6h";
+      RandomizedDelaySec = "1min";
+    };
     wantedBy = [ "timers.target" ];
   };
 

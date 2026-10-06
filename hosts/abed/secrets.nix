@@ -1,5 +1,9 @@
 _: {
-  sops.defaultSopsFile = ./secrets.yaml;
-  sops.secrets."restic_repo_file" = { };
-  sops.secrets."restic_pass_file" = { };
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    secrets = {
+      "restic_repo_file" = { };
+      "restic_pass_file" = { };
+    };
+  };
 }

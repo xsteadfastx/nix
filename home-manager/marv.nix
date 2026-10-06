@@ -5,19 +5,25 @@
     inputs.sops-nix.homeManagerModules.sops
   ];
 
-  home.username = "marv";
-  home.homeDirectory = "/home/marv";
+  home = {
+    username = "marv";
+    homeDirectory = "/home/marv";
 
-  home.stateVersion = "24.05";
+    stateVersion = "24.05";
 
-  home.sessionVariables = {
-    # EDITOR = "emacs";
+    sessionVariables = {
+      # EDITOR = "emacs";
+    };
   };
 
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
+  programs = {
+    # Let Home Manager install and manage itself.
+    home-manager.enable = true;
 
-  # Direnv
-  programs.direnv.enable = true;
-  programs.direnv.nix-direnv.enable = true;
+    # Direnv
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+  };
 }

@@ -17,7 +17,7 @@ in
     ../../hosts/phil
   ];
   specialArgs = {
-    lib = pkgs.lib;
+    inherit (pkgs) lib;
     inherit inputs;
   };
 }).config.system.build.sdImage

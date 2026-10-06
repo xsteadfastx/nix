@@ -7,9 +7,13 @@
     attic.url = "github:zhaofengli/attic";
     christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";
     christine-preuss-de.url = "github:xsteadfastx/christine-preuss.de";
-    coding-agent.inputs.home-manager.follows = "home-manager";
-    coding-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
-    coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
+    coding-agent = {
+      inputs = {
+        home-manager.follows = "home-manager";
+        nixpkgs.follows = "nixpkgs-unstable";
+      };
+      url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
+    };
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena";
     compose2nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -50,14 +54,16 @@
       colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
       lib = import ./lib;
       nixosConfigurations = inputs.self.outputs.colmenaHive.nodes;
-      nixosModules.base = import ./modules/base;
-      nixosModules.coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
-      nixosModules.home-manager = import ./modules/home-manager;
-      nixosModules.lix = import ./modules/lix;
-      nixosModules.ssh = import ./modules/ssh;
-      nixosModules.tlsrouter = import ./modules/tlsrouter;
-      nixosModules.users = import ./modules/users;
-      nixosModules.vm-variant = import ./modules/vm-variant;
+      nixosModules = {
+        base = import ./modules/base;
+        coding-agent = inputs.coding-agent.nixosModules.coding-agent-raw;
+        home-manager = import ./modules/home-manager;
+        lix = import ./modules/lix;
+        ssh = import ./modules/ssh;
+        tlsrouter = import ./modules/tlsrouter;
+        users = import ./modules/users;
+        vm-variant = import ./modules/vm-variant;
+      };
       overlays.default = import ./overlays { inherit inputs; };
     }
     // inputs.flake-utils.lib.eachDefaultSystem (
@@ -98,14 +104,17 @@
       {
         checks.pre-commit-check = preCommitGen.pre-commit-check;
         devShells.default = preCommitGen.devShell;
-        formatter = preCommitGen.formatter;
-        packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
-        packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
-        packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
-        packages.jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
-        packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
-        packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
-        packages.zellij-ssh-tint = pkgsUnstable.callPackage ./pkgs/zellij-ssh-tint/package.nix { }; # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
+        inherit (preCommitGen) formatter;
+        packages = {
+          phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
+          tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
+          paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
+          jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
+          lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
+          mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
+          # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
+          zellij-ssh-tint = pkgsUnstable.callPackage ./pkgs/zellij-ssh-tint/package.nix { };
+        };
       }
     );
 }

@@ -45,9 +45,11 @@
   };
 
   coltrane = {
-    deployment.tags = [ "local" ];
-    deployment.allowLocalDeployment = true;
-    deployment.targetHost = lib.mkForce null;
+    deployment = {
+      tags = [ "local" ];
+      allowLocalDeployment = true;
+      targetHost = lib.mkForce null;
+    };
     imports = [
       ./hosts/coltrane
 

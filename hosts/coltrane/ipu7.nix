@@ -246,62 +246,73 @@ in
     ivsc-firmware
   ];
 
-  services.udev.extraRules = ''
-    SUBSYSTEM=="intel-ipu7-psys", MODE="0660", GROUP="video"
-    KERNEL=="ipu7-psys*", MODE="0660", GROUP="video"
-  '';
+  services = {
+    udev.extraRules = ''
+      SUBSYSTEM=="intel-ipu7-psys", MODE="0660", GROUP="video"
+      KERNEL=="ipu7-psys*", MODE="0660", GROUP="video"
+    '';
 
-  # Hide the 32 raw ISYS capture nodes (/dev/video0-31) from user-space camera
-  # enumeration. GStreamer's v4l2 device provider — GstDeviceMonitor, what
-  # cheese and friends use to build their camera list — walks udev directly and
-  # does NOT consult WirePlumber, so these otherwise show up as 32 dead "ipu7"
-  # cameras *ahead* of the relayd loopback and become the default pick.
-  #
-  # MODE/GROUP alone would leave an ACL: systemd's 70-uaccess.rules tags every
-  # video4linux device `uaccess` and 73-seat-late.rules then grants the seat
-  # user rw. Hence the 71- prefix (between those two) and udev.packages rather
-  # than extraRules, which is 99-local.rules and far too late. Verified after a
-  # switch: /dev/video0 becomes root:root 0600, the stale ACL entries are masked
-  # off (`mask::---`, so `user:<you>:rw-` reads `#effective:---`), open() gives
-  # EACCES, and gst-device-monitor lists only the loopback.
-  #
-  # v4l2-relayd runs as root, so icamerasrc still reaches the nodes.
-  services.udev.packages = [
-    (pkgs.writeTextFile {
-      name = "ipu7-hide-isys-udev-rules";
-      destination = "/etc/udev/rules.d/71-ipu7-hide-isys.rules";
-      text = ''
-        SUBSYSTEM=="video4linux", ENV{ID_V4L_PRODUCT}=="ipu7", TAG-="uaccess", OWNER="root", GROUP="root", MODE="0600"
-      '';
-    })
-  ];
+    # Hide the 32 raw ISYS capture nodes (/dev/video0-31) from user-space camera
+    # enumeration. GStreamer's v4l2 device provider — GstDeviceMonitor, what
+    # cheese and friends use to build their camera list — walks udev directly and
+    # does NOT consult WirePlumber, so these otherwise show up as 32 dead "ipu7"
+    # cameras *ahead* of the relayd loopback and become the default pick.
+    #
+    # MODE/GROUP alone would leave an ACL: systemd's 70-uaccess.rules tags every
+    # video4linux device `uaccess` and 73-seat-late.rules then grants the seat
+    # user rw. Hence the 71- prefix (between those two) and udev.packages rather
+    # than extraRules, which is 99-local.rules and far too late. Verified after a
+    # switch: /dev/video0 becomes root:root 0600, the stale ACL entries are masked
+    # off (`mask::---`, so `user:<you>:rw-` reads `#effective:---`), open() gives
+    # EACCES, and gst-device-monitor lists only the loopback.
+    #
+    # v4l2-relayd runs as root, so icamerasrc still reaches the nodes.
+    udev.packages = [
+      (pkgs.writeTextFile {
+        name = "ipu7-hide-isys-udev-rules";
+        destination = "/etc/udev/rules.d/71-ipu7-hide-isys.rules";
+        text = ''
+          SUBSYSTEM=="video4linux", ENV{ID_V4L_PRODUCT}=="ipu7", TAG-="uaccess", OWNER="root", GROUP="root", MODE="0600"
+        '';
+      })
+    ];
 
-  # The IPU7 exposes 32 raw ISYS capture nodes (/dev/video0-31, driver "isys").
-  # WirePlumber would publish them as selectable cameras — they deliver nothing
-  # and opening them blocks icamerasrc. Disabling the whole video-capture
-  # monitor works but also hides the v4l2-relayd loopback, so PipeWire clients
-  # (cheese, Firefox, anything using the camera portal) see no camera at all.
-  # Instead: disable only the isys-driven nodes, keep the loopback, and turn off
-  # the libcamera monitor (it publishes a "Built-in Front Camera" that drives
-  # the sensor directly and fights icamerasrc for it).
-  services.pipewire.wireplumber.extraConfig."51-ipu7-camera" = {
-    "wireplumber.profiles" = {
-      main = {
-        # Explicit: the "hardware.video-capture" feature only *wants* both
-        # monitors, and disabling libcamera stops v4l2 loading with it.
-        "monitor.v4l2" = "required";
-        "monitor.libcamera" = "disabled";
+    # The IPU7 exposes 32 raw ISYS capture nodes (/dev/video0-31, driver "isys").
+    # WirePlumber would publish them as selectable cameras — they deliver nothing
+    # and opening them blocks icamerasrc. Disabling the whole video-capture
+    # monitor works but also hides the v4l2-relayd loopback, so PipeWire clients
+    # (cheese, Firefox, anything using the camera portal) see no camera at all.
+    # Instead: disable only the isys-driven nodes, keep the loopback, and turn off
+    # the libcamera monitor (it publishes a "Built-in Front Camera" that drives
+    # the sensor directly and fights icamerasrc for it).
+    pipewire.wireplumber.extraConfig."51-ipu7-camera" = {
+      "wireplumber.profiles" = {
+        main = {
+          # Explicit: the "hardware.video-capture" feature only *wants* both
+          # monitors, and disabling libcamera stops v4l2 loading with it.
+          "monitor.v4l2" = "required";
+          "monitor.libcamera" = "disabled";
+        };
+      };
+      "monitor.v4l2.rules" = [
+        {
+          matches = [ { "api.v4l2.cap.driver" = "isys"; } ];
+          actions.update-props = {
+            "node.disabled" = true;
+            "device.disabled" = true;
+          };
+        }
+      ];
+    };
+    v4l2-relayd.instances.ipu7 = {
+      enable = true;
+      cardLabel = "Intel MIPI Camera";
+      extraPackages = [ icamerasrc-ipu7x ];
+      input = {
+        pipeline = "icamerasrc";
+        format = "NV12";
       };
     };
-    "monitor.v4l2.rules" = [
-      {
-        matches = [ { "api.v4l2.cap.driver" = "isys"; } ];
-        actions.update-props = {
-          "node.disabled" = true;
-          "device.disabled" = true;
-        };
-      }
-    ];
   };
 
   # Self-heal orphaned loopbacks. If a consumer still holds the node when
@@ -325,14 +336,4 @@ in
         ${ctl} delete "$dev" || true
       done
     '';
-
-  services.v4l2-relayd.instances.ipu7 = {
-    enable = true;
-    cardLabel = "Intel MIPI Camera";
-    extraPackages = [ icamerasrc-ipu7x ];
-    input = {
-      pipeline = "icamerasrc";
-      format = "NV12";
-    };
-  };
 }

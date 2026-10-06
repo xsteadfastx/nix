@@ -1,8 +1,13 @@
 { pkgs, ... }:
 {
-  boot.supportedFilesystems = [ "zfs" ];
-  boot.zfs.forceImportRoot = true;
-  boot.zfs.requestEncryptionCredentials = true;
+  boot = {
+    supportedFilesystems = [ "zfs" ];
+    zfs = {
+      forceImportRoot = true;
+      requestEncryptionCredentials = true;
+    };
+    kernel.sysctl."vm.swappiness" = 60;
+  };
   environment.systemPackages = [ pkgs.zfs ];
   networking.hostId = "00000001";
 
@@ -12,8 +17,6 @@
     memoryPercent = 100;
     priority = 100;
   };
-
-  boot.kernel.sysctl."vm.swappiness" = 60;
 
   disko.devices = {
     disk = {

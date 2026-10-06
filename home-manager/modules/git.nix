@@ -25,17 +25,21 @@ in
       "mergetool \"diffview\"".cmd = "nvim -n -c \"DiffviewOpen\"";
       "url \"git@git.wobcom.de:\"".insteadOf = "https://git.wobcom.de";
 
-      alias.graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
-      alias.hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
-      alias.please = "push --force-with-lease";
+      alias = {
+        graph = "log --oneline --abbrev-commit --all --graph --decorate --color";
+        hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
+        please = "push --force-with-lease";
+      };
       core.pager = "delta";
       credential.helper = "gopass";
-      delta.dark = true;
-      delta.lineNumbers = true;
-      delta.navigate = true;
-      delta.side-by-side = true;
-      delta.smoothScroll = true;
-      delta.theme = "Dracula";
+      delta = {
+        dark = true;
+        lineNumbers = true;
+        navigate = true;
+        side-by-side = true;
+        smoothScroll = true;
+        theme = "Dracula";
+      };
       difftool.prompt = false;
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
@@ -48,11 +52,13 @@ in
       pull.ff = true;
       push.followTags = true;
       rerere.enabled = true;
-      sendemail.annotate = "yes";
-      sendemail.smtpencryption = "tls";
-      sendemail.smtpserver = "smtp.gmail.com";
-      sendemail.smtpserverport = 587;
-      sendemail.smtpuser = "xsteadfastx@gmail.com";
+      sendemail = {
+        annotate = "yes";
+        smtpencryption = "tls";
+        smtpserver = "smtp.gmail.com";
+        smtpserverport = 587;
+        smtpuser = "xsteadfastx@gmail.com";
+      };
       user.email = "marvin@xsteadfastx.org";
       user.name = "Marvin Preuss";
     };

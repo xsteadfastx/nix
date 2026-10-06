@@ -4,17 +4,21 @@
   ...
 }:
 {
-  options.features.games = lib.mkEnableOption "enable games";
-  options.features.kodi = lib.mkEnableOption "enable kodi";
-  options.features.matrix = lib.mkEnableOption "enable matrix";
-  options.features.meshcore = lib.mkEnableOption "enable meshcore";
-  options.features.neovim = lib.mkEnableOption "enable neovim";
-  options.features.wobcom = lib.mkEnableOption "wobcom work apps (1password, sandboxed Slack)";
-  options.features.desktop = lib.mkEnableOption "the graphical desktop (sway/Wayland + GUI apps)";
+  options.features = {
+    games = lib.mkEnableOption "enable games";
+    kodi = lib.mkEnableOption "enable kodi";
+    matrix = lib.mkEnableOption "enable matrix";
+    meshcore = lib.mkEnableOption "enable meshcore";
+    neovim = lib.mkEnableOption "enable neovim";
+    wobcom = lib.mkEnableOption "wobcom work apps (1password, sandboxed Slack)";
+    desktop = lib.mkEnableOption "the graphical desktop (sway/Wayland + GUI apps)";
+  };
 
   config = {
-    home-manager.useGlobalPkgs = true;
-    home-manager.useUserPackages = false; # Put the stuff to .nix-profile
-    home-manager.extraSpecialArgs = { inherit inputs; };
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = false; # Put the stuff to .nix-profile
+      extraSpecialArgs = { inherit inputs; };
+    };
   };
 }

@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   # Don't create default ~/Sync folder
   systemd.services.syncthing.environment.STNODEFAULTFOLDER = "true";
   services.syncthing = {

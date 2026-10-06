@@ -20,7 +20,7 @@
 
 stdenv.mkDerivation {
   pname = "trippy-dracula";
-  version = dbip-city-lite.version;
+  inherit (dbip-city-lite) version;
 
   nativeBuildInputs = [ makeWrapper ];
 

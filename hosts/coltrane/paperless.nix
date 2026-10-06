@@ -214,85 +214,93 @@ let
 in
 {
   users.users.marv.extraGroups = [ "paperless" ];
-  systemd.tmpfiles.rules = [
-    "d /var/lib/paperless/consume 0775 paperless paperless - -"
-  ];
-
-  services.gotenberg.chromium.disableJavascript = lib.mkForce false;
-  services.gotenberg.extraArgs = lib.mkForce [ "--chromium-allow-list=.*" ];
-
-  services.paperless = {
-    enable = true;
-    configureTika = true;
-    package = (pkgs.paperless-ngx.override { tesseract5 = tesseractBest; }).overrideAttrs (_: {
-      doInstallCheck = false;
-    });
-    port = 28981;
-    address = "127.0.0.1";
-    settings = {
-      PAPERLESS_OCR_LANGUAGE = "deu+eng";
-      PAPERLESS_OCR_USER_ARGS = builtins.toJSON {
-        optimize = 1;
-        clean_final = true;
-        deskew = true;
-      };
-      PAPERLESS_TIME_ZONE = "Europe/Berlin";
-      PAPERLESS_URL = "https://paperless.local";
-      PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
-      PAPERLESS_DATE_ORDER = "DMY";
-      PAPERLESS_POST_CONSUME_SCRIPT = "${postConsumeScript}";
-    };
-    passwordFile = config.sops.secrets."paperless-admin-password".path;
-  };
-
-  systemd.services.paperless-gpt = {
-    enable = false;
-    description = "paperless-gpt LLM auto-tagger";
-    after = [
-      "network.target"
-      "paperless-scheduler.service"
-      "ollama.service"
+  systemd = {
+    tmpfiles.rules = [
+      "d /var/lib/paperless/consume 0775 paperless paperless - -"
     ];
-    wantedBy = [ "multi-user.target" ];
-    environment = {
-      PAPERLESS_BASE_URL = "http://127.0.0.1:28981";
-      LLM_PROVIDER = "ollama";
-      LLM_MODEL = "qwen2.5:7b";
-      VISION_LLM_PROVIDER = "ollama";
-      VISION_LLM_MODEL = "minicpm-v:8b";
-      OCR_PROVIDER = "llm";
+
+    services = {
+      paperless-gpt = {
+        enable = false;
+        description = "paperless-gpt LLM auto-tagger";
+        after = [
+          "network.target"
+          "paperless-scheduler.service"
+          "ollama.service"
+        ];
+        wantedBy = [ "multi-user.target" ];
+        environment = {
+          PAPERLESS_BASE_URL = "http://127.0.0.1:28981";
+          LLM_PROVIDER = "ollama";
+          LLM_MODEL = "qwen2.5:7b";
+          VISION_LLM_PROVIDER = "ollama";
+          VISION_LLM_MODEL = "minicpm-v:8b";
+          OCR_PROVIDER = "llm";
+        };
+        serviceConfig = {
+          ExecStartPre = pkgs.writeShellScript "paperless-gpt-prompts" ''
+            chmod -R u+w default_prompts 2>/dev/null || true
+            rm -rf default_prompts
+            cp -r --no-preserve=mode ${prompts} default_prompts
+          '';
+          ExecStart = "${pkgs.paperless-gpt}/bin/paperless-gpt";
+          EnvironmentFile = config.sops.secrets."paperless-gpt-env".path;
+          DynamicUser = true;
+          StateDirectory = "paperless-gpt";
+          WorkingDirectory = "/var/lib/paperless-gpt";
+          Restart = "on-failure";
+          RestartSec = "5s";
+        };
+      };
+
+      paperless-betrag-backfill = {
+        description = "Backfill Betrag custom field for Amazon documents";
+        after = [ "paperless-web.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = betragBackfillScript;
+          User = "paperless";
+        };
+      };
     };
-    serviceConfig = {
-      ExecStartPre = pkgs.writeShellScript "paperless-gpt-prompts" ''
-        chmod -R u+w default_prompts 2>/dev/null || true
-        rm -rf default_prompts
-        cp -r --no-preserve=mode ${prompts} default_prompts
-      '';
-      ExecStart = "${pkgs.paperless-gpt}/bin/paperless-gpt";
-      EnvironmentFile = config.sops.secrets."paperless-gpt-env".path;
-      DynamicUser = true;
-      StateDirectory = "paperless-gpt";
-      WorkingDirectory = "/var/lib/paperless-gpt";
-      Restart = "on-failure";
-      RestartSec = "5s";
+
+    timers = {
+      paperless-betrag-backfill = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "5min";
+          OnUnitActiveSec = "15min";
+        };
+      };
     };
   };
 
-  systemd.services.paperless-betrag-backfill = {
-    description = "Backfill Betrag custom field for Amazon documents";
-    after = [ "paperless-web.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = betragBackfillScript;
-      User = "paperless";
-    };
-  };
+  services = {
+    gotenberg.chromium.disableJavascript = lib.mkForce false;
+    gotenberg.extraArgs = lib.mkForce [ "--chromium-allow-list=.*" ];
 
-  systemd.timers.paperless-betrag-backfill = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "5min";
-      OnUnitActiveSec = "15min";
+    paperless = {
+      enable = true;
+      configureTika = true;
+      package = (pkgs.paperless-ngx.override { tesseract5 = tesseractBest; }).overrideAttrs (_: {
+        doInstallCheck = false;
+      });
+      port = 28981;
+      address = "127.0.0.1";
+      settings = {
+        PAPERLESS_OCR_LANGUAGE = "deu+eng";
+        PAPERLESS_OCR_USER_ARGS = builtins.toJSON {
+          optimize = 1;
+          clean_final = true;
+          deskew = true;
+        };
+        PAPERLESS_TIME_ZONE = "Europe/Berlin";
+        PAPERLESS_URL = "https://paperless.local";
+        PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
+        PAPERLESS_DATE_ORDER = "DMY";
+        PAPERLESS_POST_CONSUME_SCRIPT = "${postConsumeScript}";
+      };
+      passwordFile = config.sops.secrets."paperless-admin-password".path;
     };
   };
 }

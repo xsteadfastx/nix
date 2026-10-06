@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   # Keep USB/Thunderbolt controllers and the ISY USB-C hub powered to prevent
   # dropouts. DP itself runs over the TB/DP-alt-mode path, not this hub.
   #

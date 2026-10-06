@@ -59,7 +59,7 @@ in
   # bug (mautrix/slack#95, merged; lands in v0.2608.0). nixpkgs still ships
   # 0.2605/0.2607 — both before that fix — so token-login aborts before the real
   # credential check. Use v0.2609.0 instead.
-  mautrix-slack = prev.mautrix-slack.overrideAttrs (rec {
+  mautrix-slack = prev.mautrix-slack.overrideAttrs rec {
     version = "26.09";
     tag = "v0.2609.0";
     src = prev.fetchFromGitHub {
@@ -72,7 +72,7 @@ in
     # pkg/msgconv unit tests need env fixtures that don't exist in the nix
     # build sandbox; irrelevant to bridge runtime. Skip them.
     doCheck = false;
-  });
+  };
 
   meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
 
@@ -168,7 +168,7 @@ in
 
   attic = inputs.attic.packages.${system}.attic;
 
-  cliamp = prev.cliamp.overrideAttrs (rec {
+  cliamp = prev.cliamp.overrideAttrs rec {
     version = "1.63.2";
     src = prev.fetchFromGitHub {
       owner = "bjarneo";
@@ -183,5 +183,5 @@ in
       license = prev.lib.licenses.mit;
       maintainers = with prev.lib.maintainers; [ marv ];
     };
-  });
+  };
 }
