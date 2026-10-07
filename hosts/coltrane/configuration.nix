@@ -284,19 +284,31 @@
     # memory save
     oomd.enable = false;
 
-    # Hard ceiling on tasks-per-session. systemd's own default is
-    # TasksMax=infinity on login-session scopes, so a runaway fork loop (see
-    # 2026-09-18 gping/ping storm: ~53k processes, ~17GB of swap) had nothing
-    # to stop it short of ulimit -u (126401). This caps it far below any real
-    # workload so a storm hits EAGAIN in seconds.
+    # Hard ceiling on tasks per user, so a runaway fork storm fails with EAGAIN
+    # instead of eating RAM and swap until the OOM killer takes the desktop
+    # apart (2026-09-18: ~53k processes, ~17GB swap; 2026-10-07: ~12k
+    # ping/gping, 10 minutes of OOM kills).
     #
-    # This used to be services.logind.settings.Login.UserTasksMax, but systemd
-    # removed that logind.conf option entirely -- confirmed live on 2026-09-22:
-    # "systemd-logind: /etc/systemd/logind.conf:16: Support for option
-    # UserTasksMax= has been removed", meaning the cap had been silently doing
-    # nothing since it was added. The replacement lives on the user-.slice
-    # template (matches every user-<uid>.slice instance) instead.
-    slices."user-".sliceConfig.TasksMax = "10000";
+    # systemd's own default cannot help here: its replacement for the removed
+    # logind UserTasksMax lives in user-.slice.d/10-defaults.conf and is
+    # TasksMax=33% -- 33% of kernel.pid_max, i.e. 1.38M tasks on this machine.
+    #
+    # Set on user.slice, NOT user-.slice. `user-.slice` is a systemd *built-in*
+    # unit: a unit file for it is rejected outright (verified 2026-10-07 --
+    # `systemctl show user-.slice` => LoadState=error, "Invalid argument", and
+    # even `systemd-analyze verify` on a copy in /tmp fails), and the error
+    # state takes the unit's own 33% drop-in down with it, leaving every
+    # user-<uid>.slice at TasksMax=infinity. A drop-in is its only hook, and
+    # NixOS emits exactly that for slices."user" -- because `user.slice` already
+    # exists upstream, generateUnits rewrites it to
+    # user.slice.d/overrides.conf rather than shadowing the unit file. pids.max
+    # is enforced hierarchically, so user.slice caps every user-<uid>.slice
+    # below it. Do not "fix" this back to user-.slice.
+    #
+    # 4000 is ~2.5x this user's normal task count (~1500) and well under where a
+    # swarm of ~4MB processes would exhaust RAM: a repeat storm now dies at a
+    # few GB with fork() failing. Raise it if a real workload ever hits EAGAIN.
+    slices."user".sliceConfig.TasksMax = "4000";
   };
 
   security.rtkit.enable = true;
