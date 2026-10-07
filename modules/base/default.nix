@@ -77,6 +77,7 @@
     ncdu
     net-tools
     nmap
+    rgrc
     ripgrep
     speedtest-go
     tmux

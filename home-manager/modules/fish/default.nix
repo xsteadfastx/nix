@@ -187,6 +187,60 @@
         rg = "rg --no-ignore-vcs --hidden";
         prev = "fzf --preview 'bat --style=numbers --color=always {}'";
         watch = "viddy";
+
+        # rgrc = regex colouriser, for commands with no *reliable* colour of
+        # their own. Which those are was measured, not assumed:
+        #
+        #   script -qec '<cmd>' /dev/null | grep -cP '\x1b\['
+        #
+        # Excluded because they already colour themselves -- and rgrc would
+        # only switch that OFF (it pipes them, so they see no tty) and put regex
+        # guessing in its place: gcc (1 escape), ip (5), systemctl (29),
+        # journalctl. Excluded for other reasons: `ls` (a pipe makes it print
+        # one entry per line instead of columns), `docker`/`podman` (`run -it`
+        # needs a real tty), `mtr` (a TUI), `curl` (response bodies are not a
+        # colourisation target).
+        #
+        # journalctl is deliberately absent: it colours, just unreliably
+        # (207/300 lines in a kernel-heavy window, 0 in a clean `-p info` one),
+        # and its colouring is the *useful* kind -- red means that line is an
+        # error. rgrc would trade that signal for decoration. Force systemd's
+        # own colour through a pipe with SYSTEMD_COLORS=1 instead.
+        #
+        # Abbrs, not aliases, on purpose: abbrs are interactive-only, so scripts
+        # and agents keep the real commands. See the 2026-10-07 gping/ping
+        # storm -- `ping` meaning something other than ping is the failure mode.
+        ping = "rgrc ping";
+        blkid = "rgrc blkid";
+        df = "rgrc df";
+        diff = "rgrc diff";
+        du = "rgrc du";
+        env = "rgrc env";
+        fdisk = "rgrc fdisk";
+        findmnt = "rgrc findmnt";
+        free = "rgrc free";
+        getfacl = "rgrc getfacl";
+        gpg = "rgrc gpg";
+        go = "rgrc go";
+        id = "rgrc id";
+        ifconfig = "rgrc ifconfig";
+        iptables = "rgrc iptables";
+        last = "rgrc last";
+        lsblk = "rgrc lsblk";
+        lsmod = "rgrc lsmod";
+        lspci = "rgrc lspci";
+        lsusb = "rgrc lsusb";
+        mount = "rgrc mount";
+        netstat = "rgrc netstat";
+        nmap = "rgrc nmap";
+        ps = "rgrc ps";
+        ss = "rgrc ss";
+        stat = "rgrc stat";
+        sysctl = "rgrc sysctl";
+        tail = "rgrc tail";
+        uptime = "rgrc uptime";
+        vmstat = "rgrc vmstat";
+
         g = "git";
         ga = "git add -A";
         gc = "git commit";
@@ -213,7 +267,7 @@
       };
 
       # interactive-only init: theme colors, ssh-agent + gopass keys, guarded tool
-      # blocks, grc wrappers. Runs after HM applies abbrs/aliases.
+      # blocks. Runs after HM applies abbrs/aliases.
       interactiveShellInit = ''
         fish_vi_key_bindings
         set default_user marv
@@ -274,25 +328,6 @@
             gopass completion fish | source
         end
 
-        # grc color-wrapped commands
-        if type -q grc
-            for exe in cat cvs df diff dig gcc g++ ls ifconfig make mount mtr \
-                netstat ping ps tail traceroute wdiff blkid du dnf docker \
-                docker-machine env id ip iostat last lsattr lsblk lspci lsmod \
-                lsof getfacl getsebool ulimit uptime nmap fdisk findmnt free \
-                semanage sar ss sysctl systemctl stat showmount tcpdump tune2fs \
-                vmstat w who
-                if type -q $exe
-                    function $exe --inherit-variable exe --wraps=$exe
-                        if isatty 1
-                            grc $exe $argv
-                        else
-                            command $exe $argv
-                        end
-                    end
-                end
-            end
-        end
       '';
     };
 
