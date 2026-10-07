@@ -195,17 +195,20 @@
         #
         # Excluded because they already colour themselves -- and rgrc would
         # only switch that OFF (it pipes them, so they see no tty) and put regex
-        # guessing in its place: gcc (1 escape), ip (5), systemctl (29),
-        # journalctl. Excluded for other reasons: `ls` (a pipe makes it print
-        # one entry per line instead of columns), `docker`/`podman` (`run -it`
-        # needs a real tty), `mtr` (a TUI), `curl` (response bodies are not a
-        # colourisation target).
+        # guessing in its place: gcc (1 escape), ip (5), systemctl (29).
+        # Excluded for other reasons: `ls` (a pipe makes it print one entry per
+        # line instead of columns), `docker`/`podman` (`run -it` needs a real
+        # tty), `mtr` (a TUI), `curl` (response bodies are not a colourisation
+        # target).
         #
-        # journalctl is deliberately absent: it colours, just unreliably
-        # (207/300 lines in a kernel-heavy window, 0 in a clean `-p info` one),
-        # and its colouring is the *useful* kind -- red means that line is an
-        # error. rgrc would trade that signal for decoration. Force systemd's
-        # own colour through a pipe with SYSTEMD_COLORS=1 instead.
+        # journalctl IS wrapped, even though it does colour. It colours by
+        # *priority*, not structure, and 270 of 300 lines on this box sit at
+        # priority 6 (info) -- deliberately plain -- with no err/warn lines in
+        # the window at all. So the severity signal fires rarely enough that
+        # structural colour on every line (grey timestamp, magenta unit and IPs)
+        # is the better deal here. Its own colour is still reachable:
+        # SYSTEMD_COLORS=1 through a pipe, and `-p warning` to show only the
+        # lines it would have coloured anyway.
         #
         # Abbrs, not aliases, on purpose: abbrs are interactive-only, so scripts
         # and agents keep the real commands. See the 2026-10-07 gping/ping
@@ -225,6 +228,7 @@
         id = "rgrc id";
         ifconfig = "rgrc ifconfig";
         iptables = "rgrc iptables";
+        journalctl = "rgrc journalctl";
         last = "rgrc last";
         lsblk = "rgrc lsblk";
         lsmod = "rgrc lsmod";
