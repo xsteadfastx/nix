@@ -14,7 +14,7 @@
         "github.com/mholt/caddy-ratelimit@v0.1.0"
         "pkg.jsn.cam/caddy-defender@v0.10.0"
       ];
-      hash = "sha256-e3ndIslJx1rk+QkX4sJA2ij9IT2Ctp2O52gtRUNWYHY=";
+      hash = "sha256-LK9AyliIgySZSz5mzs4Za9WuVSGcWJw67yXNHIY2loo=";
     };
 
     globalConfig = ''
