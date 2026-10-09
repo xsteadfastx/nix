@@ -264,7 +264,6 @@
         rmv = "rsync -ah --info=progress2 --remove-source-files";
         ssh = "TERM=xterm-256color SHELL=/bin/sh ssh";
         yaegi = "rlwrap yaegi";
-        "jellyfin-mpv" = "flatpak run com.github.iwalton3.jellyfin-mpv-shim/x86_64/stable";
         coderadio = "tmux rename-window coderadio; mpv http://coderadio-admin.freecodecamp.org/radio/8010/radio.mp3";
         chillradio = "tmux rename-window chillradio; streamlink https://www.youtube.com/watch?v=jfKfPfyJRdk 720p -p \"mpv --no-video\"";
         synthwaveradio = "tmux rename-window synthwaveradio; mpv --no-video https://www.youtube.com/watch?v=4xDzrJKXOOY";
