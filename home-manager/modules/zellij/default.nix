@@ -569,8 +569,25 @@ in
                         mode_locked          "#[fg=$bg,bg=$pink,bold] {name} "
                         mode_default_to_mode "locked"
 
-                        tab_normal               "#[fg=$fg,bg=$dim] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
-                        tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        // The tab label is the title of that tab's focused pane --
+                        // i.e. what fish_title (see the fish functions below) writes:
+                        // the directory while idle, `<command> <directory>` while one
+                        // runs. {name} -- zellij's own tab name -- is deliberately not
+                        // used any more: only a pane-level action can change it, so it
+                        // always trailed the focused pane (a pane that went away left
+                        // its name behind, and a shell cannot notice focus moving).
+                        // zjstatus re-reads every pane title on each PaneUpdate, which
+                        // is what a focus change, a pane opening or a pane closing
+                        // sends. Measured in a scratch session: opening a pane flipped
+                        // the label from zellij's initial `Pane #1` to the real `/tmp`,
+                        // while a title change alone (a command starting) changed
+                        // nothing -- zellij announces pane actions only, not pane
+                        // titles (#5482), which is what keeps zellij_tab_running /
+                        // zellij_tab_idle below load-bearing: their rename-tab is a
+                        // pane action, and it is what makes the label pick up a new
+                        // command promptly.
+                        tab_normal               "#[fg=$fg,bg=$dim] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
                         tab_fullscreen_indicator "□ "
                         tab_sync_indicator       "  "
                         tab_floating_indicator   "󰉈 "
@@ -581,8 +598,8 @@ in
                         // Without these keys a background-tab bell is invisible.
                         // Pink block, matching mode_locked's style.
                         tab_bell_indicator       "󰂚 "
-                        tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
-                        tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
+                        tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
+                        tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
 
                         command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
                         command_battery_format   "${metricFormat "battery"}"
@@ -653,6 +670,13 @@ in
       # Plain `rename-tab` renames whichever tab the *client* is looking at, so a
       # long command finishing in a tab you have since left would rename the tab
       # you are on. Resolve this pane's own tab id and target that instead.
+      #
+      # The name the bar *shows* is no longer this tab name but the focused pane's
+      # title (layouts/default.kdl: {focused_pane_title}), which zjstatus re-reads
+      # on every PaneUpdate. These hooks stay because they are also the update:
+      # zellij broadcasts only pane *actions*, never title changes (#5482), so
+      # without the rename-tab there is nothing to make the bar re-read the new
+      # command name until some unrelated pane event happens.
       zellij_tab_rename = {
         argumentNames = [ "name" ];
         description = "rename the zellij tab holding this pane, if it is focused there";
@@ -666,8 +690,15 @@ in
           test (string length -- $name) -gt 20; and set name (string sub -l 19 -- $name)"…"
           # columns: TAB_ID ... PANE_ID TYPE TITLE FOCUSED FLOATING EXITED
           set -l m (command zellij action list-panes -t -s 2>/dev/null \
-              | string match -r -g "^(\d+)\s.*\sterminal_$ZELLIJ_PANE_ID\s.*\s(true|false)\s+\S+\s+\S+\$")
+              | string match -r -g "^(\d+)\s.*\sterminal_$ZELLIJ_PANE_ID\s.*\s(true|false)\s+(\S+)\s+\S+\$")
           test "$m[2]" = true; or return
+          # A floating pane is an overlay on the tab, not the tab. Letting it own
+          # the label means the label keeps the overlay's directory after the
+          # overlay closes, and zellij sends a pane *no* signal on focus change
+          # (not even SIGWINCH -- only a real resize), so no shell hook can put
+          # it back. A split close resizes the sibling, which re-asserts itself
+          # from its next prompt; a floating pane resizes nothing.
+          test "$m[3]" = false; or return
           command zellij action rename-tab --tab-id $m[1] -- "$name" 2>/dev/null
         '';
       };
@@ -682,23 +713,80 @@ in
         '';
       };
 
+      # What a command *line* should be called. `sudo nixos-rebuild switch`
+      # should read as nixos-rebuild, not sudo, `FOO=1 make` as make -- and so
+      # should every abbr in home-manager/modules/fish that starts with a
+      # wrapper rather than the app itself: `journalctl` arrives as `rgrc
+      # journalctl` (abbrs expand in the reader, so whoever reads the command
+      # line later sees the expansion) and `yaegi` as `rlwrap yaegi`.
+      #
+      # One funnel for both callers below, the tab name and the terminal title:
+      # they must not disagree about what is running (they did -- the title
+      # said `rgrc`, the tab said journalctl).
+      cmd_name = {
+        argumentNames = [ "line" ];
+        description = "the name a command line should be shown under, wrapper stripped";
+        body = ''
+          set -l words (string split -n " " -- $line)
+          test -n "$words[1]"; or return
+          while test (count $words) -gt 1
+              contains -- $words[1] sudo doas command env nohup rgrc rlwrap
+              or string match -q -- "*=*" $words[1]
+              or break
+              set -e words[1]
+          end
+          basename -- $words[1]
+        '';
+      };
+
+      # A pane's OSC title -- what the pane frame shows and what zellij hands
+      # the terminal's window title -- is fish's default fish_title, which
+      # prints the command line it is handed when a command starts. That is the
+      # raw expansion, so the wrapper was what showed up; run it through
+      # cmd_name like the tab name is.
+      #
+      # fish also calls fish_title with *no* argument on every prompt render,
+      # which is the hook this config was missing: it is the only thing a pane
+      # runs when it regains focus (the split next to it closed, a floating pane
+      # was dismissed -- zellij resizes us, so fish redraws the prompt). That is
+      # where the tab name gets re-asserted, otherwise it keeps naming the
+      # directory of the pane that just went away. zellij_tab_rename still drops
+      # it unless this is the tab's focused pane, so a background pane merely
+      # redrawing cannot steal the name.
+      # ponytail: zellij tells a pane nothing when focus moves -- the only
+      # trigger a shell has is the resize a *layout* change causes. So tiled
+      # focus moves (arrow keys between panes of one tab) keep the old name
+      # until the next prompt, and floating panes are kept out of the labelling
+      # altogether (zellij_tab_rename) instead of sticking.
+      #
+      # The title is also what zjstatus prints as the tab label, and zjstatus has
+      # no per-label length limit of its own ({focused_pane_title} prints the pane
+      # title it is handed; tab_display_count only bounds how many tabs are shown),
+      # so the bound lives here: 20 characters with an ellipsis, the same bound
+      # zellij_tab_rename puts on the tab name. prompt_pwd already shortens the
+      # path to `~/n/h/modules` form, so the cut lands on its tail.
+      fish_title = {
+        description = "pane/window title: real command name plus directory, bounded";
+        body = ''
+          set -l ssh
+          set -q SSH_TTY
+          and set ssh "["(prompt_hostname | string sub -l 10 | string collect)"]"
+          set -q argv[1]; or zellij_tab_name
+          set -l name (prompt_pwd -d 1 -D 1)
+          set -q argv[1]; and set name (cmd_name $argv[1])" "$name
+          test (string length -- $name) -gt 20; and set name (string sub -l 19 -- $name)"…"
+          echo -- $ssh $name
+        '';
+      };
+
       # Before a command runs: show what is about to run.
       zellij_tab_running = {
         onEvent = "fish_preexec";
         description = "name the zellij tab after the running command";
         body = ''
           set -q ZELLIJ; or return
-          set -l words (string split -n " " -- $argv[1])
-          test -n "$words[1]"; or return
-          # `sudo nixos-rebuild switch` should read as nixos-rebuild, not sudo.
-          # `FOO=1 make` should read as make.
-          while test (count $words) -gt 1
-              contains -- $words[1] sudo doas command env nohup
-              or string match -q -- "*=*" $words[1]
-              or break
-              set -e words[1]
-          end
-          set -l cmd (basename -- $words[1])
+          set -l cmd (cmd_name $argv[1])
+          test -n "$cmd"; or return
           # Near-instant commands would only flicker the tab name; the postexec
           # hook restores the directory right after them anyway.
           contains -- $cmd cd ls ll la clear pwd exit; and return
@@ -718,11 +806,6 @@ in
         '';
       };
     };
-
-    # new tab/pane: start out named after the cwd (see zellij_tab_rename)
-    fish.interactiveShellInit = ''
-      zellij_tab_name
-    '';
 
     zellij = {
       enable = true;
