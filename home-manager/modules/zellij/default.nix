@@ -546,17 +546,22 @@ in
                         format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_disk}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
                         format_space  "#[bg=$dim]"
 
-                        // No format_hide_on_overlength: it drops a whole part (all
-                        // 55 cols of metrics+clock) the moment one col doesn't fit,
-                        // and the parts never actually overlap -- zjstatus appends
-                        // left + get_spacer + right, and the spacer is
-                        // `cols.saturating_sub(left+right)` (src/config.rs), so
-                        // zero means right starts flush against left and merely runs
-                        // off the right edge. The clip already eats the clock's
-                        // date/seconds first, which is the graceful version. The
-                        // long-name bug is handled at the source instead: the name
-                        // bound in zellij_tab_rename (fish) -- zjstatus itself never
-                        // truncates a tab name.
+                        // No format_hide_on_overlength: it drops a whole part the
+                        // moment one col doesn't fit, and a part is all-or-nothing
+                        // whatever format_precedence says -- with the default the
+                        // metrics+clock go, with "rlc" the mode chip, the session and
+                        // every tab go. The parts never collide anyway: zjstatus
+                        // appends left + get_spacer + right, and the spacer is
+                        // `cols.saturating_sub(left+right)` (src/config.rs), so zero
+                        // means right starts flush against left -- and an overlong left
+                        // doesn't clip, it wraps: the line is written into a one-row
+                        // pane, so the pane's viewport scrolls and the bar shows the
+                        // tail of the line and nothing else. Measured in a scratch
+                        // session at this bar's 174 columns, 8 tabs left `09/10/2026`
+                        // as the entire status bar. Both ends are bounded instead, at
+                        // the source: the tab count below, and the name bound in
+                        // zellij_tab_rename (fish) -- zjstatus itself never truncates
+                        // a tab name.
 
                         border_enabled "false"
 
@@ -600,6 +605,24 @@ in
                         tab_bell_indicator       "󰂚 "
                         tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
                         tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
+
+                        // More tabs than fit: show a window around the active one and
+                        // render the rest as these two markers instead. {count} is
+                        // substituted only in them, and a click on one jumps to the
+                        // hidden tab. This is the only width control zjstatus has --
+                        // the tab list is unbounded, and "as many tabs as fit" is
+                        // still an open feature request (dj95/zjstatus#298).
+                        // Measured on this bar (174 cols: 1913 px / 11 px cell, ghostty
+                        // font-size 14): chips 15, metrics+clock 57, so the tabs get
+                        // 102 -- about six of them at the current name lengths.
+                        // ponytail: 6 is a fixed number, not a fit; six names at the
+                        // 20-char bound in zellij_tab_rename still overflow (+~30 cols,
+                        // measured -- the bar scrolls as above), so lower that bound to
+                        // ~12, where 6 tabs + markers + chips + metrics is 162 of the
+                        // 174 columns, if the clock must never be dropped.
+                        tab_display_count        "6"
+                        tab_truncate_start_format "#[fg=$blue,bg=$dim]‹{count} "
+                        tab_truncate_end_format   "#[fg=$blue,bg=$dim] {count}›"
 
                         command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
                         command_battery_format   "${metricFormat "battery"}"
@@ -761,10 +784,14 @@ in
       #
       # The title is also what zjstatus prints as the tab label, and zjstatus has
       # no per-label length limit of its own ({focused_pane_title} prints the pane
-      # title it is handed; tab_display_count only bounds how many tabs are shown),
-      # so the bound lives here: 20 characters with an ellipsis, the same bound
-      # zellij_tab_rename puts on the tab name. prompt_pwd already shortens the
-      # path to `~/n/h/modules` form, so the cut lands on its tail.
+      # title it is handed; `tab_display_count` in layouts/default.kdl only bounds
+      # how many tabs are shown), so the bound lives here: 20 characters with an
+      # ellipsis, the same bound zellij_tab_rename puts on the tab name. prompt_pwd
+      # already shortens the path to `~/n/h/modules` form, so the cut lands on its
+      # tail. The bar's width is the product of that bound and the one in the
+      # layout, and exceeding it scrolls the whole bar (layout comment above):
+      # measured, 6 tabs of 20 columns plus chips and metrics is 219 of 174, six
+      # of 12 is 162.
       fish_title = {
         description = "pane/window title: real command name plus directory, bounded";
         body = ''
