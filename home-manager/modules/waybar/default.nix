@@ -93,14 +93,8 @@ lib.mkIf cfg.desktop {
   # See home-manager/lib/statusbar.nix for the palette and the segment
   # colours; style.css holds the layout and the waybar-only colours.
   #
-  # `mode = "dock"` is the real mode now: always visible, standard systemd-run
-  # waybar like everyone else's setup, not sway hide/reveal-managing it via
-  # `swaybar_command` + bar IPC (that used to live in ../sway/config.nix's
-  # `bar {}` block -- removed, along with the repeated layer-surface
-  # show/hide churn every Mod4 press caused). No `ipc` setting: that was only
-  # for asking sway for the hide/reveal bar_state_update, which nothing needs
-  # anymore -- the `sway/workspaces` and `sway/mode` modules below have their
-  # own separate IPC connection to sway and don't need it either.
+  # `mode = "dock"` is the real mode now: always visible, a normal systemd user
+  # service, not compositor-managed via `bar {}` + IPC.
   #
   # NOTE: module definitions sit directly on the bar, NOT nested under a
   # `modules = { ... }` attr -- Home Manager removed that nesting and writing it
@@ -135,7 +129,6 @@ lib.mkIf cfg.desktop {
     BindsTo = [ "wireplumber.service" ];
     After = [ "wireplumber.service" ];
   };
-  systemd.user.targets.sway-session.Unit.Upholds = [ "waybar.service" ];
 
   programs.waybar = {
     enable = true;
@@ -150,11 +143,7 @@ lib.mkIf cfg.desktop {
         mode = "dock";
         height = 30;
 
-        modules-left = [
-          "sway/workspaces"
-          "wlr/taskbar"
-          "sway/mode"
-        ];
+        modules-left = [ "wlr/taskbar" ];
 
         # MPRIS "now playing" -- centered since it's the one module that's
         # empty most of the time (waybar hides a module with nothing to show
@@ -221,10 +210,9 @@ lib.mkIf cfg.desktop {
         };
 
         # ── Tray ────────────────────────────────────────────────────────────
-        # The module swaybar never had: Waybar speaks StatusNotifierItem
-        # properly, which is why blueman's tray icon ("its SNI properties are
-        # unsupported", per ../sway/config.nix) could never render there. The
-        # applets themselves are systemd user units (../sway/applets.nix).
+        # Waybar speaks StatusNotifierItem, which is what renders the applets'
+        # tray icons. The applets themselves are systemd user units
+        # (../applets.nix).
         tray = {
           icon-size = 18;
           spacing = 8;
@@ -236,35 +224,6 @@ lib.mkIf cfg.desktop {
           format = icons.bell;
           tooltip = false;
           on-click = "${swayncClient} -t -sw";
-        };
-
-        # ── Workspaces / mode ───────────────────────────────────────────────
-        "sway/workspaces" = {
-          disable-scroll = true;
-          all-outputs = true;
-          format = "{name}";
-        };
-
-        # Binding-mode indicator (the old bar's binding_mode colours).
-        "sway/mode" = {
-          format = "  {}";
-        };
-
-        # Window buttons with app icons. waybar's wlr/taskbar speaks
-        # wlr-foreign-toplevel-management, which both compositors implement
-        # (wlroots under sway, niri natively), so unlike the workspace modules
-        # this one is not session-specific. The icon is resolved from the app_id
-        # through the app's desktop file and the Dracula icon theme installed by
-        # ../gtk -- no per-app configuration here.
-        "wlr/taskbar" = {
-          format = "{icon}";
-          icon-size = 16;
-          icon-theme = "Dracula";
-          tooltip-format = "{title}";
-          on-click = "activate";
-          on-click-middle = "close";
-          all-outputs = true;
-          active-first = true;
         };
 
         # ── Right-hand modules ──────────────────────────────────────────────

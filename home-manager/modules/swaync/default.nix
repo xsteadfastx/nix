@@ -15,14 +15,14 @@ lib.mkIf cfg.desktop {
   #
   # The Home Manager module already ships the systemd user unit (Type=dbus,
   # BusName=org.freedesktop.Notifications, WantedBy = wayland.systemd.target,
-  # which this repo pins to sway-session.target in ../sway/default.nix), so
-  # nothing execs it from the sway config and no autostart entry is needed.
+  # which is graphical-session.target here), so nothing execs it from a session
+  # script and no autostart entry is needed.
   #
   # Style is the official Dracula port, kept as a file beside this module
   # (642 lines -- not inlined into Nix); see style.css for its one local edit.
   #
   # NOTE: home-manager's services.swaync does NOT pull in libnotify, but the
-  # brightness/volume bindings in ../sway/config.nix call notify-send. Without
+  # brightness/volume bindings in ../niri/config.nix call notify-send. Without
   # the explicit package below the daemon would run and those OSDs would
   # silently do nothing.
   services.swaync = {
@@ -73,6 +73,6 @@ lib.mkIf cfg.desktop {
     };
   };
 
-  # notify-send, for the brightness/volume bindings in ../sway/config.nix.
+  # notify-send, for the brightness/volume bindings in ../niri/config.nix.
   home.packages = [ pkgs.libnotify ];
 }

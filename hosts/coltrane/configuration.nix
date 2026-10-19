@@ -205,17 +205,9 @@
   };
 
   programs = {
-    # Wayland: sway session (i3 removed).
-    sway.enable = true;
-
-    # niri as a second Wayland session, for evaluation only -- no config, default
-    # keybinds. Trial: log in on tty1 and run `niri-session` instead of `sway`
-    # (niri-session is what imports the env and starts the systemd user session;
-    # plain `niri` skips it the way plain `sway` skips the config.d include).
-    # The probe is the three things our sway tooling exists for: 3-monitor
-    # dock/undock, launcher keeping keyboard focus under focus-follows-mouse, and
-    # window switching. Passes -> migrate and delete sway-outputs + kanshi; fails
-    # -> delete this line.
+    # The Wayland session. Config in home-manager/modules/niri/; start it with
+    # `niri-session` (the wrapper in ~/.local/bin maps the bare `niri` to it,
+    # because plain `niri` never imports the environment into systemd).
     niri.enable = true;
 
     # Needs to be enabled for completions
@@ -245,16 +237,16 @@
   # a full compositor plus GTK theming just to draw a login box, and it
   # crashed back to a bare getty on first boot here with no visible error.
   # tty1 just runs NixOS's default `agetty` + password login; log in and run
-  # `sway` by hand. Same PAM auth underneath as any greeter, one less thing
-  # that can crash before you even get a shell -- and if sway itself fails,
-  # you see the real error instead of a greeter silently retrying.
+  # `niri-session` by hand. Same PAM auth underneath as any greeter, one less
+  # thing that can crash before you even get a shell -- and if the compositor
+  # fails, you see the real error instead of a greeter silently retrying.
 
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk-sans
   ];
 
-  # Keyboard layout is set by the sway config (input * xkb_layout de); no X server
+  # Keyboard layout is set by the niri config (input xkb layout "de"); no X server
   # or X11 keymap config is needed on this host.
 
   console = {
@@ -386,7 +378,7 @@
       extraArgs = [
         # "-g"
         "--avoid"
-        "^(X|i3.*|sway.*|niri.*|sshd|systemd|ghostty|alacritty|zellij)$"
+        "^(X|niri.*|sshd|systemd|ghostty|alacritty|zellij)$"
         "--prefer"
         "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
       ];

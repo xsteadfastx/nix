@@ -8,7 +8,7 @@ let
   cfg = nixosConfig.features;
 
   # wofi window switcher: `--dmenu` over `niri msg --json windows`, the same
-  # shape as the sway version (sway-window-switch in ../sway/default.nix) --
+  # shape as the sway version this replaced --
   # titles to pick from, then the id of the first window with that title.
   # Covers both native Wayland and XWayland (satellite) windows, since niri
   # reports them in the same list.
@@ -38,13 +38,12 @@ lib.mkIf cfg.desktop {
   # for key -- see config.nix for what niri cannot express -- so the probe login
   # judges niri itself, not a half-furnished session.
   #
-  # Not ported, and moot while sway is what actually runs: the sway-outputs /
-  # kanshi arrangement -- config.nix does the same job in niri's own config, by
-  # make/model/serial, so kanshi would only add a second source of truth (niri
-  # implements wlr-output-management since 0.1.8, so it *would* run there) -- and
-  # the workspace-to-output pinning, which has no niri equivalent at all.
+  # Output arrangement lives in config.nix (niri's own blocks, matched by
+  # make/model/serial); the sway-outputs script and kanshi that used to do it are
+  # gone with sway. There is no workspace-to-output pinning: niri workspaces
+  # belong to a monitor.
   #
-  # For a GUI: `wdisplays` (in home.packages via ../sway, wlr-output-management)
+  # For a GUI: `wdisplays` (home.packages, ../desktop.nix, wlr-output-management)
   # and `nwg-displays` (0.4.0+ writes niri KDL) both work. They only apply
   # settings -- the config above stays the source of truth, so a GUI experiment
   # is undone by Mod+Shift+C reload.
@@ -95,32 +94,4 @@ lib.mkIf cfg.desktop {
     '';
   };
 
-  # Every session-bound user unit (waybar, swayidle, the tray applets) is
-  # WantedBy sway-session.target only: Home Manager's wayland.systemd.target is a
-  # single value and sway needs its own, because NixOS starts
-  # graphical-session.target *before* sway with no WAYLAND_DISPLAY (see
-  # ../sway/default.nix). niri needs no such target -- niri.service carries
-  # `Before=graphical-session.target` and `BindsTo=graphical-session.target`, so
-  # in a niri session that target starts *after* the compositor is up and the
-  # same units work off it unchanged.
-  #
-  # Adding the second WantedBy (unit lists merge) starts them in either session,
-  # without touching the sway path. syncthingtray is conditional: declaring it
-  # when the service is off would create a unit with no ExecStart.
-  #
-  # waybar stays, for the tray: every applet here (blueman, syncthingtray,
-  # nm-applet, signal) is a StatusNotifierItem and needs a bar to host it.
-  systemd.user.services =
-    lib.genAttrs
-      [
-        "waybar"
-        "swayidle"
-        "nm-applet"
-      ]
-      (_: {
-        Install.WantedBy = [ "graphical-session.target" ];
-      })
-    // lib.optionalAttrs nixosConfig.services.syncthing.enable {
-      syncthingtray.Install.WantedBy = [ "graphical-session.target" ];
-    };
 }

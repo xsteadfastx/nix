@@ -7,9 +7,9 @@ _: {
   # not this USB hub), and its DP-1-3/DP-1-4 guard never matched because xe now
   # enumerates the MST sub-connectors as DP-6/DP-7. So it re-bound the hub and
   # then polled 30s on every boot *and* soft-reboot for nothing. Output
-  # enumeration is sway's job now: wlroots force-scans all DRM connectors at
-  # backend start, on session resume, and on hotplug, while kanshi and
-  # sway-outputs match by EDID, independent of the connector names.
+  # enumeration is niri's job now: it re-enumerates connectors on backend start,
+  # on session resume and on hotplug, and its output blocks match by
+  # make/model/serial, independent of the connector names.
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x64a0", ATTR{power/control}="on"
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xa831", ATTR{power/control}="on"
