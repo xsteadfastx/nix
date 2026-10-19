@@ -242,6 +242,7 @@ in
       Mod+Ctrl+J { focus-window-or-monitor-down; }
       Mod+Ctrl+K { focus-window-or-monitor-up; }
       Mod+Ctrl+L { focus-column-or-monitor-right; }
+
       Mod+Home { focus-column-first; }
       Mod+End { focus-column-last; }
       Mod+Ctrl+Home { move-column-to-first; }
