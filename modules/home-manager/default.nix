@@ -22,6 +22,15 @@
       useGlobalPkgs = true;
       useUserPackages = false; # Put the stuff to .nix-profile
       extraSpecialArgs = { inherit inputs; };
+
+      # Adopting a dotfile Home Manager did not write before (the first one was
+      # ~/.profile and ~/.bashrc, when bash moved into home-manager/modules/bash.nix)
+      # aborts the whole activation with "Existing file … would be clobbered" and
+      # exit code 4. With a backup extension HM moves the old file aside to
+      # <file>.backup and continues, which is what "take over this dotfile"
+      # should mean -- the alternative is `force = true` per file, which silently
+      # deletes the old content.
+      backupFileExtension = "backup";
     };
   };
 }
