@@ -152,6 +152,7 @@ lib.mkIf cfg.desktop {
 
         modules-left = [
           "sway/workspaces"
+          "wlr/taskbar"
           "sway/mode"
         ];
 
@@ -247,6 +248,23 @@ lib.mkIf cfg.desktop {
         # Binding-mode indicator (the old bar's binding_mode colours).
         "sway/mode" = {
           format = "  {}";
+        };
+
+        # Window buttons with app icons. waybar's wlr/taskbar speaks
+        # wlr-foreign-toplevel-management, which both compositors implement
+        # (wlroots under sway, niri natively), so unlike the workspace modules
+        # this one is not session-specific. The icon is resolved from the app_id
+        # through the app's desktop file and the Dracula icon theme installed by
+        # ../gtk -- no per-app configuration here.
+        "wlr/taskbar" = {
+          format = "{icon}";
+          icon-size = 16;
+          icon-theme = "Dracula";
+          tooltip-format = "{title}";
+          on-click = "activate";
+          on-click-middle = "close";
+          all-outputs = true;
+          active-first = true;
         };
 
         # ── Right-hand modules ──────────────────────────────────────────────

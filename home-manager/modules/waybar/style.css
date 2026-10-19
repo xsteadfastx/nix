@@ -84,6 +84,50 @@ window#waybar {
     background: @red;
 }
 
+/* ── Taskbar: the same active/inactive blocks as the workspace buttons ──── */
+/*
+ * waybar's wlr/taskbar builds one <button> per window and puts no styling on it
+ * by itself, so without this the window buttons floated with no background at
+ * all while the workspace buttons next to them had one. Same rules, same
+ * colours: @background when inactive, @purple when focused, @red when urgent.
+ */
+#taskbar {
+    padding: 0 4px;
+    margin: 5px 0;
+    border-left: 1px solid @selection;
+}
+
+#taskbar button {
+    /* Same box as a workspace button: full bar height (no vertical padding or
+       margin -- those made the button a half-height block), padding only left
+       and right. No border-radius: the workspace buttons have none either, and
+       a rounded block next to square ones looked bolted on. */
+    padding: 0 6px;
+    margin: 0;
+    background: @background;
+}
+
+#taskbar button image {
+    /* Let the icon sit centred in the box instead of inheriting button padding. */
+    padding: 0 2px;
+}
+
+#taskbar button:hover {
+    box-shadow: inherit;
+    text-shadow: inherit;
+    background-image: linear-gradient(0deg, @selection, @background-darker);
+}
+
+#taskbar button.active {
+    background-image: none;
+    background: @purple;
+}
+
+#taskbar button.urgent {
+    background-image: none;
+    background: @red;
+}
+
 /* ── Our modules: padding + separator between the values ────────────────── */
 /*
  * `margin: 5px 0` together with `border-left` produces a divider that is inset
