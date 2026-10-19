@@ -144,6 +144,11 @@ Hard-won facts:
   (upstream `intel/vision-drivers#32`, unfixed). An `intel_cvs` mainline series is in
   flight: <https://lore.kernel.org/linux-media/20260514184431.288353-1-miguel.vadillo@intel.com/>
 
+### Memory tuning on coltrane (zram + ZFS ARC, 2026-10-19)
+- **zram works** (zstd, 100% of RAM, ~3.5x ratio) and is not the cause of lag; it only absorbs what kswapd reclaims. Sizing at 100% is right with no disk swap.
+- **Settings** (`hosts/coltrane/configuration.nix`): `vm.watermark_boost_factor=0` (xe fragmentation woke kswapd, 2026-10-05), `vm.page-cluster=0` (no swap readahead on zram; was hand-set and lost on reboot until committed), and `zfs_arc_max=8 GiB` in `extraModprobeConfig` (ZFS 2.3+ defaults to all RAM but 1 GiB, and the ARC is invisible to `MemAvailable`). ARC changes need a reboot.
+- **Real RAM consumers** are Firefox (~5 GiB incl. swap) and the MCP servers, which every agent session spawns its own copy of (activity-mcp ~850 MiB each). Lag cause is still unproven: check `/proc/pressure/{memory,io}` during lag. A CD rip (whipper on `/dev/sr0`) inflates I/O PSI without slowing the desktop.
+
 ### Local ollama (SYCL on the Intel Arc iGPU)
 The local ollama is a hand-built SYCL container (`hosts/coltrane/ollama.nix`) driving the **Intel Arc 140V iGPU** (Lunar Lake) via Level Zero — there is no discrete GPU. Hard-won facts:
 
