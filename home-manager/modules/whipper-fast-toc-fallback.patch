@@ -1,0 +1,34 @@
+--- a/whipper/common/program.py
++++ b/whipper/common/program.py
+@@ -26,6 +26,7 @@
+ import shutil
+ import time
+ 
++from discid.disc import TOCError
+ from tempfile import NamedTemporaryFile
+ from whipper.common import accurip, checksum, common, mbngs, path
+ from whipper.program import cdrdao, cdparanoia
+@@ -130,6 +131,23 @@
+ 
+         assert itable.hasTOC()
+ 
++        try:
++            itable.getMusicBrainzDiscId()
++        except TOCError:
++            # cdrdao's slow TOC read extracts pregaps by scanning Q
++            # subchannels. Some drives return garbage subchannel data, which
++            # makes cdrdao garble the TOC and discid rejects it ("Disc too
++            # long", "Invalid order"). The fast TOC lacks INDEX 00 detail but
++            # is otherwise identical, so use it instead of failing the rip.
++            # https://github.com/whipper-team/whipper/issues/583
++            logger.warning('cdrdao full TOC unusable; falling back to '
++                           'the fast TOC')
++            t = cdrdao.ReadTOCTask(device, fast_toc=True)
++            t.description = "Reading table"
++            runner.run(t)
++            itable = t.toc.table
++            assert itable.hasTOC()
++
+         self.result.table = itable
+ 
+         logger.debug('getTable: returning table with mb id %s',
