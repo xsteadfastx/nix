@@ -11,6 +11,15 @@ let
   # the spec spellings.
   statusbar = import ../../lib/statusbar.nix { inherit lib; };
   hex = name: lib.toUpper (lib.removePrefix "#" statusbar.palette.${name});
+
+  # Screen on/off for the idle chain, written for both sessions: sway answers
+  # `output * power off` over its IPC, niri powers DPMS through its own action.
+  # The compositor is picked at run time because swayidle is the one unit that
+  # runs in both (it speaks idle-inhibit) -- see ../niri/default.nix for why it is
+  # WantedBy graphical-session.target as well.
+  screenPower =
+    state:
+    "if ${pkgs.procps}/bin/pgrep -x sway >/dev/null; then ${pkgs.sway}/bin/swaymsg \"output * power ${state}\"; else ${pkgs.niri}/bin/niri msg action power-${state}-monitors; fi";
 in
 lib.mkIf cfg.desktop {
   # swayidle as a systemd user service (auto-restart).
@@ -25,18 +34,18 @@ lib.mkIf cfg.desktop {
         command = "${pkgs.swaylock}/bin/swaylock -f";
       }
       {
-        # Screen off 5 min after the lock: sway's own `output * power off`.
-        # `*` is quoted because swayidle runs the command through `sh -c`.
+        # Screen off 5 min after the lock. `*` is quoted because swayidle runs the
+        # command through `sh -c`.
         timeout = 600;
-        command = "${pkgs.sway}/bin/swaymsg \"output * power off\"";
-        resumeCommand = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
+        command = screenPower "off";
+        resumeCommand = screenPower "on";
       }
     ];
     events = {
       before-sleep = "${pkgs.swaylock}/bin/swaylock -f";
       # power-off can survive a suspend/resume; force the outputs back on so a
       # wake doesn't land on a black screen that only lights up on a keypress.
-      after-resume = "${pkgs.sway}/bin/swaymsg \"output * power on\"";
+      after-resume = screenPower "on";
     };
   };
 
