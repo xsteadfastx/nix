@@ -94,6 +94,9 @@
       # 2026-10-05: 0 halved swap-out (23k -> 10k pages/s). Compaction still runs
       # on demand; kswapd now only works when memory is actually low.
       "vm.watermark_boost_factor" = 0;
+      # Swap-in readahead (2^n pages) only saves seeks on real disks; on zram
+      # every page is decompressed separately, so read just the faulting one.
+      "vm.page-cluster" = 0;
     };
 
     initrd.availableKernelModules = [
