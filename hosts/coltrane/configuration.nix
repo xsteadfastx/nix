@@ -71,7 +71,11 @@
     # power-off required). Upstream kept this feature off by default for exactly
     # this bug class (openzfs/zfs #16680). This only stops *new* clones being
     # created; the deadlocking write path is then never entered.
-    extraModprobeConfig = "options zfs zfs_bclone_enabled=0";
+    #
+    # Cap the ARC at 8 GiB. ZFS 2.3+ defaults zfs_arc_max to all RAM but 1 GiB
+    # (29.9 GiB here), and the ARC is invisible to MemAvailable, so after a big
+    # nix build it competes with apps and they get pushed into zram first.
+    extraModprobeConfig = "options zfs zfs_bclone_enabled=0 zfs_arc_max=8589934592";
 
     # Make a boot-time hang name its culprit instead of dying silently. On
     # 2026-09-23 a reboot froze ~20s in, in early udev with the console on xe,
