@@ -546,22 +546,18 @@ in
                         format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_disk}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
                         format_space  "#[bg=$dim]"
 
-                        // No format_hide_on_overlength: it drops a whole part the
-                        // moment one col doesn't fit, and a part is all-or-nothing
-                        // whatever format_precedence says -- with the default the
-                        // metrics+clock go, with "rlc" the mode chip, the session and
-                        // every tab go. The parts never collide anyway: zjstatus
-                        // appends left + get_spacer + right, and the spacer is
-                        // `cols.saturating_sub(left+right)` (src/config.rs), so zero
-                        // means right starts flush against left -- and an overlong left
-                        // doesn't clip, it wraps: the line is written into a one-row
-                        // pane, so the pane's viewport scrolls and the bar shows the
-                        // tail of the line and nothing else. Measured in a scratch
-                        // session at this bar's 174 columns, 8 tabs left `09/10/2026`
-                        // as the entire status bar. Both ends are bounded instead, at
-                        // the source: the tab count below, and the name bound in
-                        // zellij_tab_rename (fish) -- zjstatus itself never truncates
-                        // a tab name.
+                        // An overlong line does not clip, it wraps: it is written
+                        // into a one-row pane, so the pane's viewport scrolls and the
+                        // bar shows the tail of the line and nothing else -- measured,
+                        // one long tab title left `11:19:15 19/10/2026` as the whole
+                        // status bar. Left and right are bounded at the source (the
+                        // tab count below, the name bound in zellij_tab_rename in
+                        // fish), and this is the net for what fixed numbers cannot
+                        // cover on a narrower window: drop a whole part instead of
+                        // scrolling. The default format_precedence drops right first,
+                        // so the metrics+clock are what goes -- and a part is
+                        // all-or-nothing, whatever the precedence.
+                        format_hide_on_overlength "true"
 
                         border_enabled "false"
 
@@ -574,25 +570,21 @@ in
                         mode_locked          "#[fg=$bg,bg=$pink,bold] {name} "
                         mode_default_to_mode "locked"
 
-                        // The tab label is the title of that tab's focused pane --
-                        // i.e. what fish_title (see the fish functions below) writes:
-                        // the directory while idle, `<command> <directory>` while one
-                        // runs. {name} -- zellij's own tab name -- is deliberately not
-                        // used any more: only a pane-level action can change it, so it
-                        // always trailed the focused pane (a pane that went away left
-                        // its name behind, and a shell cannot notice focus moving).
-                        // zjstatus re-reads every pane title on each PaneUpdate, which
-                        // is what a focus change, a pane opening or a pane closing
-                        // sends. Measured in a scratch session: opening a pane flipped
-                        // the label from zellij's initial `Pane #1` to the real `/tmp`,
-                        // while a title change alone (a command starting) changed
-                        // nothing -- zellij announces pane actions only, not pane
-                        // titles (#5482), which is what keeps zellij_tab_running /
-                        // zellij_tab_idle below load-bearing: their rename-tab is a
-                        // pane action, and it is what makes the label pick up a new
-                        // command promptly.
-                        tab_normal               "#[fg=$fg,bg=$dim] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
-                        tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        // The tab label is zellij's own tab name, i.e. what the fish
+                        // hooks below write: the running command while one runs, the
+                        // directory when idle. Deliberately not {focused_pane_title}:
+                        // that is whichever OSC title the focused pane's app last set,
+                        // and an app bounds nothing -- claude's is its session
+                        // summary, measured at 33 columns, which pushed the line past
+                        // the bar. The tab name has a bound, in zellij_tab_rename (see
+                        // the fish functions below). It costs focus-following: only a
+                        // pane action renames a tab, so focus moving inside a tab
+                        // leaves the old name until the next prompt. zellij announces
+                        // pane actions, not title changes (#5482), which is what keeps
+                        // zellij_tab_running / zellij_tab_idle load-bearing: their
+                        // rename-tab is the update that makes the bar re-read.
+                        tab_normal               "#[fg=$fg,bg=$dim] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {name} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
                         tab_fullscreen_indicator "□ "
                         tab_sync_indicator       "  "
                         tab_floating_indicator   "󰉈 "
@@ -603,8 +595,8 @@ in
                         // Without these keys a background-tab bell is invisible.
                         // Pink block, matching mode_locked's style.
                         tab_bell_indicator       "󰂚 "
-                        tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
-                        tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
+                        tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
+                        tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {name} {bell_indicator}"
 
                         // More tabs than fit: show a window around the active one and
                         // render the rest as these two markers instead. {count} is
@@ -612,14 +604,16 @@ in
                         // hidden tab. This is the only width control zjstatus has --
                         // the tab list is unbounded, and "as many tabs as fit" is
                         // still an open feature request (dj95/zjstatus#298).
-                        // Measured on this bar (174 cols: 1913 px / 11 px cell, ghostty
-                        // font-size 14): chips 15, metrics+clock 57, so the tabs get
-                        // 102 -- about six of them at the current name lengths.
-                        // ponytail: 6 is a fixed number, not a fit; six names at the
-                        // 20-char bound in zellij_tab_rename still overflow (+~30 cols,
-                        // measured -- the bar scrolls as above), so lower that bound to
-                        // ~12, where 6 tabs + markers + chips + metrics is 162 of the
-                        // 174 columns, if the clock must never be dropped.
+                        // Measured on this bar (174 cols: 1908 px / 11 px cell,
+                        // ghostty font-size 14): mode+session chip 16 ("local"),
+                        // metrics+clock 57, so the tabs get 101. A label is
+                        // `{index} {name} ` = name + 3, so the six shown at the
+                        // 12-char bound in zellij_tab_rename are 90, and the two
+                        // markers (~6) still leave room for the indicators -- the
+                        // clock survives.
+                        // ponytail: 6 + 12 is a fixed fit for this width, not a fit;
+                        // a narrower window is what format_hide_on_overlength above
+                        // is for.
                         tab_display_count        "6"
                         tab_truncate_start_format "#[fg=$blue,bg=$dim]‹{count} "
                         tab_truncate_end_format   "#[fg=$blue,bg=$dim] {count}›"
@@ -694,12 +688,10 @@ in
       # long command finishing in a tab you have since left would rename the tab
       # you are on. Resolve this pane's own tab id and target that instead.
       #
-      # The name the bar *shows* is no longer this tab name but the focused pane's
-      # title (layouts/default.kdl: {focused_pane_title}), which zjstatus re-reads
-      # on every PaneUpdate. These hooks stay because they are also the update:
-      # zellij broadcasts only pane *actions*, never title changes (#5482), so
-      # without the rename-tab there is nothing to make the bar re-read the new
-      # command name until some unrelated pane event happens.
+      # The name the bar *shows* is this tab name (layouts/default.kdl: {name}),
+      # and these hooks are also its update: zellij broadcasts only pane *actions*,
+      # never title changes (#5482), so without the rename-tab nothing makes the
+      # bar re-read the new command name until some unrelated pane event happens.
       zellij_tab_rename = {
         argumentNames = [ "name" ];
         description = "rename the zellij tab holding this pane, if it is focused there";
@@ -710,7 +702,10 @@ in
           # its tabs widget is unbounded, so a single long name (a deep directory,
           # a store path `zellij_tab_running` reduced to its basename) eats the
           # right half of the bar. Keep the head -- the part that identifies it.
-          test (string length -- $name) -gt 20; and set name (string sub -l 19 -- $name)"…"
+          # 12 is the largest bound at which six tabs plus markers plus chip
+          # plus metrics still fit this bar's 174 columns -- see the arithmetic
+          # in tab_display_count (layouts/default.kdl).
+          test (string length -- $name) -gt 12; and set name (string sub -l 11 -- $name)"…"
           # columns: TAB_ID ... PANE_ID TYPE TITLE FOCUSED FLOATING EXITED
           set -l m (command zellij action list-panes -t -s 2>/dev/null \
               | string match -r -g "^(\d+)\s.*\sterminal_$ZELLIJ_PANE_ID\s.*\s(true|false)\s+(\S+)\s+\S+\$")
@@ -782,16 +777,12 @@ in
       # until the next prompt, and floating panes are kept out of the labelling
       # altogether (zellij_tab_rename) instead of sticking.
       #
-      # The title is also what zjstatus prints as the tab label, and zjstatus has
-      # no per-label length limit of its own ({focused_pane_title} prints the pane
-      # title it is handed; `tab_display_count` in layouts/default.kdl only bounds
-      # how many tabs are shown), so the bound lives here: 20 characters with an
-      # ellipsis, the same bound zellij_tab_rename puts on the tab name. prompt_pwd
-      # already shortens the path to `~/n/h/modules` form, so the cut lands on its
-      # tail. The bar's width is the product of that bound and the one in the
-      # layout, and exceeding it scrolls the whole bar (layout comment above):
-      # measured, 6 tabs of 20 columns plus chips and metrics is 219 of 174, six
-      # of 12 is 162.
+      # The title is the pane frame's and the terminal window's, not the bar's --
+      # the bar's label is the tab name above. It is still bounded (20 characters
+      # with an ellipsis) because a pane frame cannot take an unbounded string
+      # either, and because a pane that runs a shell is not the only one: an app
+      # sets its own OSC title with no bound at all. prompt_pwd already shortens
+      # the path to `~/n/h/modules` form, so the cut lands on its tail.
       fish_title = {
         description = "pane/window title: real command name plus directory, bounded";
         body = ''
