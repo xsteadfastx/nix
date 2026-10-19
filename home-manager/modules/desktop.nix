@@ -15,7 +15,8 @@ in
     ./ghostty.nix
     ./gtk
     ./niri
-    ./sway
+    ./applets.nix
+    ./lock.nix
     ./swaync
     ./waybar
     ./wofi.nix
@@ -23,8 +24,17 @@ in
 
   # syncthingtray is a tray applet, so it belongs to the desktop, not to the
   # wofi/bar modules it used to be tacked onto.
+  # Desktop tools that used to live in the sway module: the tray/manager applet,
+  # the output-arrangement GUI and the screenshot chain (grim/slurp -> satty ->
+  # wl-copy, native Wayland end to end).
   home.packages = lib.mkIf cfg.desktop (
     [
+      pkgs.blueman
+      pkgs.wdisplays
+      pkgs.grim
+      pkgs.slurp
+      pkgs.satty
+      pkgs.wl-clipboard
       pkgs.calibre
       pkgs.handbrake
       # pkgs.unstable.makemkv
