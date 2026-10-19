@@ -12,7 +12,7 @@ lib.mkIf cfg.desktop {
   # rest of the session.
   #
   # wofi has only three modes -- run, drun, dmenu -- but combi exists as
-  # `--show mode1,mode2`; the sway bindings in ../sway/config.nix reference it
+  # `--show mode1,mode2`; the Mod+D binding in ../niri/config.nix calls it
   # by store path, so keep this package attr and the pin there identical.
   programs.wofi = {
     enable = true;
