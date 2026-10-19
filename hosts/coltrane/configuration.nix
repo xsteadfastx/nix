@@ -208,6 +208,16 @@
     # Wayland: sway session (i3 removed).
     sway.enable = true;
 
+    # niri as a second Wayland session, for evaluation only -- no config, default
+    # keybinds. Trial: log in on tty1 and run `niri-session` instead of `sway`
+    # (niri-session is what imports the env and starts the systemd user session;
+    # plain `niri` skips it the way plain `sway` skips the config.d include).
+    # The probe is the three things our sway tooling exists for: 3-monitor
+    # dock/undock, launcher keeping keyboard focus under focus-follows-mouse, and
+    # window switching. Passes -> migrate and delete sway-outputs + kanshi; fails
+    # -> delete this line.
+    niri.enable = true;
+
     # Needs to be enabled for completions
     fish.enable = true;
 
@@ -376,7 +386,7 @@
       extraArgs = [
         # "-g"
         "--avoid"
-        "^(X|i3.*|sway.*|sshd|systemd|ghostty|alacritty|zellij)$"
+        "^(X|i3.*|sway.*|niri.*|sshd|systemd|ghostty|alacritty|zellij)$"
         "--prefer"
         "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
       ];

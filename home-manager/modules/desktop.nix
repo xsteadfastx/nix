@@ -14,6 +14,7 @@ in
     ./fonts
     ./ghostty.nix
     ./gtk
+    ./niri
     ./sway
     ./swaync
     ./waybar
