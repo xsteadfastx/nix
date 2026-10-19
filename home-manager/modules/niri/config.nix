@@ -232,16 +232,17 @@ in
       Mod+Ctrl+Down { move-window-down; }
       Mod+Ctrl+Up { move-window-up; }
       Mod+Ctrl+Right { move-column-right; }
-      // hjkl navigation across monitor edges. niri's defaults put "move" here
-      // (Mod+Ctrl+H/J/K/L), which is already on Mod+Shift+H/J/K/L in this config
-      // and is invisible with full-width columns anyway -- so the keys are free
-      // for what the cursor actually needs: keep walking left/right/up/down and
-      // land on the next monitor when the column/edge runs out. Without this,
-      // crossing monitors was only possible on the arrow keys.
-      Mod+Ctrl+H { focus-column-or-monitor-left; }
-      Mod+Ctrl+J { focus-window-or-monitor-down; }
-      Mod+Ctrl+K { focus-window-or-monitor-up; }
-      Mod+Ctrl+L { focus-column-or-monitor-right; }
+      // Monitor focus on hjkl: Mod+Ctrl+H/J/K/L switches to the monitor in that
+      // direction, nothing else. niri's default put "move column" here, which this
+      // config already has on Mod+Shift+H/J/K/L, so the keys were free -- and
+      // `focus-column-or-monitor-*` was the wrong pick: it focuses the column
+      // first and only leaves the monitor when there is none, so with two windows
+      // open it looks like "the key does nothing". Mod+H/J/K/L keeps the
+      // window/column focus.
+      Mod+Ctrl+H { focus-monitor-left; }
+      Mod+Ctrl+J { focus-monitor-down; }
+      Mod+Ctrl+K { focus-monitor-up; }
+      Mod+Ctrl+L { focus-monitor-right; }
 
       Mod+Home { focus-column-first; }
       Mod+End { focus-column-last; }
