@@ -21,24 +21,11 @@ lib.mkIf cfg.desktop {
     force = true;
   };
 
-  # niri's own UI text -- hotkey overlay, screenshot UI, exit dialog -- asks
-  # fontconfig for the generic family `monospace` (literally, in its markup), and
-  # fontconfig answers with DejaVu Sans Mono. Same for anything else that asks for
-  # the generic name instead of a family. Preferring the Nerd Font here fixes the
-  # lot in one place; apps that name their family explicitly (ghostty, waybar,
-  # zellij) are unaffected, and DejaVu stays as the fallback for glyphs the Nerd
-  # Font lacks.
-  #
-  # Verified with `fc-match monospace` against this exact file: DejaVu Sans Mono
-  # without it, JetBrainsMono Nerd Font with it.
-  xdg.configFile."fontconfig/fonts.conf".text = ''
-    <?xml version="1.0"?>
-    <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
-    <fontconfig>
-      <alias binding="same">
-        <family>monospace</family>
-        <prefer><family>JetBrainsMono Nerd Font</family></prefer>
-      </alias>
-    </fontconfig>
-  '';
+  # NOTE: the generic-family aliases (`monospace`, `mono`, `sans-serif`) live in
+  # ../gtk/default.nix, next to `fonts.fontconfig.enable`. Do not add a second
+  # `xdg.configFile."fontconfig/fonts.conf".text` anywhere: that option is a lines
+  # value, so two definitions are *concatenated* into one file -- two XML
+  # documents, which fontconfig rejects outright ("junk after document element")
+  # and then ignores completely, leaving DejaVu Sans Mono in place. That is
+  # exactly what happened here once.
 }

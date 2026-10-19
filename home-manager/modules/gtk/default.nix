@@ -108,14 +108,27 @@ lib.mkIf cfg.desktop {
         <?xml version="1.0"?>
         <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
         <fontconfig>
-          <alias>
+          <!-- binding="same" is required: with the default (weak) binding,
+               fontconfig ignores these aliases for the generic family
+               completely and hands back DejaVu anyway. Verified with fc-match
+               against this file. -->
+          <alias binding="same">
             <family>sans-serif</family>
             <prefer>
               <family>JetBrainsMono Nerd Font</family>
             </prefer>
           </alias>
-          <alias>
+          <alias binding="same">
             <family>monospace</family>
+            <prefer>
+              <family>JetBrainsMono Nerd Font Mono</family>
+            </prefer>
+          </alias>
+          <!-- niri's own UI (hotkey overlay, screenshot UI) asks fontconfig for
+               the generic families above *and* for `mono`; unaliased, that one
+               resolves to DejaVu Sans Mono. -->
+          <alias binding="same">
+            <family>mono</family>
             <prefer>
               <family>JetBrainsMono Nerd Font Mono</family>
             </prefer>
