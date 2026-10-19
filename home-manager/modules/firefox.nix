@@ -144,6 +144,20 @@ lib.mkIf cfg.desktop {
           "idcac-pub@guus.ninja" = amo "istilldontcareaboutcookies";
           "uBlock0@raymondhill.net" = amo "ublock-origin";
           "{d7742d87-e61d-4b78-b8a1-b469842139fa}" = amo "vimium-ff";
+          # Slack gates huddles on the user agent: Firefox on Windows and macOS is
+          # supported, Firefox on Linux is not — the "huddles aren't supported in
+          # this browser" page is Slack's own UA check (webcompat/web-bugs#121309;
+          # Chrome on Linux *is* supported). A Firefox-on-Windows UA keeps Slack on
+          # the Firefox code path where huddles fully work, while a Chrome UA only
+          # gets you joining with broken screen share. Firefox 158 no longer honours
+          # per-site `general.useragent.override.<host>` prefs — only the global one
+          # still applies (verified against a localhost UA echo, 2026-10) — so the
+          # spoof has to live in an extension. One-time setup in its popup: tick
+          # "Override per domain", add `app.slack.com`, and paste
+          #   Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:158.0) Gecko/20100101 Firefox/158.0
+          # (the bundled presets stop at Firefox ~57; keep the rv/version current
+          # enough to stay above Slack's Firefox 131 floor).
+          "user-agent-switcher@ninetailed.ninja" = amo "uaswitcher";
           # Superseded on this machine. Dropping a policy entry does *not*
           # uninstall an add-on — Firefox keeps it — so these two are what
           # actually removes the Greasemonkey and cookie add-on that an earlier
