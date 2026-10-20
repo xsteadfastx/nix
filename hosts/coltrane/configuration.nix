@@ -326,6 +326,12 @@
   services = {
     pulseaudio.enable = false;
 
+    # programs.niri enables gnome-keyring, which in turn enables gcr's ssh-agent
+    # and exports its (empty) socket into the systemd user env that niri-session
+    # hands to every terminal. Keep the keyring, drop the agent: fish starts its
+    # own ssh-agent and loads the gopass keys, as under sway.
+    gnome.gcr-ssh-agent.enable = false;
+
     pipewire = {
       enable = true;
       alsa.enable = true;
