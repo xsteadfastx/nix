@@ -7,7 +7,7 @@
 let
   cfg = nixosConfig.features;
 
-  # wofi window switcher: `--dmenu` over `niri msg --json windows`, the same
+  # fuzzel window switcher: `--dmenu` over `niri msg --json windows`, the same
   # shape as the sway version this replaced --
   # titles to pick from, then the id of the first window with that title.
   # Covers both native Wayland and XWayland (satellite) windows, since niri
@@ -19,12 +19,12 @@ let
     set -eu
     niri=${pkgs.niri}/bin/niri
     jq=${pkgs.jq}/bin/jq
-    wofi=${pkgs.unstable.wofi}/bin/wofi
+    fuzzel=${pkgs.unstable.fuzzel}/bin/fuzzel
 
     windows="$($niri msg --json windows)"
     sel="$(printf '%s' "$windows" | $jq -r '
       .[] | select((.title // "") != "" and (.app_id // "") != "") | .title
-    ' | $wofi --dmenu --insensitive --prompt windows)"
+    ' | $fuzzel --dmenu --prompt "windows> ")"
     [ -n "$sel" ] || exit 0
     id="$(printf '%s' "$windows" | $jq -r --arg n "$sel" '
       [.[] | select((.title // "") == $n) | .id][0] // empty

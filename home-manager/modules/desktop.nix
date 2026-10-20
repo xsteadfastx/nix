@@ -19,11 +19,11 @@ in
     ./lock.nix
     ./swaync
     ./waybar
-    ./wofi.nix
+    ./fuzzel.nix
   ];
 
   # syncthingtray is a tray applet, so it belongs to the desktop, not to the
-  # wofi/bar modules it used to be tacked onto.
+  # launcher/bar modules it used to be tacked onto.
   # Desktop tools that used to live in the sway module: the tray/manager applet,
   # the output-arrangement GUI and the screenshot chain (grim/slurp -> satty ->
   # wl-copy, native Wayland end to end).

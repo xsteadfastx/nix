@@ -23,7 +23,7 @@ let
 
   ghostty = "${pkgs.unstable.ghostty}/bin/ghostty";
   fish = "${pkgs.unstable.fish}/bin/fish";
-  wofi = "${pkgs.unstable.wofi}/bin/wofi";
+  fuzzel = "${pkgs.unstable.fuzzel}/bin/fuzzel";
   niri = "${pkgs.niri}/bin/niri";
   notify-send = "${pkgs.libnotify}/bin/notify-send";
   brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
@@ -70,8 +70,8 @@ let
   clipShot = "${grim} -g \"$(${slurp})\" - | ${wl-copy}";
   sattyShot = "${grim} -g \"$(${slurp})\" - | ${satty} --filename - --output-filename ~/tmp/satty-%Y%m%d-%H%M%S.png --copy-command ${wl-copy} --early-exit copy --actions-on-enter save-to-clipboard";
 
-  # sway's gopass picker: list, filter in wofi, copy the password of the choice.
-  gopassPick = "${gopass} ls --flat | ${wofi} --dmenu -p gopass | ${xargs} --no-run-if-empty ${gopass} show -c";
+  # sway's gopass picker: list, filter in fuzzel, copy the password of the choice.
+  gopassPick = "${gopass} ls --flat | ${fuzzel} --dmenu --prompt 'gopass> ' | ${xargs} --no-run-if-empty ${gopass} show -c";
 
   # Workspaces are dynamic in niri and belong to a monitor: `Mod+3` is the third
   # workspace of the *focused* screen, not "workspace 3 is that screen".
@@ -328,9 +328,10 @@ in
       // installed; keep the key, point it at the same terminal.
       Mod+T repeat=false { spawn ${q ghostty} "-e" ${q fish}; }
 
-      // sway: `--release $mod+d wofi --show drun,run`. niri has no release
+      // sway: `--release $mod+d wofi --show drun,run` (now fuzzel, see
+      // ../fuzzel.nix for the $PATH list and app2unit). niri has no release
       // trigger; repeat=false is the equivalent guard.
-      Mod+D repeat=false { spawn ${q wofi} "--show" "drun,run"; }
+      Mod+D repeat=false { spawn ${q fuzzel}; }
 
       // sway's window switcher (rofi's `window` mode), same key.
       Mod+Tab repeat=false { spawn ${q windowSwitch}; }
