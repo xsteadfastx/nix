@@ -67,13 +67,15 @@
     # hook reads a tag inside the zfs module whose percpu counters pointer is
     # garbage, i.e. memory was overwritten and the hook is the first reader. RAM
     # passed a night of memtest; the closest upstream report is openzfs#19144
-    # (ZFS 2.4.4 memory corruption, open). mem_profiling=never removes the hook:
+    # (ZFS 2.4.4 memory corruption, open). sysctl.vm.mem_profiling=never removes the hook:
     # if it still crashes, the corruption is in ZFS itself and moves elsewhere.
+    # The boot parameter is sysctl.vm.mem_profiling; a bare mem_profiling=
+    # is an unknown parameter the kernel silently passes to init.
     kernelPackages = pkgs.linuxPackages;
     zfs.package = pkgs.zfs;
     kernelParams = [
       "drm_kms_helper.poll=1"
-      "mem_profiling=never"
+      "sysctl.vm.mem_profiling=never"
     ];
 
     # Disable ZFS block cloning (reflink/copy_file_range). ZFS 2.3+ defaults
