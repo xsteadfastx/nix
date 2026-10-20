@@ -67,15 +67,19 @@
     # hook reads a tag inside the zfs module whose percpu counters pointer is
     # garbage, i.e. memory was overwritten and the hook is the first reader. RAM
     # passed a night of memtest; the closest upstream report is openzfs#19144
-    # (ZFS 2.4.4 memory corruption, open). sysctl.vm.mem_profiling=never removes the hook:
+    # (ZFS 2.4.4 memory corruption, open). sysctl.vm.mem_profiling=0 removes the hook:
     # if it still crashes, the corruption is in ZFS itself and moves elsewhere.
     # The boot parameter is sysctl.vm.mem_profiling; a bare mem_profiling=
-    # is an unknown parameter the kernel silently passes to init.
+    # is an unknown parameter the kernel silently passes to init. 0, not never:
+    # every sysctl.* param is applied twice (early_param, then as a sysctl
+    # write), and never makes the sysctl read-only, so the second write logs
+    # "Failed to set sysctl parameter". With 0 the static key is off, which is
+    # what gates the slab free hook (mm/slub.c alloc_tagging_slab_free_hook).
     kernelPackages = pkgs.linuxPackages;
     zfs.package = pkgs.zfs;
     kernelParams = [
       "drm_kms_helper.poll=1"
-      "sysctl.vm.mem_profiling=never"
+      "sysctl.vm.mem_profiling=0"
     ];
 
     # Disable ZFS block cloning (reflink/copy_file_range). ZFS 2.3+ defaults
