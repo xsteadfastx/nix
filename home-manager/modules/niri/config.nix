@@ -185,6 +185,11 @@ in
       backdrop-color "${backdrop}"
   }
 
+  // Square windows, no app-drawn title bars, as under sway. Apps get told they
+  // are tiled (GTK then drops its rounded corners) and are asked to leave the
+  // decorations to niri via xdg-decoration. Running apps need a restart.
+  prefer-no-csd
+
   // ── window rules ─────────────────────────────────────────────────────────
   // sway: `for_window [app_id="org-openstreetmap-josm-Main"] floating disable;
   // layout splitv`. JOSM is wanted tiled, not floating.
