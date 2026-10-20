@@ -209,6 +209,14 @@ lib.mkIf cfg.desktop {
           interval = 1;
         };
 
+        # ── Taskbar ─────────────────────────────────────────────────────────
+        # One button per window. waybar binds no click action by default, so
+        # without these the buttons are dead.
+        "wlr/taskbar" = {
+          on-click = "activate";
+          on-click-middle = "close";
+        };
+
         # ── Tray ────────────────────────────────────────────────────────────
         # Waybar speaks StatusNotifierItem, which is what renders the applets'
         # tray icons. The applets themselves are systemd user units
