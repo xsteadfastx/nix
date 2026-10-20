@@ -25,14 +25,7 @@ lib.mkIf cfg.desktop {
       main = {
         font = "JetBrainsMono Nerd Font:size=11";
         terminal = "${pkgs.unstable.ghostty}/bin/ghostty -e";
-        # wofi's `drun,run`: apps plus every executable on $PATH.
-        list-executables-in-path = true;
-        # Each app gets its own systemd scope (app-niri-<entry-id>-<rand>.scope)
-        # instead of running inside the launcher's. The XDG portal derives a
-        # host app's id from that scope name: under plain spawning every app
-        # started from the launcher was "wofi" to it (Meshy's autostart file
-        # was written as wofi.desktop). fuzzel >= 1.14 passes the desktop entry
-        # to app2unit through DESKTOP_ENTRY_* itself.
+        list-executables-in-path = false;
         launch-prefix = "${pkgs.unstable.app2unit}/bin/app2unit --";
       };
 
