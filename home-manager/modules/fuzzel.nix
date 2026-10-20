@@ -24,6 +24,10 @@ lib.mkIf cfg.desktop {
     settings = {
       main = {
         font = "JetBrainsMono Nerd Font:size=11";
+        # Same pixel size everywhere. With all outputs at scale 1, `auto` sizes
+        # by the monitor's reported DPI, and the TV (1000x610 mm at 1360x768,
+        # ~35 DPI) shrank the text to ~5 px.
+        dpi-aware = "no";
         terminal = "${pkgs.unstable.ghostty}/bin/ghostty -e";
         list-executables-in-path = false;
         launch-prefix = "${pkgs.unstable.app2unit}/bin/app2unit --";
