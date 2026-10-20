@@ -60,9 +60,21 @@
     # kept the crash. Plain linuxPackages (nixpkgs' own default/stable track,
     # 6.18.x) is what ZFS is actually broadly tested against; the Lunar Lake xe
     # driver and IPU7 out-of-tree modules don't need bleeding-edge to work.
+    #
+    # The kernel was NOT the cause: 6.18.57 hit the same Oops on 2026-10-20
+    # (GPF in __alloc_tagging_slab_free_hook <- spl_kmem_cache_free <- abd_free
+    # <- arc_hdr_free_abd <- arc_evict), a hard freeze recovered from pstore. The
+    # hook reads a tag inside the zfs module whose percpu counters pointer is
+    # garbage, i.e. memory was overwritten and the hook is the first reader. RAM
+    # passed a night of memtest; the closest upstream report is openzfs#19144
+    # (ZFS 2.4.4 memory corruption, open). mem_profiling=never removes the hook:
+    # if it still crashes, the corruption is in ZFS itself and moves elsewhere.
     kernelPackages = pkgs.linuxPackages;
     zfs.package = pkgs.zfs;
-    kernelParams = [ "drm_kms_helper.poll=1" ];
+    kernelParams = [
+      "drm_kms_helper.poll=1"
+      "mem_profiling=never"
+    ];
 
     # Disable ZFS block cloning (reflink/copy_file_range). ZFS 2.3+ defaults
     # zfs_bclone_enabled=1, but the clone path can deadlock the txg sync: on
