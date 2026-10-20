@@ -306,11 +306,20 @@
         # `exec fish` from an old shell shadows the correct universal value,
         # and pgrep alone can't detect or repair that. Drop such a shadow first
         # so the universal value underneath can show through.
-        if not test -S "$SSH_AUTH_SOCK"
+        #
+        # "Validate" means ask the agent, not `test -S`: since OpenSSH 10 the
+        # socket lives in ~/.ssh/agent/ (not /tmp), so the file survives a
+        # reboot with nobody listening. `ssh-add -l` exits 2 when no agent
+        # answers (0/1 = alive, with/without keys).
+        function __ssh_agent_alive
+            ssh-add -l >/dev/null 2>&1
+            test $status -ne 2
+        end
+        if not __ssh_agent_alive
             set -e -g SSH_AUTH_SOCK
             set -e -g SSH_AGENT_PID
         end
-        if not test -S "$SSH_AUTH_SOCK"
+        if not __ssh_agent_alive
             eval (ssh-agent -c)
             set -Ux SSH_AGENT_PID $SSH_AGENT_PID
             set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK
