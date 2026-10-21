@@ -56,6 +56,10 @@ lib.mkIf cfg.desktop {
       #    other BackupService.init() call (loading Settings -> Account and
       #    Sync, for instance) starts the service regardless of this policy.
       BrowserDataBackup = false;
+      # Only a default value for browser.download.dir -- the pref that actually
+      # decides where downloads land is browser.download.folderList, and as long
+      # as that stays 1 (Downloads) the directory is ignored: see the
+      # folderList pref in Preferences below.
       DefaultDownloadDirectory = "\${home}/tmp";
       DisableFirefoxStudies = true;
       DisableTelemetry = true;
@@ -119,6 +123,16 @@ lib.mkIf cfg.desktop {
         # enabled/archive/restore only) and the pref a Nimbus rollout would flip
         # to make profile backups automatic. Locked, like the rest.
         "browser.backup.scheduled.enabled" = false;
+        # What makes DefaultDownloadDirectory above take effect.
+        # DownloadIntegration.getPreferredDownloadsDirectory switches on this:
+        # 0=Desktop, 1=Downloads folder, 2=the browser.download.dir folder,
+        # 3=web app. The DefaultDownloadDirectory policy only sets the dir, so at
+        # folderList=1 downloads still go to ~/Downloads. Object form on purpose:
+        # a bare value would be setAndLockPref'd (Preferences policy), and this
+        # one should stay changeable from Settings.
+        "browser.download.folderList" = {
+          Value = 2;
+        };
       };
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis
