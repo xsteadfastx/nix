@@ -68,7 +68,7 @@ let
   # same grab opened in satty to annotate first (Enter copies, Escape discards).
   # satty is native Wayland end to end, which is why flameshot is gone.
   clipShot = "${grim} -g \"$(${slurp})\" - | ${wl-copy}";
-  sattyShot = "${grim} -g \"$(${slurp})\" - | ${satty} --filename - --output-filename ~/tmp/satty-%Y%m%d-%H%M%S.png --copy-command ${wl-copy} --early-exit copy --actions-on-enter save-to-clipboard";
+  sattyShot = "${grim} -g \"$(${slurp})\" - | ${satty} --filename - --output-filename ~/tmp/satty-%Y%m%d-%H%M%S.png --copy-command ${wl-copy} --early-exit --actions-on-enter save-to-clipboard";
 
   # sway's gopass picker: list, filter in fuzzel, copy the password of the choice.
   gopassPick = "${gopass} ls --flat | ${fuzzel} --dmenu --prompt 'gopass> ' | ${xargs} --no-run-if-empty ${gopass} show -c";
@@ -395,10 +395,11 @@ in
       Ctrl+Alt+L repeat=false { spawn ${q swaylock} "-f"; }
 
   // ── screenshots ──────────────────────────────────────────────────────────
-      // sway: `$mod+Shift+Print` straight to the clipboard,
-      // `$mod+Print` through satty. niri's own screenshot UI keeps bare Print.
-      Mod+Shift+Print { spawn-sh ${q clipShot}; }
-      Mod+Print { spawn-sh ${q sattyShot}; }
+      // `$mod+Print` goes straight to the clipboard (paste it, done);
+      // `$mod+Shift+Print` opens satty when you actually want to annotate.
+      // niri's own screenshot UI keeps bare Print.
+      Mod+Print { spawn-sh ${q clipShot}; }
+      Mod+Shift+Print { spawn-sh ${q sattyShot}; }
 
   // ── OSDs ─────────────────────────────────────────────────────────────────
       // sway's brightness/volume keys, with swaync standing in for dunst. niri's
