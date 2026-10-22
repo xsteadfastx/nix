@@ -30,6 +30,16 @@ userData dir), which Element merges *over* the webapp's baked config
 writes that file, so the homeserver default and the theme arrive without
 overriding `element-web` (which would rebuild it locally on every nixpkgs bump).
 
+The font is the exception: `useSystemFont` and `systemFont` are
+`LEVELS_DEVICE_ONLY_SETTINGS` (`apps/web/src/settings/Settings.tsx`), so
+`setting_defaults` in that `config.json` cannot set them — Element only consults
+the config level for settings that list it. They have to be set once in Settings →
+Appearance on the device. And "Use a system font" applies the family *named* in
+the field: `FontWatcher` sets `--cpd-font-family-sans` from it, and an empty value
+is `setProperty(name, "")`, i.e. `removeProperty` — the override is dropped and the
+theme's bundled font stays. There is no "empty means the OS font" path;
+`system-ui` is what to type for that, and it resolves through fontconfig.
+
 The theme itself is [`lib/element-theme.nix`](../lib/element-theme.nix),
 shared with the web client's `elementWeb` config so the two cannot drift. It is
 not an upstream theme — the only public Element Dracula theme
