@@ -5,10 +5,6 @@
   ...
 }:
 {
-  # Allow nheko (Matrix client) to build: it links libolm (olm), which upstream
-  # has stopped maintaining -> marked insecure in nixpkgs. Opt in explicitly.
-  nixpkgs.config.permittedInsecurePackages = [ "olm-3.2.16" ];
-
   features = {
     games = true;
     kodi = true;
@@ -455,6 +451,12 @@
       };
     };
   };
+
+  # Electron apps (element-desktop) only get nixpkgs' Wayland flags --
+  # --ozone-platform-hint=auto etc. -- when this is set; without it they run
+  # through xwayland-satellite. Chromium-based toolkits read NIXOS_OZONE_WL at
+  # start, so no rebuild of the packages is needed.
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   environment.systemPackages = with pkgs; [
     brightnessctl

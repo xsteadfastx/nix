@@ -42,29 +42,37 @@ let
     };
   };
 
-  # nheko draws its whole UI in Qt Quick, which can't use Kvantum: nixpkgs' wrapper
-  # unsets QT_STYLE_OVERRIDE, else the window stays blank (nixpkgs#333009, still
-  # true with 0.12.1). So nheko alone takes its palette from qt6ct -- the palette,
-  # qt6ct.conf and the theme=system pin live with the rest of the theming in
-  # gtk/default.nix. qt6ct comes from the same pkgs as nheko, so both link the
-  # same qtbase.
-  nheko = pkgs.symlinkJoin {
-    name = "nheko-qt6ct-${pkgs.nheko.version}";
-    paths = [ pkgs.nheko ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/nheko \
-        --set QT_QPA_PLATFORMTHEME qt6ct \
-        --prefix QT_PLUGIN_PATH : ${pkgs.qt6Packages.qt6ct}/lib/qt-6/plugins
-    '';
+  # Element Desktop merges a config.json from Electron's userData dir over the
+  # webapp's baked-in one (apps/desktop/src/config.ts), so this is where both the
+  # homeserver default and the theme go -- no element-web rebuild needed. The
+  # theme itself is shared with the web client's config; see
+  # lib/element-theme.nix.
+  elementConfig = {
+    brand = "Element";
+    default_server_config = {
+      "m.homeserver" = {
+        base_url = "https://matrix.xsfx.dev";
+        server_name = "matrix.xsfx.dev";
+      };
+      "m.identity_server".base_url = "";
+    };
+    default_theme = "custom-Dracula";
+    setting_defaults.custom_themes = [ (import ../../lib/element-theme.nix) ];
   };
 in
 lib.mkIf cfg.matrix {
 
   home.packages = [
     pkgs.iamb
-    nheko
+    # Element Desktop from cache. The webapp is nixpkgs' stock element-web, not
+    # the one dipper serves, so login defaults to app.element.io and the domain
+    # is typed once; overriding element-web here would mean rebuilding all of
+    # element-web + Electron locally on every nixpkgs bump. Wayland comes from
+    # NIXOS_OZONE_WL in hosts/coltrane/configuration.nix, at runtime.
+    pkgs.element-desktop
   ];
 
   xdg.configFile."iamb/config.toml".source = iambConfig;
+
+  home.file.".config/Element/config.json".text = builtins.toJSON elementConfig;
 }

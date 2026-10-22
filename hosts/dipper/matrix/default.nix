@@ -38,6 +38,12 @@ let
         # deliberately don't run.
         "element_call".use_exclusively = true;
       };
+      # Same Dracula theme the desktop app on coltrane gets, from one shared
+      # definition (lib/element-theme.nix). Element applies it after a click
+      # in Settings -> Appearance: use_system_theme is device-only, so a config
+      # default cannot switch off OS matching.
+      default_theme = "custom-Dracula";
+      setting_defaults.custom_themes = [ (import ../../../lib/element-theme.nix) ];
     };
   };
 in

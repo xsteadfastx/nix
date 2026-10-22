@@ -1,5 +1,4 @@
 {
-  config,
   nixosConfig,
   lib,
   pkgs,
@@ -34,91 +33,6 @@ let
     done
   '';
 
-  # Palette for Qt Quick apps, which can't use Kvantum (nheko, see ../matrix.nix):
-  # they get QT_QPA_PLATFORMTHEME=qt6ct and read it from here. It is the Kvantum
-  # palette above with the roles gtk2 leaves unset filled in -- links at Qt's
-  # #0000ff, and light/dark, which nheko reads as button text and background
-  # (FlatButton.qml), dark-on-dark. Not dracula/qt5's Dracula.conf: that one
-  # sets text to comment (dim) and the placeholder to selection (invisible).
-  qt6ctPalette =
-    let
-      # Not in the Dracula spec: the Dracula Kvantum theme's own window and
-      # highlight colours and gtk2's alternate base, kept so a qt6ct app and a
-      # Kvantum app look the same next to each other.
-      kvantum = {
-        window = "#1e1f29";
-        highlight = "#7c60a3";
-        alternateBase = "#242630";
-      };
-      # qt6ct writes one comma list per colour group, in QPalette's role order.
-      roles = [
-        "WindowText"
-        "Button"
-        "Light"
-        "Midlight"
-        "Dark"
-        "Mid"
-        "Text"
-        "BrightText"
-        "ButtonText"
-        "Base"
-        "Window"
-        "Shadow"
-        "Highlight"
-        "HighlightedText"
-        "Link"
-        "LinkVisited"
-        "AlternateBase"
-        "NoRole"
-        "ToolTipBase"
-        "ToolTipText"
-        "PlaceholderText"
-      ];
-      group =
-        colors: lib.concatMapStringsSep ", " (role: "#ff${lib.removePrefix "#" colors.${role}}") roles;
-      active = with palette; {
-        WindowText = foreground;
-        Button = kvantum.window;
-        Light = foreground;
-        Midlight = selection;
-        Dark = selection;
-        Mid = selection;
-        Text = foreground;
-        BrightText = "#ffffff";
-        ButtonText = foreground;
-        Base = background;
-        Window = kvantum.window;
-        Shadow = "#000000";
-        Highlight = kvantum.highlight;
-        HighlightedText = foreground;
-        Link = cyan;
-        LinkVisited = purple;
-        AlternateBase = kvantum.alternateBase;
-        NoRole = "#000000";
-        ToolTipBase = kvantum.window;
-        ToolTipText = foreground;
-        PlaceholderText = comment;
-      };
-      disabled =
-        active
-        // (with palette; {
-          WindowText = comment;
-          Light = comment;
-          Dark = background;
-          Text = comment;
-          ButtonText = comment;
-          Highlight = selection;
-          HighlightedText = comment;
-          Link = comment;
-          LinkVisited = comment;
-        });
-    in
-    pkgs.writeText "dracula-qt6ct.conf" ''
-      [ColorScheme]
-      active_colors=${group active}
-      inactive_colors=${group active}
-      disabled_colors=${group disabled}
-    '';
 in
 lib.mkIf cfg.desktop {
   home = {
@@ -164,18 +78,6 @@ lib.mkIf cfg.desktop {
       done
     '';
 
-    # Same for nheko: only its "System" theme uses the qt6ct palette, Light and
-    # Dark are hard-coded (src/ui/Theme.cpp), and it rewrites nheko.conf itself.
-    activation.nhekoSystemTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      rc="$HOME/.config/nheko/nheko.conf"
-      if [ -f "$rc" ]; then
-        if grep -q '^theme=' "$rc"; then
-          sed -i 's/^theme=.*/theme=system/' "$rc"
-        elif grep -q '^\[user\]' "$rc"; then
-          sed -i '/^\[user\]/a theme=system' "$rc"
-        fi
-      fi
-    '';
   };
 
   fonts.fontconfig.enable = true;
@@ -218,7 +120,6 @@ lib.mkIf cfg.desktop {
   # xdg.configFile."Kvantum/kvantum.kvconfig" by hand loses: the module owns that
   # path (it generates "kvantum-config"), so the hand-written theme=Dracula was
   # silently replaced by the default theme=null and Qt stayed unthemed.
-  # Qt Quick apps can't use Kvantum; they use qt6ctPalette above.
   qt = {
     enable = true;
     platformTheme.name = "gtk";
@@ -232,20 +133,6 @@ lib.mkIf cfg.desktop {
 
   xdg = {
     configFile = {
-      # Only read by apps started with QT_QPA_PLATFORMTHEME=qt6ct (nheko). Font
-      # and icons are the GTK ones the gtk2 platform theme hands every other Qt
-      # app; file dialogs go through the portal instead of gtk2.
-      "qt6ct/qt6ct.conf".text = ''
-        [Appearance]
-        custom_palette=true
-        color_scheme_path=${qt6ctPalette}
-        icon_theme=${config.gtk.iconTheme.name}
-        standard_dialogs=xdgdesktopportal
-
-        [Fonts]
-        general="${config.gtk.font.name},${toString config.gtk.font.size}"
-        fixed="JetBrainsMono Nerd Font Mono,${toString config.gtk.font.size}"
-      '';
       "fontconfig/fonts.conf".text = ''
         <?xml version="1.0"?>
         <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
