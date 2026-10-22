@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   domain = "matrix.xsfx.dev";
   hsPort = 6167; # tuwunel plain HTTP, behind Caddy
@@ -44,6 +49,22 @@ in
     ./mautrix-telegram-go.nix
     ./mautrix-slack.nix
   ];
+
+  # Bridges follow tuwunel: restarted when it restarts, started when it starts.
+  # mautrix-go caches the homeserver's /capabilities (incl. the default room
+  # version) for the process lifetime. tuwunel 1.9.4 switched the default to v12;
+  # the still-running bridges kept "v11", skipped their v12 power-level filter and
+  # every new portal failed with "creator user IDs are not allowed in the `users`
+  # field" (2026-10). NixOS only restarts units whose own unit changed, so the
+  # bridges never noticed. Unit names, not option names (telegram-go's unit is
+  # mautrix-telegram).
+  systemd.services =
+    lib.genAttrs [ "mautrix-signal" "mautrix-whatsapp" "mautrix-telegram" "mautrix-slack" ]
+      (_: {
+        partOf = [ "tuwunel.service" ];
+        wantedBy = [ "tuwunel.service" ];
+        after = [ "tuwunel.service" ];
+      });
 
   # Federation + client API both need inbound TCP. The MatrixRTC ports are opened
   # in turn.nix, next to the services that need them.

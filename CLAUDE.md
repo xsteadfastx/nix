@@ -69,6 +69,12 @@ Lifecycle: requires pi/Claude restart to take effect.
 - **Launcher = fuzzel** (`home-manager/modules/fuzzel.nix`, wofi removed 2026-10-20) with `launch-prefix = app2unit --`: each app runs in its own `app-niri-<entry-id>-<rand>.scope`. The portal derives a host app's id from that scope name; spawned straight from the launcher every app was "wofi" (Meshy's autostart got written as `wofi.desktop`).
 - Ports of the old sway session: `modules/lock.nix` (swaylock + swayidle, screen off = `niri msg action power-{off,on}-monitors`) and `modules/applets.nix` (nm-applet, syncthingtray as units on `graphical-session.target`). Xwayland needs no config: niri ≥25.08 spawns `xwayland-satellite` on demand and exports `$DISPLAY`.
 
+### dipper: mautrix bridges must restart with tuwunel (2026-10-22)
+- **Symptom**: a new chat/group never gets a Matrix room or invite; bridge log shows `M_INVALID_PARAM: creator user IDs are not allowed in the users field`. Existing portals keep working.
+- **Cause**: mautrix-go caches the homeserver's `/capabilities` (incl. default room version) per process. tuwunel 1.9.4 switched the default to room v12, but the bridges weren't restarted (NixOS only restarts units whose unit changed), so they still assumed v11, skipped `filterCreateRequestForV12`, and put the bot (= v12 creator) in `power_levels.users`.
+- **Fix**: `hosts/dipper/matrix/default.nix` gives all four bridges `PartOf=` + `WantedBy=tuwunel.service`, so a tuwunel restart restarts them. Failed portal creations are not retried; the next message in that chat creates the room.
+- Unit names ≠ option names: `services.mautrix-telegram-go` runs as `mautrix-telegram.service`.
+
 ### Waybar self-healing (2026-09-24)
 - Waybar never recovers on its own: HM's default SIGUSR2 **reload** on switch leaks state (duplicate tray hosts); the unpinned `network` module sticks on "offline" after the default route bounces (resume/dock) with ppp0/tailscale0 up -- now split into `network#wifi` (`wlp*`) + `network#nic` (`enp*`, hidden when down), and the `wireplumber` module never reconnects after the audio stack restarts (0% forever). `home-manager/modules/waybar/default.nix` now forces **restart** triggers instead of reload and `BindsTo=wireplumber.service` so an audio restart/kill bounces the bar automatically.
 - Gotcha that triggered it: `pkill pi` (pattern match) also kills `pipewire`/`pipewire-pulse`; use `pkill -x pi`. A Bluetooth sink that connects while wireplumber is down stays "connected" with no A2DP ("Protocol not available") until reconnected.
