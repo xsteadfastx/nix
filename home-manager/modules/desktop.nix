@@ -46,13 +46,13 @@ in
       pkgs.unstable.mqttx
       pkgs.unstable.networkmanagerapplet
       pkgs.unstable.pavucontrol
-      pkgs.unstable.pcmanfm
       pkgs.unstable.peek # gif screen recorder
       pkgs.unstable.rawtherapee
       pkgs.unstable.remmina
       pkgs.unstable.rustdesk-flutter
       pkgs.unstable.signal-desktop
       pkgs.unstable.system-config-printer
+      pkgs.unstable.thunar
       pkgs.unstable.tor-browser
       pkgs.unstable.xdotool
       pkgs.unstable.xsaneGimp
@@ -62,9 +62,19 @@ in
 
   home.sessionVariables.DEFAULT_BROWSER = "firefox";
 
+  # Detailed list instead of icons for every folder that has no view of its own.
+  # Thunar reads the xfconf key "thunar"/"default-view" on each new window and
+  # copies it into "last-view"; the GType name is the whole value. The key is
+  # rewritten on every switch, so changing it in the GUI only lasts until the
+  # next rebuild -- that is the point of setting it here.
+  xfconf = lib.mkIf cfg.desktop {
+    settings.thunar."default-view" = "ThunarDetailsView";
+  };
+
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = lib.mkIf cfg.desktop {
     "x-scheme-handler/http" = [ "firefox.desktop" ];
     "x-scheme-handler/https" = [ "firefox.desktop" ];
+    "inode/directory" = [ "thunar.desktop" ];
   };
 }

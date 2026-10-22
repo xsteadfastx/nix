@@ -231,6 +231,12 @@
     # Needs to be enabled for completions
     fish.enable = true;
 
+    # Thunar 4.20 keeps its preferences in the xfconf channel "thunar" (it dropped
+    # ~/.config/Thunar/thunarrc). NixOS does not ship xfconfd unless something
+    # asks for it: without it Thunar's preference changes are discarded. The
+    # values themselves are set per-user in home-manager/modules/desktop.nix.
+    xfconf.enable = true;
+
     appimage = {
       enable = true;
       binfmt = true;
@@ -349,6 +355,12 @@
     # hands to every terminal. Keep the keyring, drop the agent: fish starts its
     # own ssh-agent and loads the gopass keys, as under sway.
     gnome.gcr-ssh-agent.enable = false;
+
+    # "Browse Network" in Thunar: gvfs ships the smb://, sftp://, nfs:// and MTP
+    # backends, this module adds the dbus activation, the systemd user units and
+    # udisks2. Log out/in once after the first switch, or Thunar starts without
+    # the volumes.
+    gvfs.enable = true;
 
     pipewire = {
       enable = true;
