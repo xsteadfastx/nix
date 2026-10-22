@@ -447,7 +447,6 @@
   environment.systemPackages = with pkgs; [
     brightnessctl
     dmidecode
-    nheko # Matrix client
     pciutils
     usbutils
     xclip

@@ -41,11 +41,29 @@ let
       };
     };
   };
+
+  # nheko draws its whole UI in Qt Quick, which can't use Kvantum: nixpkgs' wrapper
+  # unsets QT_STYLE_OVERRIDE, else the window stays blank (nixpkgs#333009, still
+  # true with 0.12.1). So nheko alone takes its palette from qt6ct -- the palette,
+  # qt6ct.conf and the theme=system pin live with the rest of the theming in
+  # gtk/default.nix. qt6ct comes from the same pkgs as nheko, so both link the
+  # same qtbase.
+  nheko = pkgs.symlinkJoin {
+    name = "nheko-qt6ct-${pkgs.nheko.version}";
+    paths = [ pkgs.nheko ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/nheko \
+        --set QT_QPA_PLATFORMTHEME qt6ct \
+        --prefix QT_PLUGIN_PATH : ${pkgs.qt6Packages.qt6ct}/lib/qt-6/plugins
+    '';
+  };
 in
 lib.mkIf cfg.matrix {
 
   home.packages = [
     pkgs.iamb
+    nheko
   ];
 
   xdg.configFile."iamb/config.toml".source = iambConfig;
