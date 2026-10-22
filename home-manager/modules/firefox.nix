@@ -133,6 +133,11 @@ lib.mkIf cfg.desktop {
         "browser.download.folderList" = {
           Value = 2;
         };
+        # Dark mode only where the site offers it: 0=dark, 1=light, 2=follow the
+        # GTK/OS colour scheme, 3=follow the browser theme. This is what
+        # Settings > Website appearance writes; locked here like the rest of
+        # this block. Sites without a dark stylesheet keep their light look.
+        "layout.css.prefers-color-scheme.content-override" = 0;
       };
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis
@@ -147,7 +152,6 @@ lib.mkIf cfg.desktop {
           };
         in
         {
-          "addon@darkreader.org" = amo "darkreader";
           "{b743f56d-1cc1-4048-8ba6-f9c2ab7aa54d}" = amo "dracula-dark-colorscheme";
           # Violentmonkey, not Greasemonkey 4: the MusicBrainz script community
           # runs VM/TM, and GM4 dropped the sync GM_* APIs (GM_xmlhttpRequest)
