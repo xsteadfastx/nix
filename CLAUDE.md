@@ -74,7 +74,17 @@ Lifecycle: requires pi/Claude restart to take effect.
 - Gotcha that triggered it: `pkill pi` (pattern match) also kills `pipewire`/`pipewire-pulse`; use `pkill -x pi`. A Bluetooth sink that connects while wireplumber is down stays "connected" with no A2DP ("Protocol not available") until reconnected.
 
 ### IPU7 webcam (OV02C10 on Lunar Lake)
-The internal camera works (`hosts/coltrane/ipu7.nix`, imported since 2026-09-04).
+**Disabled 2026-10-21**: `hosts/coltrane/ipu7.nix` is no longer imported (file
+kept). Reboot panicked twice (shutdown before 2026-09-21 boot, and 2026-10-21):
+`list_del corruption` / `kernel BUG at lib/list_debug.c:62` in
+`device_shutdown`, with a device-list link pointing into module memory
+(`0xffffffffc…110` both times → a module-static object). The out-of-tree
+`intel_ipu7_psys` + `intel_cvs` were the prime suspects; the in-tree staging
+`intel_ipu7`/`intel_ipu7_isys` still autoload. If it panics again, blacklist
+those two next. The SoundWire timeouts in that pstore dump come *after* the
+BUG — aftermath, not cause.
+
+The internal camera worked (`hosts/coltrane/ipu7.nix`, imported 2026-09-04 → 2026-10-21).
 Hard-won facts:
 
 - **"Black frames" was mostly a measurement artifact.** The HAL's *first* buffer
@@ -158,6 +168,7 @@ Hard-won facts:
 - **zram works** (zstd, 100% of RAM, ~3.5x ratio) and is not the cause of lag; it only absorbs what kswapd reclaims. Sizing at 100% is right with no disk swap.
 - **Settings** (`hosts/coltrane/configuration.nix`): `vm.watermark_boost_factor=0` (xe fragmentation woke kswapd, 2026-10-05), `vm.page-cluster=0` (no swap readahead on zram; was hand-set and lost on reboot until committed), and `zfs_arc_max=8 GiB` in `extraModprobeConfig` (ZFS 2.3+ defaults to all RAM but 1 GiB, and the ARC is invisible to `MemAvailable`). ARC changes need a reboot.
 - **ZFS Oops / hard freeze (2026-09-22, again 2026-10-20)**: GPF in `__alloc_tagging_slab_free_hook` <- `spl_kmem_cache_free` <- `abd_free` <- `arc_*` (ARC eviction / sync). Firefox stalls first, then everything; the journal just stops, the trace is in **pstore** (`/var/lib/systemd/pstore/<id>/`, root-only). Not the kernel version (hit 7.2.6 and 6.18.57), RAM passed a night of memtest. Mitigation since 2026-10-20: `sysctl.vm.mem_profiling=0` (the bare `mem_profiling=` is an unknown param; `never` works too but logs "Failed to set sysctl parameter" because the sysctl.* param is re-applied after `never` made it read-only). If it still crashes, the corruption is in ZFS itself (cf. openzfs#19144) -- report upstream with both traces.
+- **Prime suspect now: the IPU7 camera stack (2026-10-22).** A second clean memtest run of ~18 h (shutdown 2026-10-21 14:49 → boot 2026-10-22 09:00, per `last -x`) rules out RAM. The ZFS slab GPF and the `list_del` reboot panic (see IPU7 section) are both memory-corruption signatures, and every pstore dump since 2026-09-21 falls inside the window when `ipu7.nix` was imported (2026-09-04 → 2026-10-21, out-of-tree `intel_ipu7_psys` + `intel_cvs`). The older dumps (16× on 2026-04-30) are unrelated: a NULL deref in `intel_tc_port_in_tbt_alt_mode [xe]` (Type-C/dock display), not seen since. pstore dumps sit in `<id>/001/` subdirs: `sudo grep -rhm4 -E "BUG|protection fault|RIP:|list_del" /var/lib/systemd/pstore/<id>`. If neither crash recurs for ~3 weeks with `ipu7.nix` off, it was the camera; if ZFS still crashes, blacklist in-tree `intel_ipu7`/`intel_ipu7_isys`, then consider `slub_debug=FZP slab_nomerge` to catch the writer.
 - **Real RAM consumers** are Firefox (~5 GiB incl. swap) and the MCP servers, which every agent session spawns its own copy of (activity-mcp ~850 MiB each). Lag cause is still unproven: check `/proc/pressure/{memory,io}` during lag. A CD rip (whipper on `/dev/sr0`) inflates I/O PSI without slowing the desktop.
 
 ### Local ollama (SYCL on the Intel Arc iGPU)
