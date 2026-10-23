@@ -81,11 +81,11 @@
         "pre-commit": "pre-commit_2"
       },
       "locked": {
-        "lastModified": 1790935498,
-        "narHash": "sha256-W0dHlW6H8tJvH7xJe8/r+kfDlgfTK2O6+d6qVPU3x/s=",
+        "lastModified": 1792739880,
+        "narHash": "sha256-vfe/zmMAzxTjS5MsL3uO0WHovcaVi+DpXctUrx3hkeY=",
         "ref": "refs/heads/main",
-        "rev": "4ce277e3bf32dc158968768827c3012cee6cfc50",
-        "revCount": 75,
+        "rev": "388d51be475bf285ba09ec34ba8c41d6fa0eb988",
+        "revCount": 78,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/coding-agent.git"
       },
@@ -412,11 +412,11 @@
         "systems": "systems_4"
       },
       "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "lastModified": 1791914995,
+        "narHash": "sha256-Zf/xfQEAasnwnmEfHqW/4hjDE/s44yn2hD4RuVIZRjA=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "rev": "b7a79d3fea1e214f6d668d521cecec0c01e26544",
         "type": "github"
       },
       "original": {
@@ -549,11 +549,11 @@
         "spectrum": "spectrum"
       },
       "locked": {
-        "lastModified": 1790890970,
-        "narHash": "sha256-MV/BNWl8docJMxrNtkZ2/iw0FYMesyB69HKkLWk0r5s=",
+        "lastModified": 1791551030,
+        "narHash": "sha256-jTx3O3MKqPjv+cDfBFQ5zlKECBEwzF91scC+mSumZyE=",
         "owner": "microvm-nix",
         "repo": "microvm.nix",
-        "rev": "3f1540f254fe73ac907281b7de7d396bb3d54850",
+        "rev": "f13928fe9900e91709d7ce581eefa47eaafa79e1",
         "type": "github"
       },
       "original": {
