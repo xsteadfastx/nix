@@ -107,6 +107,7 @@
         packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
         # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
         packages.zellij-ssh-tint = pkgsUnstable.callPackage ./pkgs/zellij-ssh-tint/package.nix { };
+        packages.duemmel-sdcard-img = import ./hosts/duemmel/sdcard-img.nix { inherit inputs; };
       }
     );
 }

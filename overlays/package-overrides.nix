@@ -51,6 +51,9 @@ in
 
   localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
 
+  # ESP32-C5 ITS-G5 -> MQTT bridge for the duemmel receiver (hosts/duemmel).
+  its-g5-bridge = prev.callPackage ../pkgs/its-g5-bridge { };
+
   # Go (bridgev2) mautrix-telegram, shadows nixpkgs' legacy Python one. Builds
   # against cgo libolm (olm-3.2.16) — only on hosts that permit it (dipper does).
   mautrix-telegram = prev.callPackage ../pkgs/mautrix-telegram.nix { };

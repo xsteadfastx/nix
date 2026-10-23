@@ -67,6 +67,22 @@
     ];
   };
 
+  duemmel = {
+    deployment = {
+      tags = [
+        "raspberrypi"
+      ];
+      # build on the Pi: its derivations are native aarch64, which is what
+      # cache.nixos.org carries, so almost nothing gets compiled at all.
+      buildOnTarget = true;
+    };
+    imports = [
+      ./hosts/duemmel
+      inputs.self.nixosModules.ssh
+      inputs.self.nixosModules.users
+    ];
+  };
+
   dipper = {
     deployment.tags = [
       "server"
