@@ -55,7 +55,10 @@ nix build .#nixosConfigurations.dipper.config.system.build.toplevel \
   --no-link --print-out-paths
 ```
 
-Remote hosts are deployed with colmena via the hive in `hive.nix`.
+Remote hosts are deployed with colmena via the hive in `hive.nix`. The Pi
+hosts (`phil`, `duemmel`) build on the target itself (`deployment.buildOnTarget`):
+a deploy needs them reachable, and it fetches from cache.nixos.org instead of
+cross-compiling from x86_64.
 
 ### Raspberry Pi SD images
 

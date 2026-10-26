@@ -1,22 +1,20 @@
 { lib, pkgs, ... }:
 {
-  nixpkgs = {
-    buildPlatform = "x86_64-linux";
-    hostPlatform = "aarch64-linux";
-    overlays = [
-      (_: prev: {
-        # ncdu uses Zig which doesn't cross-compile properly in nixpkgs
-        ncdu = prev.writeShellScriptBin "ncdu" ''
-          echo "ncdu: not available (Zig cross-compilation limitation)" >&2
-          exit 1
-        '';
-      })
-    ];
-  };
+  # Native aarch64 (hardware-configuration sets hostPlatform): colmena builds
+  # on the Pi itself, see hive.nix. Native is what cache.nixos.org carries —
+  # no cross, so nothing has to be compiled from source.
 
-  # phil doesn't use ZFS; silence the 26.11 deprecation warning (also applies
-  # to the phil-sdcard-img build, which bypasses the hive's base module).
+  # A Pi has no GRUB; the firmware/U-Boot chain reads extlinux.conf. All that
+  # nixos-hardware's raspberry-pi module still contributed: its other payload is
+  # a hand-built rpi kernel, and no cache carries those (see hive.nix).
   boot = {
+    loader = {
+      grub.enable = false;
+      generic-extlinux-compatible.enable = true;
+    };
+
+    # phil doesn't use ZFS; silence the 26.11 deprecation warning (also applies
+    # to the phil-sdcard-img build, which bypasses the hive's base module).
     zfs.forceImportRoot = false;
     tmp = {
       useTmpfs = true;

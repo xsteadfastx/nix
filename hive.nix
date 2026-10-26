@@ -104,13 +104,18 @@
   };
 
   phil = {
-    deployment.tags = [
-      "server"
-      "raspberrypi"
-    ];
+    deployment = {
+      tags = [
+        "server"
+        "raspberrypi"
+      ];
+      # Build on the Pi, like duemmel: its derivations are native aarch64,
+      # which is what cache.nixos.org carries, so it fetches them instead of
+      # cross-compiling from here (no aarch64 artifact comes from our cache).
+      buildOnTarget = true;
+    };
     imports = [
       ./hosts/phil
-      inputs.nixos-hardware.nixosModules.raspberry-pi-3
       inputs.self.nixosModules.ssh
       inputs.self.nixosModules.users
       inputs.self.nixosModules.vm-variant
