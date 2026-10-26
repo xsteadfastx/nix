@@ -984,8 +984,18 @@ in
             // color is configurable; the plugin passively watches PaneUpdate, no
             // wrapper or remote changes needed.
             "file:${pkgs.unstable.zellij-ssh-tint}" {
-                // Dracula red, from the same table as everything else here.
-                color "${statusbar.palette.red}"
+                // NOT palette.red (#ff5555): set_pane_color paints the pane's whole
+                // grid background, not just its frame, so the tint has to stay near
+                // the background's own luminance or every colour an app draws on it
+                // loses contrast -- #ff5555 turned the whole pane into a red screen.
+                //
+                // So: Red #ff5555 dimmed to about a quarter, with the blue of
+                // Background #282a36 left in. A spec colour cannot spell this (the
+                // palette is dracula/waybar's colors.css verbatim and has no dark
+                // red), and pure #3a0000 reads as a brown maroon next to Dracula's
+                // purple-tinted background. Comment blue stays *more* readable on
+                // this than on the plain background: 3.4:1 vs 3.0:1.
+                color "#3d1420"
             }
         }
 
