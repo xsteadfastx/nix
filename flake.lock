@@ -1125,11 +1125,11 @@
         "pre-commit-hooks": "pre-commit-hooks_3"
       },
       "locked": {
-        "lastModified": 1787640992,
-        "narHash": "sha256-Ea9vn8SBT9zS+HYiWSdTdIKdMTZutse0QU167DWaFYY=",
+        "lastModified": 1793024827,
+        "narHash": "sha256-JL9bFJKjHPTz1bKgIxbM3beGFrzBzbxWfD0Sb36azCk=",
         "ref": "refs/heads/main",
-        "rev": "995a95b7697853000a0ba75464569085cab37122",
-        "revCount": 22,
+        "rev": "66c126a63e6eef27a9d28ff6942866e03da4fcb8",
+        "revCount": 23,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git"
       },
