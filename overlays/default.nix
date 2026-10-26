@@ -9,15 +9,13 @@
 #   package-overrides.nix  custom packages
 #   unstable.nix           the nested nixpkgs-unstable instance (pkgs.unstable)
 #   nixpak.nix             bubblewrap-sandboxed work apps
-#   coding-agent.nix .overlay  surface unstable coding-agent packages at top level
+#   coding-agent.nix .overlay  surface coding-agent packages (their pinned nixpkgs) at top level
 #
 # Maintainer: Marvin Preuss <marv@yourdomain.com>
 let
   packageOverrides = import ./package-overrides.nix { inherit inputs; };
   codingAgent = import ./coding-agent.nix { inherit inputs; };
-  unstable = import ./unstable.nix {
-    inherit inputs packageOverrides codingAgent;
-  };
+  unstable = import ./unstable.nix { inherit inputs packageOverrides; };
   nixpak = import ./nixpak.nix { inherit inputs; };
 in
 inputs.nixpkgs.lib.composeManyExtensions [

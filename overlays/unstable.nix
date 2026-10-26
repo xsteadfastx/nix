@@ -1,7 +1,6 @@
 {
   inputs,
   packageOverrides,
-  codingAgent,
   ...
 }:
 
@@ -16,15 +15,14 @@
 # `import` (not `.legacyPackages`) is required for `allowUnfree`; the same
 # packageOverrides are applied so custom packages resolve identically on both
 # channels (`pkgs.foo` = stable, `pkgs.unstable.foo` = unstable). The
-# coding-agent repo's overlay is applied here too, so the Python MCP servers
-# build against unstable (recent deps).
+# coding-agent repo's overlay is NOT applied here: its packages build against
+# the channel that repo pins, not ours (see coding-agent.nix).
 _final: prev: {
   unstable = import inputs.nixpkgs-unstable {
     inherit (prev.stdenv.hostPlatform) system;
     config.allowUnfree = true;
     overlays = [
       packageOverrides
-      codingAgent.codingAgentOverlay
       # tint the zellij pane red while an ssh session runs — must build against
       # nixpkgs-unstable, which is the only channel with pkgsCross.wasm32-wasip1
       (_: prev: { zellij-ssh-tint = prev.callPackage ../pkgs/zellij-ssh-tint/package.nix { }; })
