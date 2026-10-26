@@ -34,6 +34,12 @@ stdenvNoCC.mkDerivation {
       'set_mqtt_state(enabled=True, available=False)'
   '';
 
+  # The 0.2.5 USB stream carries one extra byte (RSSI) in front of every 802.11
+  # frame: published as-is, tshark sees "unknown 802.11 frame type" and the
+  # decoder reports UNKNOWN. Verified with tcpdump: the same 48 bytes parse as
+  # a CF-QoS broadcast GeoNetworking frame once the first byte is dropped.
+  patches = [ ./normalise-frame.patch ];
+
   installPhase = ''
     runHook preInstall
     install -Dm644 bridge/its_g5_bridge.py bridge/dashboard_server.py \
