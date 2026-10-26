@@ -34,11 +34,16 @@ stdenvNoCC.mkDerivation {
       'set_mqtt_state(enabled=True, available=False)'
   '';
 
-  # The 0.2.5 USB stream carries one extra byte (RSSI) in front of every 802.11
-  # frame: published as-is, tshark sees "unknown 802.11 frame type" and the
-  # decoder reports UNKNOWN. Verified with tcpdump: the same 48 bytes parse as
-  # a CF-QoS broadcast GeoNetworking frame once the first byte is dropped.
-  patches = [ ./normalise-frame.patch ];
+  # Some firmware (0.2.5) writes an RSSI byte between the length field and the
+  # 802.11 frame, others don't: with the fixed 14-byte header the payload is
+  # shifted by one byte and its last byte is left in the buffer. The patch
+  # detects the byte from the first frame and skips non-802.11 link tests.
+  patches = [ ./frame-reader.patch ];
+
+  checkPhase = ''
+    cp ${./frame-reader-test.py} frame_reader_test.py
+    ${python}/bin/python3 frame_reader_test.py
+  '';
 
   installPhase = ''
     runHook preInstall

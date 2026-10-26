@@ -1,0 +1,73 @@
+diff --git a/bridge/its_g5_bridge.py b/bridge/its_g5_bridge.py
+index 43dd230..d5ad48d 100644
+--- a/bridge/its_g5_bridge.py
++++ b/bridge/its_g5_bridge.py
+@@ -190,10 +190,28 @@ class PcapWriter:
+ # Frame parser
+ # ---------------------------------------------------------------------------
+ 
++def _looks_80211(b: bytes) -> bool:
++    """Cheap sanity check: 802.11 data frame with a broadcast addr1/addr2."""
++    return (
++        len(b) > 12
++        and (b[0] & 0x03) == 0
++        and ((b[0] >> 2) & 0x03) == 2
++        and b[4:10] == b"\xff" * 6
++    )
++
++
+ class FrameReader:
+-    """Stateful resync parser: scans a byte stream for ITS5 frames."""
++    """Stateful resync parser: scans a byte stream for ITS5 frames.
++
++    Some firmware (e.g. 0.2.5) puts an RSSI byte between the length field and
++    the 802.11 frame, some don't. The stream format is otherwise identical, so
++    the extra byte is detected once from the first frame that actually parses
++    as 802.11 and is then applied to every following frame — otherwise the
++    payload is shifted by one byte and its last byte is left in the buffer.
++    """
+     def __init__(self):
+         self._buf = bytearray()
++        self._hdr_extra = 0
+ 
+     def feed(self, chunk: bytes):
+         self._buf.extend(chunk)
+@@ -211,10 +229,22 @@ class FrameReader:
+             if plen > 4096:
+                 del self._buf[:4]
+                 continue
+-            if len(self._buf) < HEADER_LEN + plen:
++            if len(self._buf) < HEADER_LEN + self._hdr_extra + plen:
+                 return
+-            payload = bytes(self._buf[HEADER_LEN: HEADER_LEN + plen])
+-            del self._buf[: HEADER_LEN + plen]
++            off = HEADER_LEN + self._hdr_extra
++            payload = bytes(self._buf[off: off + plen])
++            if self._hdr_extra == 0 and len(self._buf) >= HEADER_LEN + 1 + plen:
++                shifted = bytes(self._buf[HEADER_LEN + 1: HEADER_LEN + 1 + plen])
++                # ITS-G5 only carries 802.11 data frames, so a payload opening
++                # with NUL is an RSSI byte, not the frame: that also decides the
++                # synthetic boot frame, which never parses as 802.11 at all.
++                if (not _looks_80211(payload) and _looks_80211(shifted)) or (
++                    payload[:1] == b"\x00" and shifted[:1] != b"\x00"
++                ):
++                    self._hdr_extra = 1
++                    payload = shifted
++                    off += 1
++            del self._buf[: off + plen]
+             yield sec, usec, payload
+ 
+ 
+@@ -642,6 +672,12 @@ def main():
+                     if chunk:
+                         n_bytes += len(chunk)
+                         for sec, usec, payload in reader.feed(chunk):
++                            if not _looks_80211(payload):
++                                # firmware's "Testpaket" at boot — proves the USB
++                                # link and is labelled the same way in the app,
++                                # but it is not traffic and must not be published.
++                                logging.info("link test frame (%d bytes), not published", len(payload))
++                                continue
+                             n_frames += 1
+                             now_mono = time.monotonic()
+                             rate_window.append(now_mono)
