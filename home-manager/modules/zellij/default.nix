@@ -825,6 +825,14 @@ in
         serialize_pane_viewport = true;
         default_shell = "${pkgs.unstable.fish}/bin/fish";
         mouse_mode = true;
+        # Copy straight into the Wayland clipboard instead of zellij's default
+        # OSC 52, which pushes the selection through the terminal as an escape
+        # sequence and depends on the emulator accepting it.
+        #
+        # Full store path on purpose: the command runs in the zellij *server's*
+        # environment, not the shell's, so a bare "wl-copy" would depend on
+        # ~/.nix-profile/bin being on that PATH.
+        copy_command = "${pkgs.wl-clipboard}/bin/wl-copy";
         # dracula-border pane frames (full border around each pane)
         pane_frames = true;
         pane_frame_style = "full";
