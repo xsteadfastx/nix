@@ -32,6 +32,38 @@
         production mutation of any kind. The user alone decides when and how something goes live. If a
         deploy is needed, surface it and let the user run it.
 
+      ## YouTrack — referencing tickets from commits
+
+      Tickets live in YouTrack (`youtrack.service.wobcom.de`). Its VCS
+      integration reads pushed commit messages, so a ticket only shows the work
+      when the commit names it.
+
+      - **Always reference the ticket when there is one.** If the work came
+        from a ticket, or the user named one anywhere in the conversation, every
+        commit carrying that work names it — a ticket whose commits are missing
+        is one nobody can reconstruct later. Never invent an ID: no ticket
+        known, no reference, and ask if you suspect one exists.
+      - **Link only:** a bare ticket ID in the body. The house wording is a
+        trailer line `Refs IoT-224` — the bare ID is what YouTrack matches,
+        `Refs` is for human readers.
+      - **Link and apply a command:** `^IoT-224 Fixed`. The caret flags an ID
+        that is followed by a command; everything after the ID on that line is
+        parsed as the command, and a command may not wrap to the next line.
+      - **Use `^`, never `#`.** YouTrack treats them as equivalent, but `git
+        commit` through an editor runs `--cleanup=strip` and silently deletes
+        every line starting with `#`. Under `-F`/`-m` (`cleanup=whitespace`) it
+        survives, so a `#` form appears to work right up until someone commits
+        interactively and the reference disappears without a word.
+      - **Write the key the way YouTrack prints it** — `IoT-224`, matching the
+        history, not `IOT-224`.
+      - **Never apply a command the user did not ask for.** `Refs` is inert;
+        `Fixed` or a state change mutates the ticket for the whole team the
+        moment the commit is pushed. Reference the ticket and leave the
+        transition to the user unless they said to close it.
+      - If a ticket you referenced does not show the commit, the project is
+        probably not mapped to that repo in YouTrack's VCS settings — say so
+        rather than rewording the trailer.
+
       ## Playwright MCP — driving the already-open Chromium
 
       The `playwright` MCP server on this machine runs in **extension mode** and
