@@ -5,19 +5,13 @@
   ...
 }:
 let
-  # MAC of the ESP32-C5 as lowercase hex, no separators. The v2x2map web
-  # flasher prints it as "Node-ID"; everything on the map hangs off
-  # its/<nodeId>/... Mail it to the OpenTrafficMap people for a friendly name.
-  nodeId = "3844be38ae9c";
-
-  # /dev/ttyACM0 = the C5's native USB (v2x2map firmware).
-  # /dev/ttyUSB0 = its UART bridge (reference firmware writes frames there).
-  port = "/dev/ttyACM0";
-
   wifiConf = "/boot/firmware/wifi.conf";
 in
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ./cits.nix
+  ];
 
   # native aarch64, not cross: the Pi builds/fetches these itself
   # (cache.nixos.org has native aarch64; cross artifacts it does not).
@@ -110,40 +104,10 @@ in
     };
   };
 
-  systemd.services.its-g5 = {
-    description = "OpenTrafficMap ITS-G5 bridge (ESP32-C5 over USB)";
-    wantedBy = [ "multi-user.target" ];
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
-    environment.HOME = "/var/lib/its-g5";
-    # the bridge shows a legal notice on first run and waits for ENTER;
-    # pre-accept it, otherwise a headless service just exits.
-    preStart = ''
-      install -d -m0700 "$HOME/.config/v2x2map"
-      [ -e "$HOME/.config/v2x2map/v2x2map.cfg" ] ||
-        echo '{"legal_accepted": true}' > "$HOME/.config/v2x2map/v2x2map.cfg"
-    '';
-    serviceConfig = {
-      ExecStart = "${pkgs.its-g5-bridge}/bin/its-g5-bridge --node-id ${nodeId} --port ${port} --dashboard-port 8080";
-      Restart = "always";
-      RestartSec = 5;
-      DynamicUser = true;
-      StateDirectory = "its-g5";
-      WorkingDirectory = "/var/lib/its-g5";
-      SupplementaryGroups = [ "dialout" ];
-    };
-  };
-
   # authenticate once with `ssh duemmel tailscale up`; the node key persists in
-  # /var/lib/tailscale on the SD root (only /tmp is tmpfs).
+  # /var/lib/tailscale on the SD root (only /tmp is tmpfs). cits.nix expects
+  # this: it exposes the dashboard and the MQTT mirror through tailscaled.
   services.tailscale.enable = true;
-
-  # (re)start as soon as the board shows up: 303a = ESP32 native USB,
-  # 1a86 = CH34x UART bridge.
-  services.udev.extraRules = ''
-    SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", TAG+="systemd", ENV{SYSTEMD_WANTS}+="its-g5.service"
-    SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", TAG+="systemd", ENV{SYSTEMD_WANTS}+="its-g5.service"
-  '';
 
   # nothing here needs to survive a reboot, and every write to the card is wear
   services.journald.extraConfig = ''
