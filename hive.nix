@@ -26,6 +26,7 @@
 
   abed = {
     deployment.tags = [
+      "remote"
       "server"
       "vm"
     ];
@@ -71,6 +72,7 @@
     deployment = {
       tags = [
         "raspberrypi"
+        "remote"
       ];
       # build on the Pi: its derivations are native aarch64, which is what
       # cache.nixos.org carries, so almost nothing gets compiled at all.
@@ -85,6 +87,7 @@
 
   dipper = {
     deployment.tags = [
+      "remote"
       "server"
       "vm"
     ];
@@ -106,8 +109,9 @@
   phil = {
     deployment = {
       tags = [
-        "server"
         "raspberrypi"
+        "remote"
+        "server"
       ];
       # Build on the Pi, like duemmel: its derivations are native aarch64,
       # which is what cache.nixos.org carries, so it fetches them instead of
