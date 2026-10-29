@@ -37,7 +37,6 @@ let
   wl-copy = "${pkgs.wl-clipboard}/bin/wl-copy";
   swaylock = "${pkgs.swaylock}/bin/swaylock";
   playerctl = "${pkgs.playerctl}/bin/playerctl";
-  blueman-manager = "${pkgs.blueman}/bin/blueman-manager";
   gopass = "${pkgs.gopass}/bin/gopass";
 
   # Colours come from the same table the bar, swaync and the lock screen render
@@ -344,9 +343,10 @@ in
       // sway's gopass picker.
       Mod+P repeat=false { spawn-sh ${q gopassPick}; }
 
-      // sway's blueman bind. (Its tray icon works under waybar now, but this
-      // stays as the direct route.)
-      Mod+B repeat=false { spawn ${q blueman-manager}; }
+      // Bar visibility. waybar's SIGUSR1 default action is "toggle"; it has to
+      // go through systemd because waybar's comm is .waybar-wrapped, so
+      // `pkill -x waybar` matches nothing.
+      Mod+B repeat=false { spawn "systemctl" "--user" "kill" "--signal=USR1" "waybar"; }
 
   // ── focus and movement ───────────────────────────────────────────────────
   // sway's `focus left|down|up|right` and `move left|down|up|right`.
