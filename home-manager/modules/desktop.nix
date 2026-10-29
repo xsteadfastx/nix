@@ -6,6 +6,35 @@
 }:
 let
   cfg = nixosConfig.features;
+
+  imageMimeTypes = [
+    "image/apng"
+    "image/avif"
+    "image/bmp"
+    "image/gif"
+    "image/heic"
+    "image/jp2"
+    "image/jpeg"
+    "image/jxl"
+    "image/png"
+    "image/qoi"
+    "image/svg+xml"
+    "image/svg+xml-compressed"
+    "image/tiff"
+    "image/vnd.microsoft.icon"
+    "image/webp"
+    "image/x-dds"
+    "image/x-exr"
+    "image/x-portable-anymap"
+    "image/x-portable-bitmap"
+    "image/x-portable-graymap"
+    "image/x-portable-pixmap"
+    "image/x-qoi"
+    "image/x-tga"
+    "image/x-win-bitmap"
+    "image/x-xbitmap"
+    "image/x-xpixmap"
+  ];
 in
 {
   imports = [
@@ -41,6 +70,7 @@ in
       pkgs.unstable.evince
       pkgs.unstable.gimp
       pkgs.unstable.libmediainfo
+      pkgs.unstable.loupe
       pkgs.unstable.mediaelch
       pkgs.unstable.mpv
       pkgs.unstable.mqttx
@@ -72,9 +102,12 @@ in
   };
 
   xdg.mimeApps.enable = true;
-  xdg.mimeApps.defaultApplications = lib.mkIf cfg.desktop {
-    "x-scheme-handler/http" = [ "firefox.desktop" ];
-    "x-scheme-handler/https" = [ "firefox.desktop" ];
-    "inode/directory" = [ "thunar.desktop" ];
-  };
+  xdg.mimeApps.defaultApplications = lib.mkIf cfg.desktop (
+    {
+      "x-scheme-handler/http" = [ "firefox.desktop" ];
+      "x-scheme-handler/https" = [ "firefox.desktop" ];
+      "inode/directory" = [ "thunar.desktop" ];
+    }
+    // lib.genAttrs imageMimeTypes (_: [ "org.gnome.Loupe.desktop" ])
+  );
 }
