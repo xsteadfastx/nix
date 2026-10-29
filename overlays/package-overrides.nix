@@ -149,6 +149,7 @@ in
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };
   importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
   paperless-gpt = prev.callPackage ../pkgs/paperless-gpt/package.nix { };
+  niri-taskbar = prev.callPackage ../pkgs/niri-taskbar/package.nix { };
 
   xsaneGimp = prev.xsane.override { gimpSupport = true; };
 
