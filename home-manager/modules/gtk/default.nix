@@ -110,6 +110,17 @@ lib.mkIf cfg.desktop {
       name = "Dracula";
       package = pkgs.dracula-theme;
     };
+    # libadwaita paints sidebar widgets from its own colour set. The Dracula
+    # GTK4 port only defines theme_bg_color, so @sidebar_bg_color and
+    # @sidebar_fg_color resolve to nothing there and the sidebar falls back to
+    # light defaults -- NewsFlash's unread badge (`.item-count`, i.e.
+    # `mix(@sidebar_fg_color, white, 0.4)` behind `color: @sidebar_bg_color`)
+    # came out white text on a white pill. HM appends this after the @import,
+    # so it wins over the theme.
+    gtk4.extraCss = ''
+      @define-color sidebar_bg_color ${palette.background};
+      @define-color sidebar_fg_color ${palette.foreground};
+    '';
     colorScheme = "dark";
   };
   dconf.enable = true;
