@@ -56,12 +56,12 @@ let
   volumeNow = "${wpctl} get-volume @DEFAULT_AUDIO_SINK@ | ${awk} '{print int($2*100)}'";
   volumeOsd =
     sign:
-    "${wpctl} set-volume @DEFAULT_AUDIO_SINK@ 5%${sign} && ${notify-send} -a volume -u low -h string:x-canonical-private-synchronous:volume -h int:value:$(${volumeNow}) Volume \"$(${volumeNow})%\"";
+    "${wpctl} set-volume @DEFAULT_AUDIO_SINK@ 5%${sign} && v=$(${volumeNow}) && ${notify-send} -a volume -u low -h string:x-canonical-private-synchronous:volume -h int:value:$v Volume \"$v%\"";
   muteOsd = "${wpctl} set-mute @DEFAULT_AUDIO_SINK@ toggle && ${notify-send} -a volume -u low -h string:x-canonical-private-synchronous:volume Volume Muted";
   brightnessNow = "${brightnessctl} | ${grep} -oP '\\d+(?=%)'";
   brightnessOsd =
     sign:
-    "${brightnessctl} set 5%${sign} && ${notify-send} -a brightness -u low -h string:x-canonical-private-synchronous:brightness -h int:value:$(${brightnessNow}) Brightness \"$(${brightnessNow})%\"";
+    "${brightnessctl} set 5%${sign} && v=$(${brightnessNow}) && ${notify-send} -a brightness -u low -h string:x-canonical-private-synchronous:brightness -h int:value:$v Brightness \"$v%\"";
 
   # sway's two screenshot binds: a quick region grab to the clipboard, and the
   # same grab opened in satty to annotate first (Enter copies, Escape discards).
