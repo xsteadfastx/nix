@@ -86,18 +86,21 @@ window#waybar {
 
 /* ── Taskbar: the same active/inactive blocks as the workspace buttons ──── */
 /*
- * waybar's wlr/taskbar builds one <button> per window and puts no styling on it
- * by itself, so without this the window buttons floated with no background at
- * all while the workspace buttons next to them had one. Same rules, same
- * colours: @background when inactive, @purple when focused, @red when urgent.
+ * The taskbar is niri-taskbar, a CFFI module: it adds its own CSS class
+ * "niri-taskbar" to its container and "focused"/"urgent" to the per-window
+ * buttons (lib.rs:74, button.rs:91/127). waybar sets no id for cffi modules
+ * ("the classes and IDs are managed by the cffi dynamic library"), so these
+ * are class selectors, and the focused class is "focused", not "active".
+ * Without them the buttons fall back to the module's built-in stylesheet,
+ * which paints an urgent button plain CSS red (#ff0000) instead of @red.
  */
-#taskbar {
+.niri-taskbar {
     padding: 0 4px;
     margin: 5px 0;
     border-left: 1px solid @selection;
 }
 
-#taskbar button {
+.niri-taskbar button {
     /* Same box as a workspace button: full bar height (no vertical padding or
        margin -- those made the button a half-height block), padding only left
        and right. No border-radius: the workspace buttons have none either, and
@@ -107,23 +110,23 @@ window#waybar {
     background: @background;
 }
 
-#taskbar button image {
+.niri-taskbar button image {
     /* Let the icon sit centred in the box instead of inheriting button padding. */
     padding: 0 2px;
 }
 
-#taskbar button:hover {
+.niri-taskbar button:hover {
     box-shadow: inherit;
     text-shadow: inherit;
     background-image: linear-gradient(0deg, @selection, @background-darker);
 }
 
-#taskbar button.active {
+.niri-taskbar button.focused {
     background-image: none;
     background: @purple;
 }
 
-#taskbar button.urgent {
+.niri-taskbar button.urgent {
     background-image: none;
     background: @red;
 }
