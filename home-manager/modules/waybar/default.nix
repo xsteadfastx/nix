@@ -130,6 +130,10 @@ lib.mkIf cfg.desktop {
     After = [ "wireplumber.service" ];
   };
 
+  # The taskbar module below is a shared object waybar dlopen()s at runtime, so
+  # the store path has to survive garbage collection on its own.
+  home.packages = [ pkgs.niri-taskbar ];
+
   programs.waybar = {
     enable = true;
     package = pkgs.waybar;
@@ -143,7 +147,7 @@ lib.mkIf cfg.desktop {
         mode = "dock";
         height = 30;
 
-        modules-left = [ "wlr/taskbar" ];
+        modules-left = [ "cffi/niri-taskbar" ];
 
         # MPRIS "now playing" -- centered since it's the one module that's
         # empty most of the time (waybar hides a module with nothing to show
@@ -210,11 +214,13 @@ lib.mkIf cfg.desktop {
         };
 
         # ── Taskbar ─────────────────────────────────────────────────────────
-        # One button per window. waybar binds no click action by default, so
-        # without these the buttons are dead.
-        "wlr/taskbar" = {
-          on-click = "activate";
-          on-click-middle = "close";
+        # One button per window, ordered by niri's layout. waybar's own
+        # wlr/taskbar cannot do this: wlr-foreign-toplevel-management defines no
+        # ordering (niri discussion #549), so buttons arrive in whatever order
+        # the compositor sent the toplevels. This CFFI module talks to niri's
+        # IPC instead and handles clicks itself.
+        "cffi/niri-taskbar" = {
+          module_path = "${pkgs.niri-taskbar}/lib/libniri_taskbar.so";
         };
 
         # ── Tray ────────────────────────────────────────────────────────────
