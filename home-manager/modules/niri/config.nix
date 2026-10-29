@@ -186,6 +186,12 @@ in
       match app-id="Qemu-system-x86_64"
       open-floating true
   }
+  // The terminal takes the whole screen on open; niri draws fullscreen windows
+  // above the top layer, so the bar goes with it. Mod+F leaves fullscreen.
+  window-rule {
+      match app-id="com.mitchellh.ghostty"
+      open-fullscreen true
+  }
 
   // ── binds ───────────────────────────────────────────────────────────────
   // READ THIS BEFORE ADDING A KEY: niri does NOT merge its default binds when a
