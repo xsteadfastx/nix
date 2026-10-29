@@ -146,9 +146,6 @@ lib.mkIf cfg.desktop {
         position = "top";
         mode = "dock";
         height = 30;
-        # Boot hidden; Mod+B (niri) toggles it back and forth. SIGUSR1 is
-        # waybar's default "toggle" action.
-        start_hidden = true;
 
         modules-left = [ "cffi/niri-taskbar" ];
 
