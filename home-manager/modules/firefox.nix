@@ -197,6 +197,8 @@ lib.mkIf cfg.desktop {
         # toggle could never stick anyway. Mostly toolbarbutton/urlbar spacing --
         # the tabs and toolbar rows stay.
         "browser.uidensity" = 1;
+        "browser.tabs.tabMinWidth" = 30;
+        "browser.tabs.tabClipWidth" = 60;
         "signon.rememberSignons" = false;
         # GPU canvas (the CanvasRenderer thread) was the biggest Firefox source of
         # order-8/9 TTM allocations on xe; under fragmentation those feed the
