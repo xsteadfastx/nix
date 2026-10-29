@@ -103,8 +103,12 @@ lib.mkIf cfg.desktop {
     gtk3.extraConfig = {
       gtk-application-prefer-dark-theme = 1;
     };
-    # NOTE: gtk4 deliberately has no `gtk-application-prefer-dark-theme` —
-    # libadwaita rejects it; `colorScheme = "dark"` drives GTK4's dark mode.
+    # NOTE: `gtk-application-prefer-dark-theme` is not set here, but Home
+    # Manager's own mkGtkSettings writes it into gtk-4.0/settings.init for
+    # colorScheme = "dark" anyway, which is why every libadwaita app logs
+    # "Using GtkSettings:gtk-application-prefer-dark-theme with libadwaita is
+    # unsupported". Harmless: libadwaita ignores it and follows the dconf
+    # color-scheme instead.
     gtk4.extraConfig = { };
     gtk4.theme = {
       name = "Dracula";
@@ -120,6 +124,23 @@ lib.mkIf cfg.desktop {
     gtk4.extraCss = ''
       @define-color sidebar_bg_color ${palette.background};
       @define-color sidebar_fg_color ${palette.foreground};
+
+      /* The @define-colors above do not reach an app rule that was parsed
+         before them, so NewsFlash's unread badge stays white-on-white:
+         `.custom-sidebar .item-count` mixes @sidebar_fg_color with white and
+         paints the number in @sidebar_bg_color. Overriding the rule itself at
+         user priority is the only reliable way in. */
+      .custom-sidebar .item-count {
+        background-color: ${palette.foreground};
+        color: ${palette.background};
+      }
+      /* NewsFlash adds its own provider to the display as well, so the plain
+         selector ties with it. The doubled class wins on specificity whatever
+         order the providers landed in. */
+      .custom-sidebar .item-count.item-count {
+        background-color: ${palette.foreground};
+        color: ${palette.background};
+      }
     '';
     colorScheme = "dark";
   };
