@@ -61,6 +61,7 @@ lib.mkIf cfg.desktop {
       # as that stays 1 (Downloads) the directory is ignored: see the
       # folderList pref in Preferences below.
       DefaultDownloadDirectory = "\${home}/tmp";
+      DisableFirefoxAccounts = true;
       DisableFirefoxStudies = true;
       DisableTelemetry = true;
       DisplayBookmarksToolbar = "never";
