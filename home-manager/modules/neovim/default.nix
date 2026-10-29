@@ -26,11 +26,11 @@ in
     ./lint.nix
     ./lspconfig.nix
     ./misc-plugins.nix
+    ./obsidian.nix
     ./otter.nix
     ./treesitter.nix
     ./trouble.nix
     ./ui.nix
-    ./vimwiki.nix
   ];
 
   programs.neovim = mkIf cfg.neovim {

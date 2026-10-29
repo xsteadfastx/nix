@@ -77,7 +77,7 @@ in
         vim.g["pencil#wrapModeDefault"] = "soft"
 
         vim.api.nvim_create_autocmd("Filetype", {
-        	pattern = "tex,markdown,mkd,vimwiki",
+        	pattern = "tex,markdown,mkd",
         	callback = function()
         		vim.cmd("call pencil#init()")
         	end,
