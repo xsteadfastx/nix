@@ -136,6 +136,16 @@ in
       // full-width column in (Mod+R cycles the old presets when you want
       // halves).
       default-column-width { proportion 1.0; }
+      // Mod+R cycles these. niri's stock presets are 1/3, 1/2, 2/3 -- with a
+      // 100%-wide default, Mod+R from a fresh window would jump straight to a
+      // third. Listing 1.0 first makes the cycle walk down a step at a time
+      // (Mod+Shift+R walks back up).
+      preset-column-widths {
+          proportion 1.0
+          proportion 0.66667
+          proportion 0.5
+          proportion 0.33333
+      }
       // sway's `output * bg #282a36 solid_color`. Global, because niri's
       // per-output `background-color` needs a name per monitor and is
       // deprecated in favour of this.
