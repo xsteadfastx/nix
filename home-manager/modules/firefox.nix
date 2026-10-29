@@ -154,6 +154,9 @@ lib.mkIf cfg.desktop {
         in
         {
           "{b743f56d-1cc1-4048-8ba6-f9c2ab7aa54d}" = amo "dracula-dark-colorscheme";
+          "{c5867acc-54c9-4074-9574-04d8818d53e8}" = {
+            installation_mode = "blocked";
+          };
           # Violentmonkey, not Greasemonkey 4: the MusicBrainz script community
           # runs VM/TM, and GM4 dropped the sync GM_* APIs (GM_xmlhttpRequest)
           # that the importers rely on.
