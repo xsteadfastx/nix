@@ -58,6 +58,7 @@ let
     };
     default_theme = "custom-Dracula";
     setting_defaults.custom_themes = [ (import ../../lib/element-theme.nix) ];
+    minimizeToTray = false;
   };
 in
 lib.mkIf cfg.matrix {
