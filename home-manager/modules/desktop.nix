@@ -75,6 +75,7 @@ in
       pkgs.unstable.mpv
       pkgs.unstable.mqttx
       pkgs.unstable.networkmanagerapplet
+      pkgs.unstable.newsflash
       pkgs.unstable.pavucontrol
       pkgs.unstable.peek # gif screen recorder
       pkgs.unstable.rawtherapee
