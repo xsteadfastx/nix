@@ -70,6 +70,14 @@ _: {
         owner = "marv";
       };
 
+      # gitwatch push token for ~/permanent/vimwiki (Forgejo access token with
+      # repository read+write access). Read by the gitwatch-notes unit's
+      # GIT_ASKPASS helper; never written to the Nix store.
+      "vimwiki-git-token" = {
+        owner = "marv";
+        mode = "0400";
+      };
+
       # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API access.
       # URL is a secret here too, so both are injected via the *_FILE convention.
       "mcp-netbox-token" = {

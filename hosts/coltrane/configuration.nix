@@ -468,30 +468,6 @@
     xclip
   ];
 
-  # ~/permanent/vimwiki is a plain git repo with a Forgejo remote, but nothing
-  # ever committed it: the vault drifted and never synced. gitwatch commits
-  # whenever a note changes. No `remote` on purpose -- gitwatch then never
-  # pushes (its own arg parsing: "default is empty, i.e. no push"), so the
-  # password notes in there stay local until a push is decided on.
-  # Hand-rolled rather than services.gitwatch: that module interpolates the
-  # null `remote` (its own default) straight into the script and dies with
-  # "cannot coerce null to a string", so a remote-less watch is unreachable
-  # through it. Switch back once upstream handles a missing remote.
-  systemd.services.gitwatch-notes = {
-    description = "gitwatch for ~/permanent/vimwiki";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    path = with pkgs; [
-      git
-      gitwatch
-    ];
-    serviceConfig.User = "marv";
-    script = ''
-      exec ${pkgs.gitwatch}/bin/gitwatch -m "chore(notes): autocommit %d" /home/marv/permanent/vimwiki
-    '';
-  };
-
   system.stateVersion = "25.11";
 
   users.users.root.hashedPassword = "!";

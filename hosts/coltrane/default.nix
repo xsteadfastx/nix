@@ -7,6 +7,7 @@ _: {
     ./fix-audio.nix
     ./fix-isy-hub.nix
     ./fix-kernel.nix
+    ./gitwatch-notes.nix
     ./hardware-configuration.nix
     ./meshcore.nix
     ./ollama.nix
