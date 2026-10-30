@@ -10,13 +10,25 @@
       # lua
       ''
         -- ~/permanent/vimwiki is a plain markdown vault with [[wiki links]], so it
-        -- is already an Obsidian vault. Notes stay flat, keep their names (no
-        -- zettel ids), and get no frontmatter, so existing files are untouched.
+        -- is already an Obsidian vault. Notes stay flat and keep their names (no
+        -- zettel ids). Frontmatter is on, but only properties with a value are
+        -- written: the default function also emits `aliases: []` and `tags: []`
+        -- on every note, which is noise when neither is used.
         require("obsidian").setup({
           workspaces = { { name = "notes", path = "~/permanent/vimwiki" } },
           picker = { name = "fzf-lua" },
           note_id_func = require("obsidian.builtin").title_id,
-          frontmatter = { enabled = false },
+          frontmatter = {
+            enabled = true,
+            -- The built-in function also writes empty `aliases: []` / `tags: []`
+            -- on every note; this keeps the block to what is actually set.
+            func = function(note)
+              local props = { id = note.id }
+              if #note.aliases > 0 then props.aliases = note.aliases end
+              if #note.tags > 0 then props.tags = note.tags end
+              return vim.tbl_extend("force", props, note.metadata or {})
+            end,
+          },
           ui = { enable = false },
           daily_notes = { enabled = false },
           legacy_commands = false,
