@@ -84,6 +84,11 @@ in
       keyboard {
           xkb {
               layout "de"
+              // German, but without dead keys: ^, ´ and ` become ordinary
+              // characters. The default de layout makes ^ a dead key, so the
+              // key left of 1 silently waits for Space/vowel; that is wrong for
+              // a vault full of markdown and code. Shift+key is still degree.
+              variant "nodeadkeys"
               options "caps:escape"
           }
       }
