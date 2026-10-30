@@ -40,6 +40,9 @@ in
           vim.keymap.set("n", "<A-.>", ":bnext<CR>")
           vim.keymap.set("n", "<A-c>", ":bd<CR>")
 
+          -- zen-mode-nvim
+          vim.keymap.set("n", "<Leader>z", "<cmd>ZenMode<CR>", { desc = "Toggle zen mode" })
+
           -- terminal mode
           vim.keymap.set("t", "<Leader><Esc>", "<C-\\><C-n>")
         '';

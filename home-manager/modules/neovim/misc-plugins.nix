@@ -38,6 +38,7 @@ in
       vim-surround
       vim-table-mode
       which-key-nvim
+      zen-mode-nvim
     ];
     initLua =
       # lua
@@ -127,6 +128,22 @@ in
 
         -- git-conflict-nvim
         require("git-conflict").setup()
+
+        -- zen-mode-nvim
+        require("zen-mode").setup({
+        	window = {
+        		options = {
+        			number = false,
+        			relativenumber = false,
+        			signcolumn = "no",
+        			foldcolumn = "0",
+        			list = false,
+        		},
+        	},
+        	-- twilight-nvim is not installed; its hook would only be swallowed by
+        	-- zen-mode's pcall, so switch it off instead of pretending.
+        	plugins = { twilight = { enabled = false } },
+        })
       '';
   };
 }
