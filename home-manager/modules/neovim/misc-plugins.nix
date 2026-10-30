@@ -31,7 +31,6 @@ in
       plenary-nvim
       rainbow-delimiters-nvim
       render-markdown-nvim
-      snacks-nvim
       todo-comments-nvim
       vim-better-whitespace
       vim-bracketed-paste
