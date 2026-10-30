@@ -34,6 +34,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     chmod -R u+w $out
     substituteInPlace $out/Cargo.toml --replace-fail '>=25.11.0, <25.12.0' '>=26.4.0, <26.5.0'
     cp ${./Cargo.lock} $out/Cargo.lock
+    patch -p1 --batch --forward -d $out < ${./workspace-filter.patch}
   '';
 
   cargoHash = "sha256-qcfqt8eDJgtJUBYUqIVWKZx0/wnRhG63qXmBnQoKEdc=";

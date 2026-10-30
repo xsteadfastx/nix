@@ -1,0 +1,100 @@
+--- a/src/state.rs
++++ b/src/state.rs
+@@ -79,7 +79,7 @@
+ pub enum Event {
+     Notification(Box<EnrichedNotification>),
+     WindowSnapshot(Snapshot),
+-    Workspaces(()),
++    Workspaces(Vec<Workspace>),
+ }
+ 
+ async fn notify_stream(tx: Sender<Event>) {
+@@ -102,8 +102,8 @@
+ 
+ async fn workspace_stream(tx: Sender<Event>, workspace_stream: impl Stream<Item = Vec<Workspace>>) {
+     let mut workspace_stream = Box::pin(workspace_stream);
+-    while workspace_stream.next().await.is_some() {
+-        if let Err(e) = tx.send(Event::Workspaces(())).await {
++    while let Some(workspaces) = workspace_stream.next().await {
++        if let Err(e) = tx.send(Event::Workspaces(workspaces)).await {
+             tracing::error!(%e, "error sending workspaces");
+         }
+     }
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -85,6 +85,10 @@
+     buttons: BTreeMap<u64, Button>,
+     container: gtk::Box,
+     last_snapshot: Option<Snapshot>,
++    // Ids of the workspaces that are currently displayed on their output. Only
++    // these are worth a button: Niri's window list covers every workspace, and
++    // a taskbar that lists the windows you cannot see is just noise.
++    active_workspaces: Arc<Mutex<BTreeSet<u64>>>,
+     state: State,
+ }
+ 
+@@ -94,6 +98,7 @@
+             buttons: Default::default(),
+             container,
+             last_snapshot: None,
++            active_workspaces: Arc::new(Mutex::new(BTreeSet::new())),
+             state,
+         }
+     }
+@@ -117,10 +122,26 @@
+                     self.process_window_snapshot(windows, output_filter.clone())
+                         .await
+                 }
+-                Event::Workspaces(_) => {
+-                    // We're just using this as a signal that the outputs may have changed.
++                Event::Workspaces(workspaces) => {
++                    *self
++                        .active_workspaces
++                        .lock()
++                        .expect("active workspace lock") = workspaces
++                        .iter()
++                        .filter(|workspace| workspace.is_active)
++                        .map(|workspace| workspace.id)
++                        .collect();
++
++                    // The outputs may have changed too.
+                     let new_filter = self.build_output_filter().await;
+                     *output_filter.lock().expect("output filter lock") = new_filter;
++
++                    // A workspace switch does not produce a window snapshot, so
++                    // re-render what we already have.
++                    if let Some(snapshot) = self.last_snapshot.clone() {
++                        self.process_window_snapshot(snapshot, output_filter.clone())
++                            .await;
++                    }
+                 }
+             }
+         }
+@@ -364,11 +385,25 @@
+         // We need to track which, if any, windows are no longer present.
+         let mut omitted = self.buttons.keys().copied().collect::<BTreeSet<_>>();
+ 
++        let active_workspaces = self
++            .active_workspaces
++            .lock()
++            .expect("active workspace lock")
++            .clone();
++        let show_all_workspaces = active_workspaces.is_empty();
++
+         for window in windows.iter().filter(|window| {
+-            filter
++            let on_this_output = filter
+                 .lock()
+                 .expect("output filter lock")
+-                .should_show(window.output().unwrap_or_default())
++                .should_show(window.output().unwrap_or_default());
++            // Until the first workspace list arrives, show everything rather
++            // than nothing.
++            let on_active_workspace = show_all_workspaces
++                || window
++                    .workspace_id
++                    .is_some_and(|id| active_workspaces.contains(&id));
++            on_this_output && on_active_workspace
+         }) {
+             let button = match self.buttons.entry(window.id) {
+                 Entry::Occupied(entry) => entry.into_mut(),
