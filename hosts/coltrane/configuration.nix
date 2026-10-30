@@ -278,7 +278,9 @@
     # directly. Plain "de" is kbd's legacy 7-bit-ASCII keymap -- it binds the ü
     # key to literal "@"/"\", no umlauts at all; "de-latin1" is the variant with
     # real ü/ö/ä, matching what every other German-keyboard tool here expects.
-    keyMap = "de-latin1";
+    # "-nodeadkeys" matches the niri session (xkb variant nodeadkeys): the key
+    # left of 1 types ^ directly instead of being a dead circumflex.
+    keyMap = "de-latin1-nodeadkeys";
     useXkbConfig = lib.mkForce false;
   };
 
