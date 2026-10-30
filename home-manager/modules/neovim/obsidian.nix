@@ -24,6 +24,13 @@
 
         local actions = require("obsidian.actions")
 
+        -- Note actions work from any buffer, so map them globally: leaving them
+        -- in the markdown FileType autocmd below made them a silent no-op
+        -- everywhere else (empty buffer, code, terminal).
+        vim.keymap.set("n", "<Leader>nn", "<cmd>Obsidian new<CR>", { desc = "Obsidian new note" })
+        vim.keymap.set("n", "<Leader>ns", "<cmd>Obsidian quick_switch<CR>", { desc = "Obsidian switch note" })
+        vim.keymap.set("n", "<Leader>nr", "<cmd>Obsidian search<CR>", { desc = "Obsidian search" })
+
         vim.api.nvim_create_autocmd("FileType", {
           pattern = "markdown",
           callback = function(ev)
@@ -31,10 +38,7 @@
             -- smart_action only *returns* the command to run, so the mapping
             -- has to be an expr one or its return value is thrown away.
             vim.keymap.set("n", "<CR>", actions.smart_action, vim.tbl_extend("force", opts, { expr = true }))
-            vim.keymap.set("n", "<Leader>nn", "<cmd>Obsidian new<CR>", opts)
-            vim.keymap.set("n", "<Leader>ns", "<cmd>Obsidian quick_switch<CR>", opts)
             vim.keymap.set("n", "<Leader>nb", "<cmd>Obsidian backlinks<CR>", opts)
-            vim.keymap.set("n", "<Leader>nr", "<cmd>Obsidian search<CR>", opts)
           end,
         })
       '';
