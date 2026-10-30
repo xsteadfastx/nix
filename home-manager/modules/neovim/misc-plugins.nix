@@ -121,7 +121,14 @@ in
         require("ibl").setup()
 
         -- render-markdown-nvim
-        require("render-markdown").setup()
+        require("render-markdown").setup({
+        	-- Render in insert mode too, closer to Obsidian's live preview.
+        	preset = "obsidian",
+        	-- Keep links concealed on the cursor line; the default anti-conceal
+        	-- turns them back into raw [[wiki links]] while the cursor sits on them.
+        	anti_conceal = { ignore = { link = true } },
+        	heading = { width = "block", border = true },
+        })
 
         -- blame-nvim
         require("blame").setup({ blame_options = { "-w" } })
