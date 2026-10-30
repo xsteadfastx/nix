@@ -30,7 +30,14 @@
             end,
           },
           ui = { enable = false },
-          daily_notes = { enabled = false },
+          daily_notes = {
+            enabled = true,
+            folder = "diary",
+            date_format = "YYYY-MM-DD",
+            default_tags = {},
+            -- Journal on weekends too, like the old diary entries.
+            workdays_only = false,
+          },
           legacy_commands = false,
         })
 
@@ -42,6 +49,7 @@
         vim.keymap.set("n", "<Leader>nn", "<cmd>Obsidian new<CR>", { desc = "Obsidian new note" })
         vim.keymap.set("n", "<Leader>ns", "<cmd>Obsidian quick_switch<CR>", { desc = "Obsidian switch note" })
         vim.keymap.set("n", "<Leader>nr", "<cmd>Obsidian search<CR>", { desc = "Obsidian search" })
+        vim.keymap.set("n", "<Leader>nj", "<cmd>Obsidian today<CR>", { desc = "Obsidian today's journal note" })
 
         vim.api.nvim_create_autocmd("FileType", {
           pattern = "markdown",
