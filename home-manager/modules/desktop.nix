@@ -108,6 +108,8 @@ in
       "x-scheme-handler/http" = [ "firefox.desktop" ];
       "x-scheme-handler/https" = [ "firefox.desktop" ];
       "inode/directory" = [ "thunar.desktop" ];
+      # Calibre claims this on install; PDFs are documents first, ebooks second.
+      "application/pdf" = [ "org.gnome.Evince.desktop" ];
     }
     // lib.genAttrs imageMimeTypes (_: [ "org.gnome.Loupe.desktop" ])
   );
