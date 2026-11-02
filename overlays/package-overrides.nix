@@ -153,6 +153,23 @@ in
 
   attic = inputs.attic.packages.${system}.attic;
 
+  # dracula-theme ships a GTK2 variant of the theme and, for it,
+  # `propagatedUserEnvPkgs = [ gtk-engine-murrine ]`. Murrine is a GTK2-only
+  # theme engine, so it pins gtk+ 2.24.33 -- removed from nixpkgs in NixOS
+  # 27.05. Nothing here runs GTK2 apps anymore (Qt goes through the GTK3
+  # platform theme, xsane is gone), so the variant is dead weight: drop it, and
+  # drop the propagation with it. `propagatedUserEnvPkgs` must be emptied (not
+  # the generated nix-support file deleted -- fixupPhase rewrites that from the
+  # attribute after postInstall runs).
+  # ponytail: if a GTK2 app ever returns, delete this override instead of
+  # keeping a GTK2 theme whose engine is no longer shipped.
+  dracula-theme = prev.dracula-theme.overrideAttrs (o: {
+    propagatedUserEnvPkgs = [ ];
+    postInstall = (o.postInstall or "") + ''
+      rm -rf $out/share/themes/*/gtk-2.0
+    '';
+  });
+
   cliamp = prev.cliamp.overrideAttrs rec {
     version = "1.63.2";
     src = prev.fetchFromGitHub {
