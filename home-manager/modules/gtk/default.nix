@@ -40,11 +40,6 @@ lib.mkIf cfg.desktop {
       dracula-theme
       dracula-icon-theme
       jetbrainsmono-nerdfont-zero
-      # Ships the GTK2 engines, incl. the Adwaita one. qt.platformTheme "gtk"
-      # maps to QT_QPA_PLATFORMTHEME=gtk2, so Qt reads the theme through GTK2 and
-      # without this it warns "Unable to locate theme engine in module_path:
-      # adwaita" and falls back to its built-in palette instead of Dracula.
-      gnome-themes-extra
     ];
     pointerCursor = {
       package = pkgs.dracula-theme;
@@ -154,7 +149,11 @@ lib.mkIf cfg.desktop {
   # silently replaced by the default theme=null and Qt stayed unthemed.
   qt = {
     enable = true;
-    platformTheme.name = "gtk";
+    # gtk3, not gtk: the GTK3 platform theme plugin (libqgtk3.so) ships inside
+    # qtbase for both Qt 5 and 6, so it needs no extra package and no GTK2 --
+    # whereas "gtk" maps to QT_QPA_PLATFORMTHEME=gtk2, which pulled
+    # qtstyleplugins/qt6gtk2 and gtk+ 2.24.33 (removed from nixpkgs in 27.05).
+    platformTheme.name = "gtk3";
     style.name = "kvantum";
     kvantum = {
       enable = true;
