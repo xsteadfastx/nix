@@ -35,6 +35,22 @@ let
     "image/x-xbitmap"
     "image/x-xpixmap"
   ];
+  # Calibre claims the OOXML document types on install; these win over it.
+  # Each type must name the component that actually declares it in its MimeType
+  # line -- startcenter declares none of them, so pointing the defaults there
+  # (or at a name that does not exist) silently falls back to Calibre again.
+  officeApplication = {
+    "application/msword" = "writer";
+    "application/rtf" = "writer";
+    "application/vnd.oasis.opendocument.text" = "writer";
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = "writer";
+    "application/vnd.ms-excel" = "calc";
+    "application/vnd.oasis.opendocument.spreadsheet" = "calc";
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" = "calc";
+    "application/vnd.ms-powerpoint" = "impress";
+    "application/vnd.oasis.opendocument.presentation" = "impress";
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation" = "impress";
+  };
 in
 {
   imports = [
@@ -70,6 +86,7 @@ in
       pkgs.unstable.evince
       pkgs.unstable.gimp
       pkgs.unstable.libmediainfo
+      pkgs.libreoffice
       pkgs.unstable.loupe
       pkgs.unstable.mediaelch
       pkgs.unstable.mpv
@@ -112,5 +129,6 @@ in
       "application/pdf" = [ "org.gnome.Evince.desktop" ];
     }
     // lib.genAttrs imageMimeTypes (_: [ "org.gnome.Loupe.desktop" ])
+    // lib.mapAttrs (_: app: [ "${app}.desktop" ]) officeApplication
   );
 }
