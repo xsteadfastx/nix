@@ -151,8 +151,6 @@ in
   paperless-gpt = prev.callPackage ../pkgs/paperless-gpt/package.nix { };
   niri-taskbar = prev.callPackage ../pkgs/niri-taskbar/package.nix { };
 
-  xsaneGimp = prev.xsane.override { gimpSupport = true; };
-
   attic = inputs.attic.packages.${system}.attic;
 
   cliamp = prev.cliamp.overrideAttrs rec {

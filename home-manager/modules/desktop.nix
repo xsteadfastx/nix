@@ -99,11 +99,11 @@ in
       pkgs.unstable.remmina
       pkgs.unstable.rustdesk-flutter
       pkgs.unstable.signal-desktop
+      pkgs.unstable.simple-scan
       pkgs.unstable.system-config-printer
       pkgs.unstable.thunar
       pkgs.unstable.tor-browser
       pkgs.unstable.xdotool
-      pkgs.unstable.xsaneGimp
     ]
     ++ lib.optional nixosConfig.services.syncthing.enable pkgs.unstable.syncthingtray
   );
