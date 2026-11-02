@@ -128,6 +128,9 @@ in
         	-- turns them back into raw [[wiki links]] while the cursor sits on them.
         	anti_conceal = { ignore = { link = true } },
         	heading = { width = "block", border = true },
+        	-- In-process LSP for `- [` checkboxes and `> ` callouts. Separate client
+        	-- from obsidian-ls, so the two do not collide (both attach, blink merges).
+        	completions = { lsp = { enabled = true } },
         })
 
         -- blame-nvim
