@@ -207,6 +207,15 @@ in
       match app-id="com.mitchellh.ghostty"
       open-fullscreen true
   }
+  // gpg's pinentry-gnome3 prompt (gopass). niri hides floating windows while a
+  // fullscreen window has focus and, by design, does not hand focus to a new
+  // window then -- so the prompt opened invisible behind the fullscreen
+  // terminal and gopass looked hung. open-focused forces the focus onto it,
+  // which brings the floating layer up above the fullscreen window.
+  window-rule {
+      match app-id="^gcr-prompter$"
+      open-focused true
+  }
 
   // ── binds ───────────────────────────────────────────────────────────────
   // READ THIS BEFORE ADDING A KEY: niri does NOT merge its default binds when a
