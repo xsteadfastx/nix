@@ -50,7 +50,6 @@
         vim.keymap.set("n", "<Leader>ns", "<cmd>Obsidian quick_switch<CR>", { desc = "Obsidian switch note" })
         vim.keymap.set("n", "<Leader>nr", "<cmd>Obsidian search<CR>", { desc = "Obsidian search" })
         vim.keymap.set("n", "<Leader>nj", "<cmd>Obsidian today<CR>", { desc = "Obsidian today's journal note" })
-
         vim.api.nvim_create_autocmd("FileType", {
           pattern = "markdown",
           callback = function(ev)
@@ -59,6 +58,14 @@
             -- has to be an expr one or its return value is thrown away.
             vim.keymap.set("n", "<CR>", actions.smart_action, vim.tbl_extend("force", opts, { expr = true }))
             vim.keymap.set("n", "<Leader>nb", "<cmd>Obsidian backlinks<CR>", opts)
+            -- toggle_checkbox also *creates* one: checkbox.create_new turns a
+            -- plain or blank line into `- [ ] …` (like <C-l> in the app).
+            vim.keymap.set(
+              "n",
+              "<Leader>nt",
+              "<cmd>Obsidian toggle_checkbox<CR>",
+              vim.tbl_extend("force", opts, { desc = "Obsidian task: toggle/create" })
+            )
           end,
         })
       '';
