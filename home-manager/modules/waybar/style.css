@@ -17,7 +17,7 @@
  *     lib/statusbar.nix, the same data the zellij bar renders from.
  *
  * Three deviations from the Dracula port that started this file:
- *   1. font-family swapped to JetBrainsMono Nerd Font (upstream asks Iosevka,
+ *   1. font-family swapped to Lilex Nerd Font (upstream asks Iosevka,
  *      which is not what this session uses).
  *   2. the module list lives in default.nix (upstream ships a Hyprland config).
  *   3. flat modules with 1px inset separators instead of powerline arrows.
@@ -33,7 +33,7 @@
 * {
     border: none;
     border-radius: 0;
-    font-family: "JetBrainsMono Nerd Font";
+    font-family: "Lilex Nerd Font";
     font-size: 12px;
     min-height: 0;
 }

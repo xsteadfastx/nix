@@ -20,10 +20,9 @@ lib.mkIf cfg.desktop {
     enable = true;
     package = pkgs.unstable.ghostty;
     settings = {
-      font-family = "JetBrainsMono Nerd Font";
+      font-family = "Lilex Nerd Font";
       font-style = "Regular";
       font-size = 14;
-      font-feature = "zero";
       shell-integration = "fish";
       window-decoration = false;
       gtk-single-instance = true;

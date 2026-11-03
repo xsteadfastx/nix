@@ -17,7 +17,7 @@ lib.mkIf cfg.desktop {
 
     settings = {
       main = {
-        font = "JetBrainsMono Nerd Font:size=16";
+        font = "Lilex Nerd Font:size=16";
         # Same pixel size everywhere. With all outputs at scale 1, `auto` sizes
         # by the monitor's reported DPI, and the TV (1000x610 mm at 1360x768,
         # ~35 DPI) shrank the text to ~5 px.

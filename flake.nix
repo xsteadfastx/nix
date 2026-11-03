@@ -110,7 +110,7 @@
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
         packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
         packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
-        packages.jetbrainsmono-nerdfont-zero = pkgs.callPackage ./pkgs/jetbrainsmono-nerdfont-zero.nix { };
+        packages.lilex-nerdfont-zero = pkgs.callPackage ./pkgs/lilex-nerdfont-zero.nix { };
         packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
         packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
         # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)

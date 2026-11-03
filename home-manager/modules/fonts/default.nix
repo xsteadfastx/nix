@@ -8,14 +8,14 @@ let
   cfg = nixosConfig.features;
 in
 lib.mkIf cfg.desktop {
-  # Combine the checked-in fonts with the custom patched JetBrainsMono into one
+  # Combine the checked-in fonts with Lilex Nerd Font (slashed zero) into one
   # directory, so there's a single home.file entry (no nested symlink that the
   # recursive parent can clobber).
   home.file.".local/share/fonts" = {
     source = pkgs.runCommand "fonts" { } ''
       mkdir -p $out
       cp -r ${./fonts}/* $out/
-      ln -s ${pkgs.jetbrainsmono-nerdfont-zero}/share/fonts/truetype/NerdFonts $out/NerdFonts
+      ln -s ${pkgs.lilex-nerdfont-zero}/share/fonts/truetype/NerdFonts $out/NerdFonts
     '';
     # The old config installed this as a real dir of symlinks; replace it.
     force = true;

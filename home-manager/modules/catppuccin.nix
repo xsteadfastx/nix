@@ -20,7 +20,7 @@
     cursors.enable = true;
 
     # swaync's stylesheet hardcodes "Ubuntu Nerd Font"; match the session.
-    swaync.font = "JetBrainsMono Nerd Font";
+    swaync.font = "Lilex Nerd Font";
     swaync.fontSize = "12";
 
     # Exceptions, themed by hand from the same sources:

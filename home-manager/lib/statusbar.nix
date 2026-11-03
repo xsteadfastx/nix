@@ -56,9 +56,8 @@ let
   # volume and mpris icons live in home-manager/modules/waybar/default.nix).
   #
   # Every codepoint here was checked against the built font's charset
-  # (fc-query), which is why the icons work at all: this font only gained the
-  # Font Awesome / Material ranges once `--complete` was passed to
-  # font-patcher (see pkgs/jetbrainsmono-nerdfont-zero.nix).
+  # (fc-query / fontTools cmap) of pkgs/lilex-nerdfont-zero.nix -- the
+  # Font Awesome and Material ranges are in nixpkgs' nerd-fonts builds.
   icons = {
     cpu = glyph "F2DB"; # fa-microchip
     memory = glyph "F035B"; # md-memory

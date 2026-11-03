@@ -93,7 +93,7 @@ lib.mkIf cfg.desktop {
     # The Papirus icon theme comes from catppuccin.gtk.icon.
     packages = with pkgs; [
       gtkTheme
-      jetbrainsmono-nerdfont-zero
+      lilex-nerdfont-zero
     ];
 
     # GIMP 3 uses its own CSS theme engine with custom widget classes
@@ -127,7 +127,7 @@ lib.mkIf cfg.desktop {
     };
 
     font = {
-      name = "JetBrainsMono Nerd Font";
+      name = "Lilex Nerd Font";
       size = 10;
     };
 
@@ -211,13 +211,13 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>sans-serif</family>
             <prefer>
-              <family>JetBrainsMono Nerd Font</family>
+              <family>Lilex Nerd Font</family>
             </prefer>
           </alias>
           <alias binding="same">
             <family>monospace</family>
             <prefer>
-              <family>JetBrainsMono Nerd Font Mono</family>
+              <family>Lilex Nerd Font Mono</family>
             </prefer>
           </alias>
           <!-- niri's own UI (hotkey overlay, screenshot UI) asks fontconfig for
@@ -226,7 +226,7 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>mono</family>
             <prefer>
-              <family>JetBrainsMono Nerd Font Mono</family>
+              <family>Lilex Nerd Font Mono</family>
             </prefer>
           </alias>
         </fontconfig>
