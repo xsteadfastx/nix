@@ -140,7 +140,16 @@ lib.mkIf cfg.desktop {
     # "Using GtkSettings:gtk-application-prefer-dark-theme with libadwaita is
     # unsupported". Harmless: libadwaita ignores it and follows the dconf
     # color-scheme instead.
-    gtk4.extraConfig = { };
+    # GTK >= 4.16 defaults to "automatic" rendering: subpixel positioning with
+    # unhinted metrics, which reads blurry at scale 1 on the ~92 DPI
+    # externals. `manual` + hinted metrics puts glyphs back on whole pixels.
+    # The GNOME settings portal feeds GTK 4 from dconf and overrides this
+    # file, so font-rendering is also set in dconf below; hint-font-metrics
+    # has no dconf key and only works from here.
+    gtk4.extraConfig = {
+      gtk-font-rendering = "manual";
+      gtk-hint-font-metrics = 1;
+    };
     gtk4.theme = {
       name = "catppuccin-${flavor}-${accent}-standard";
       package = gtkTheme;
@@ -176,6 +185,8 @@ lib.mkIf cfg.desktop {
     colorScheme = "dark";
   };
   dconf.enable = true;
+  # Read by GTK 4 through the settings portal (see gtk4.extraConfig above).
+  dconf.settings."org/gnome/desktop/interface".font-rendering = "manual";
 
   # Qt apps mirror the GTK theme + font, and use the Catppuccin Kvantum style
   # (solid, see kvantumSolid above) instead of adwaita-dark. The kvconfig is
