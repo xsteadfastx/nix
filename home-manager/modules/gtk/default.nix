@@ -126,9 +126,12 @@ lib.mkIf cfg.desktop {
       package = gtkTheme;
     };
 
+    # 11pt: 10pt Lilex reads soft on the ~92 DPI externals. The weight is
+    # Medium through the fontconfig rule below, not through this name
+    # (libadwaita's CSS would override a weight given here).
     font = {
       name = "Lilex Nerd Font";
-      size = 10;
+      size = 11;
     };
 
     gtk3.extraConfig = {
@@ -240,6 +243,21 @@ lib.mkIf cfg.desktop {
               <family>Lilex Nerd Font Mono</family>
             </prefer>
           </alias>
+          <!-- Lilex Regular reads thin and soft on the ~92 DPI externals, so a
+               request for Lilex at the regular weight gets Medium instead,
+               whatever asked for it: GTK, libadwaita CSS (which pins
+               font-weight: 400 and so ignores a "Medium" in gtk-font-name),
+               waybar, fuzzel, swaync, ghostty. Bold, italic and lighter
+               weights are untouched. A config that says "Regular" for Lilex
+               therefore renders Medium; this rule is why. -->
+          <match target="pattern">
+            <test name="family" compare="contains"><string>Lilex</string></test>
+            <!-- qual="all" also matches a request without any weight
+                 (fuzzel, plain fc-match), which a plain eq test misses -->
+            <test qual="all" name="weight" compare="more_eq"><const>regular</const></test>
+            <test qual="all" name="weight" compare="less"><const>medium</const></test>
+            <edit name="weight" mode="assign" binding="strong"><const>medium</const></edit>
+          </match>
         </fontconfig>
       '';
 

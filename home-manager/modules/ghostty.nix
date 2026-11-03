@@ -21,8 +21,13 @@ lib.mkIf cfg.desktop {
     package = pkgs.unstable.ghostty;
     settings = {
       font-family = "Lilex Nerd Font";
+      # 15pt = 20px here. At 14pt (18.67px) no hinting variant sharpened
+      # Lilex without distorting its widths; the larger size was the only
+      # clear gain on the ~92 DPI externals (ghostty is grayscale-only).
+      font-size = 15;
+      # Explicit as well: the fontconfig Lilex Regular -> Medium rule
+      # (home-manager/modules/gtk) cannot catch a request by style name.
       font-style = "Medium";
-      font-size = 14;
       shell-integration = "fish";
       window-decoration = false;
       gtk-single-instance = true;
