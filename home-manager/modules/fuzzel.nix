@@ -6,12 +6,6 @@
 }:
 let
   cfg = nixosConfig.features;
-
-  # Colours from the table the bar, swaync and the lock screen render from
-  # (../lib/statusbar.nix), as fuzzel's RRGGBBAA. The picks are the official
-  # Dracula fuzzel theme (github.com/dracula/fuzzel): dd = slightly translucent.
-  inherit ((import ../lib/statusbar.nix { inherit lib; })) palette;
-  rgba = name: alpha: lib.removePrefix "#" palette.${name} + alpha;
 in
 lib.mkIf cfg.desktop {
   # The launcher and dmenu (replaced wofi). Mod+D, the gopass picker and the
@@ -44,15 +38,7 @@ lib.mkIf cfg.desktop {
         inner-pad = 8;
       };
 
-      colors = {
-        background = rgba "background" "dd";
-        text = rgba "foreground" "ff";
-        match = rgba "cyan" "ff";
-        selection-match = rgba "cyan" "ff";
-        selection = rgba "selection" "dd";
-        selection-text = rgba "foreground" "ff";
-        border = rgba "purple" "ff";
-      };
+      # Colours come from catppuccin.fuzzel (`main.include`).
 
       # Square 1px border, like the window borders and the bar.
       border = {

@@ -9,10 +9,11 @@
 # comment rather than vanishing. Those comments are the honest diff between the
 # two sessions -- read them before judging niri on the probe login.
 #
-# NOTE: this is a Nix ''...'' string, so a literal ${ added later has to be
+# NOTE: this is a Nix ''...'' string, so a literal ${ inputs, added later has to be
 # escaped as ''${.
 {
   lib,
+  catppuccin,
   pkgs,
   windowSwitch,
 }:
@@ -39,20 +40,12 @@ let
   playerctl = "${pkgs.playerctl}/bin/playerctl";
   gopass = "${pkgs.gopass}/bin/gopass";
 
-  # Colours come from the same table the bar, swaync and the lock screen render
-  # from (../../lib/statusbar.nix), so the window borders cannot drift away from
-  # the Dracula look.
-  inherit ((import ../../lib/statusbar.nix { inherit lib; })) palette;
-
-  # palette.background-darker is the translucent bar surface,
-  # "rgba(30, 31, 41, 230)"; niri ignores alpha on the overview backdrop, so this
-  # is the same colour with the alpha dropped.
-  backdrop = "#1e1f29";
+  ctp = import ../../../lib/palette.nix { inherit lib catppuccin; };
 
   # sway's OSD one-liners, verbatim: notify-send with swaync's
   # x-canonical-private-synchronous stack tag ("replace the previous
   # notification with this value" instead of piling one up per keypress) and
-  # int:value for the progress bar the Dracula theme styles.
+  # int:value for the progress bar swaync's theme styles.
   volumeNow = "${wpctl} get-volume @DEFAULT_AUDIO_SINK@ | ${awk} '{print int($2*100)}'";
   volumeOsd =
     sign:
@@ -151,13 +144,12 @@ in
           proportion 0.5
           proportion 0.33333
       }
-      // sway's `output * bg #282a36 solid_color`. Global, because niri's
-      // per-output `background-color` needs a name per monitor and is
-      // deprecated in favour of this.
-      background-color "${palette.background}"
+      // sway: `output * bg … solid_color`. Global, because niri's per-output `background-color` needs a name per
+      // monitor and is deprecated in favour of this.
+      background-color "${ctp.hex "base"}"
 
-      // sway: `default_border pixel 1` with client.focused #6272A4,
-      // client.unfocused #282A36, client.urgent #FF5555. niri draws the same
+      // sway: `default_border pixel 1` with focused/unfocused/urgent client
+      // colours. niri draws the same
       // thing with `border`: 1px around every window, shrinking it the way a
       // sway pixel border does. The focus ring is off -- it would draw a second
       // outline around the active window on top of this border.
@@ -166,17 +158,17 @@ in
       }
       border {
           width 1
-          active-color "${palette.comment}"
-          inactive-color "${palette.background}"
-          urgent-color "${palette.red}"
+          active-color "${ctp.hex "overlay1"}"
+          inactive-color "${ctp.hex "base"}"
+          urgent-color "${ctp.hex "red"}"
       }
   }
 
   // overview backdrop (behind the workspaces in Mod+O and between workspaces
-  // when switching). niri's default is a mid grey; dracula's darker surface is
-  // what the translucent waybar background is, minus its alpha.
+  // when switching). niri's default is a mid grey; mantle is the darker
+  // surface under the workspaces.
   overview {
-      backdrop-color "${backdrop}"
+      backdrop-color "${ctp.hex "mantle"}"
   }
 
   // Square windows, no app-drawn title bars, as under sway. Apps get told they

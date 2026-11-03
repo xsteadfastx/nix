@@ -12,14 +12,6 @@
     sessionVariables = {
       EDITOR = "nvim";
       GOPATH = "$HOME/.local/share/go";
-      BAT_THEME = "Dracula";
-      FZF_DEFAULT_OPTS = ''
-        --layout=reverse
-        --color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9
-        --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9
-        --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6
-        --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4
-      '';
     };
 
     sessionPath = [
@@ -37,6 +29,26 @@
     "${pkgs.unstable.fzf}/share/fzf/key-bindings.fish";
 
   programs = {
+    # Theme comes from catppuccin.bat (home-manager/modules/catppuccin.nix), which installs
+    # the theme file and sets `config.theme` -- no BAT_THEME env var needed.
+    bat = {
+      enable = true;
+      # The package moves here from modules/base.nix (which had unstable.bat):
+      # the module installs its own default, and two bat builds collide on
+      # `bin/bat`.
+      package = pkgs.unstable.bat;
+    };
+
+    # Colours come from catppuccin.fzf (programs.fzf.colors); only the layout
+    # is ours. Home Manager composes FZF_DEFAULT_OPTS from both.
+    fzf = {
+      enable = true;
+      # Pinned so the key-bindings file below and the installed binary come from
+      # the same build: two fzf versions in the profile collide on `bin/fzf`.
+      package = pkgs.unstable.fzf;
+      defaultOptions = [ "--layout=reverse" ];
+    };
+
     fish = {
       enable = true;
       # fish 4.9.x moved/removed share/fish/tools/create_manpage_completions.py,
@@ -275,25 +287,7 @@
         fish_vi_key_bindings
         set default_user marv
 
-        # dracula colors (formerly conf.d/dracula.fish)
-        set -g fish_color_normal f8f8f2
-        set -g fish_color_command 8be9fd
-        set -g fish_color_keyword ff79c6
-        set -g fish_color_quote f1fa8c
-        set -g fish_color_redirection f8f8f2
-        set -g fish_color_end ffb86c
-        set -g fish_color_error ff5555
-        set -g fish_color_param bd93f9
-        set -g fish_color_comment 6272a4
-        set -g fish_color_selection --background=44475a
-        set -g fish_color_search_match --background=44475a
-        set -g fish_color_operator 50fa7b
-        set -g fish_color_escape ff79c6
-        set -g fish_color_autosuggestion 6272a4
-        set -g fish_pager_color_progress 6272a4
-        set -g fish_pager_color_prefix 8be9fd
-        set -g fish_pager_color_completion f8f8f2
-        set -g fish_pager_color_description 6272a4
+        # Syntax colours come from catppuccin.fish.
 
         # ssh-agent + gopass keys (formerly conf.d/ssh-agent-prepare.fish).
         # Must be -Ux (universal): these need to be shared across every fish
@@ -350,6 +344,8 @@
       package = pkgs.unstable.starship;
       enableFishIntegration = true;
       settings = {
+        # Palette and module styles come from catppuccin.starship
+        # (home-manager/modules/catppuccin.nix); the symbols below are ours.
         kubernetes.disabled = false;
         aws = {
           symbol = " ";

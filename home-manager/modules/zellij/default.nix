@@ -1,31 +1,24 @@
 {
+  config,
   pkgs,
   lib,
   ...
 }:
 let
-  # Glyphs, the Dracula palette and every metric's colour/threshold, shared with
-  # the waybar bar so the two cannot disagree -- see
-  # home-manager/lib/statusbar.nix. Here they are rendered into zjstatus'
-  # dialect: the layout's color_* vars, the command_*_format strings, and the
-  # shell script's glyphs/colours.
+  # Glyphs and every metric's colour/threshold, shared with the waybar bar so
+  # the two cannot disagree -- see home-manager/lib/statusbar.nix. Here they
+  # are rendered into zjstatus' dialect: the layout's color_* vars, the
+  # command_*_format strings, and the shell script's glyphs/colours.
   statusbar = import ../../lib/statusbar.nix { inherit lib; };
+  ctp = import ../../../lib/palette.nix {
+    inherit lib;
+    inherit (config) catppuccin;
+  };
   inherit (statusbar) segments;
   inherit (statusbar) char;
 
-  # zjstatus names palette entries for itself: $bg/$dim/$fg, and a short name
-  # per colour (its own examples and docs use `blue` for Dracula's @comment).
-  zjVars = {
-    bg = statusbar.palette.background;
-    dim = statusbar.palette.selection;
-    fg = statusbar.palette.foreground;
-    green = statusbar.palette.green;
-    purple = statusbar.palette.purple;
-    pink = statusbar.palette.pink;
-    orange = statusbar.palette.orange;
-    cyan = statusbar.palette.cyan;
-    blue = statusbar.palette.comment;
-  };
+  # Every Catppuccin colour as a zjstatus var: `$base`, `$mauve`, `$surface1`, …
+  zjVars = lib.mapAttrs (_: c: c.hex) ctp.colors;
   # Cosmetic only (KDL is whitespace-insensitive): line 1 of the interpolated
   # block inherits the layout line's own indentation, so only the rest need it,
   # and only because the layout string indents it to 20 - the 4 spaces Nix
@@ -35,236 +28,20 @@ let
     lib.mapAttrsToList (name: hex: "color_${name} " + lib.strings.escapeNixString hex) zjVars
   );
 
-  # A metric's zjstatus format: its palette colour, bold, on the bar's $dim.
-  metricFormat = segment: "#[fg=$" + segments.${segment}.color + ",bg=$dim,bold] {stdout} ";
+  # A metric's zjstatus format: its colour, bold, on the bar's $surface1.
+  metricFormat = segment: "#[fg=$" + segments.${segment}.color + ",bg=$surface1,bold] {stdout} ";
 
   # The shell script prints a raw SGR when a value crosses a threshold (zjstatus
   # parses `#[fg=...]` only in its own format string, never in a command's
   # stdout), so each warning/critical/status colour needs its `r;g;b`.
-  sgrOf = segment: state: statusbar.sgr statusbar.palette.${(statusbar.stateOf segment state).color};
+  sgrOf =
+    segment: state:
+    "38;2;" + lib.concatMapStringsSep ";" toString (ctp.rgb (statusbar.stateOf segment state).color);
 
   # Thresholds the script compares against, and the SGR parameters it prints
   # when a value crosses one.
   at = segment: state: (statusbar.stateOf segment state).at;
   inherit (segments) battery;
-
-  # zellij's own UI colours -- panes, frames, tab bar, tables/lists, exit codes,
-  # multiplayer cursors. Not a palette: zellij's theme schema is one block per
-  # component, each naming base/background/emphasis_0..3, so this is the role
-  # assignment table, with the colours themselves taken from the palette above
-  # (null = zellij's "terminal default", what the frame/exit-code backgrounds
-  # use). Spelled out because a plugin cannot read a theme -- zellij-tile
-  # exposes none -- so the bar needs its own colour_* vars too.
-  #
-  # Components and their order follow the theme this replaced; the generator
-  # below emits exactly the `themes { custom-dracula { ... } }` block that used
-  # to be typed out here as 94 `r g b` triplets.
-  #
-  # Deliberately *not* zellij's bundled `dracula` theme, nor dracula/zellij:
-  # both paint panes with #000000, which is not a Dracula colour (the spec has
-  # nothing darker than Background #282a36, and even its AnsiBlack is #21222c),
-  # and neither uses Selection #44475a or Purple #bd93f9 at all. Every value in
-  # the table below is a spec colour, which is the same "dracula, not void" call
-  # the layout comment above makes.
-  themeColors = [
-    {
-      name = "text_unselected";
-      roles = {
-        base = "foreground";
-        background = "background";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "text_selected";
-      roles = {
-        base = "foreground";
-        background = "selection";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "ribbon_unselected";
-      roles = {
-        base = "foreground";
-        background = "selection";
-        emphasis_0 = "red";
-        emphasis_1 = "orange";
-        emphasis_2 = "cyan";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "ribbon_selected";
-      roles = {
-        base = "background";
-        background = "purple";
-        emphasis_0 = "background";
-        emphasis_1 = "selection";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "table_title";
-      roles = {
-        base = "green";
-        background = "background";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "table_cell_selected";
-      roles = {
-        base = "foreground";
-        background = "selection";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "table_cell_unselected";
-      roles = {
-        base = "foreground";
-        background = "background";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "list_selected";
-      roles = {
-        base = "foreground";
-        background = "selection";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "list_unselected";
-      roles = {
-        base = "foreground";
-        background = "background";
-        emphasis_0 = "orange";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "frame_unselected";
-      roles = {
-        base = "selection";
-        background = null;
-        emphasis_0 = "selection";
-        emphasis_1 = "selection";
-        emphasis_2 = "selection";
-        emphasis_3 = "selection";
-      };
-    }
-    {
-      name = "frame_selected";
-      roles = {
-        base = "purple";
-        background = null;
-        emphasis_0 = "purple";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "pink";
-      };
-    }
-    {
-      name = "frame_highlight";
-      roles = {
-        base = "pink";
-        background = null;
-        emphasis_0 = "pink";
-        emphasis_1 = "cyan";
-        emphasis_2 = "green";
-        emphasis_3 = "orange";
-      };
-    }
-    {
-      name = "exit_code_success";
-      roles = {
-        base = "green";
-        background = null;
-        emphasis_0 = "green";
-        emphasis_1 = "green";
-        emphasis_2 = "green";
-        emphasis_3 = "green";
-      };
-    }
-    {
-      name = "exit_code_error";
-      roles = {
-        base = "red";
-        background = null;
-        emphasis_0 = "red";
-        emphasis_1 = "red";
-        emphasis_2 = "red";
-        emphasis_3 = "red";
-      };
-    }
-    {
-      name = "multiplayer_user_colors";
-      roles = {
-        player_1 = "pink";
-        player_2 = "cyan";
-        player_3 = "green";
-        player_4 = "yellow";
-        player_5 = "purple";
-        player_6 = "orange";
-        player_7 = "red";
-        player_8 = "selection";
-        player_9 = "cyan";
-        player_10 = "pink";
-      };
-    }
-  ];
-  themeRoleOrder = [
-    "base"
-    "background"
-    "emphasis_0"
-    "emphasis_1"
-    "emphasis_2"
-    "emphasis_3"
-  ]
-  ++ map (n: "player_${toString n}") (lib.range 1 10);
-  themeValue =
-    color:
-    if color == null then
-      "0" # zellij's terminal default
-    else
-      lib.concatStringsSep " " (map toString (statusbar.rgb statusbar.palette.${color}));
-  themeKdl = lib.concatStringsSep "\n        " (
-    map (
-      component:
-      component.name
-      + " {\n"
-      + lib.concatStringsSep "\n" (
-        map (role: "            ${role} ${themeValue component.roles.${role}}") (
-          lib.filter (role: lib.hasAttr role component.roles) themeRoleOrder
-        )
-      )
-      + "\n        }"
-    ) themeColors
-  );
 
   # Backing shell commands for the zjstatus powerline segments below — no
   # native zellij/zjstatus widget for battery/cpu/ram/disk, so shell out (same
@@ -405,7 +182,7 @@ let
       	# (src/render.rs `from_format_string`), never in a command's stdout, so the
       	# colour switch has to ride along in this script's stdout as a raw SGR
       	# sequence. Safe because zjstatus wraps that stdout in the format's own SGR
-      	# and resets after it (`format_string`): only fg is overridden here, bg=$dim
+      	# and resets after it (`format_string`): only fg is overridden here, bg=$surface1
       	# and bold survive, and the next format part sets its own colours anyway.
       	esc=$(printf '\033')
       	sgr=""
@@ -426,12 +203,12 @@ in
 
       # A file named `default.kdl` in the layout dir overrides zellij's built-in
       # default layout. Needed to swap the plain status-bar/tab-bar plugins for
-      # zjstatus's bar (dracula, modeled on zjstatus's own "simple" example:
+      # zjstatus's bar (catppuccin, modeled on zjstatus' own "simple" example:
       # https://github.com/dj95/zjstatus/blob/main/examples/simple.kdl): mode +
       # session name, then tabs on the left; battery/cpu/ram/disk/clock on the right,
       # divided by a thin dim divider instead of the example's "::". Flat --
       # no powerline arrows, matching waybar/neovim. Each segment is just
-      # colored text on the one flat $dim bar background, not its own block.
+      # colored text on the one flat $surface1 bar background, not its own block.
       #
       # The swap_tiled_layout / swap_floating_layout blocks below are zellij's
       # OWN built-ins, copied verbatim from `zellij setup --dump-swap-layout
@@ -538,13 +315,13 @@ in
                     plugin location="file:${pkgs.unstable.zellijPlugins.zjstatus}" {
                         ${zjColorLines}
 
-                        format_left   "{mode}#[fg=$bg,bg=$purple,bold] {session} #[fg=$fg,bg=$dim]{tabs}"
+                        format_left   "{mode}#[fg=$base,bg=$mauve,bold] {session} #[fg=$text,bg=$surface1]{tabs}"
                         format_center ""
                         // order matches waybar's modules-right: cpu, memory,
                         // disk, battery, clock (its network modules have no
                         // zellij equivalent, so they're just skipped here).
-                        format_right  "{command_cpu}#[fg=$bg,bg=$dim]│{command_ram}#[fg=$bg,bg=$dim]│{command_disk}#[fg=$bg,bg=$dim]│{command_battery}#[fg=$bg,bg=$dim]│{datetime}"
-                        format_space  "#[bg=$dim]"
+                        format_right  "{command_cpu}#[fg=$base,bg=$surface1]│{command_ram}#[fg=$base,bg=$surface1]│{command_disk}#[fg=$base,bg=$surface1]│{command_battery}#[fg=$base,bg=$surface1]│{datetime}"
+                        format_space  "#[bg=$surface1]"
 
                         // An overlong line does not clip, it wraps: it is written
                         // into a one-row pane, so the pane's viewport scrolls and the
@@ -563,12 +340,12 @@ in
                         border_enabled "false"
 
                         // mode + session get their own solid-color chip (not just
-                        // colored text on $dim) so the left side reads distinctly
+                        // colored text on $surface1) so the left side reads distinctly
                         // from the flat tabs/metrics -- covers every locked-derived
                         // submode (tab/resize/renametab/...) with the pink "locked"
                         // look; {name} still prints the real mode.
-                        mode_normal          "#[fg=$bg,bg=$green,bold] {name} "
-                        mode_locked          "#[fg=$bg,bg=$pink,bold] {name} "
+                        mode_normal          "#[fg=$base,bg=$green,bold] {name} "
+                        mode_locked          "#[fg=$base,bg=$pink,bold] {name} "
                         mode_default_to_mode "locked"
 
                         // The label is the *focused pane's* title -- tmux's automatic
@@ -594,8 +371,8 @@ in
                         // sets; nothing maintains it per command any more, because the
                         // bar does not read it. Naming both would double the zellij
                         // calls on every prompt.
-                        tab_normal               "#[fg=$fg,bg=$dim] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
-                        tab_active               "#[fg=$purple,bg=$dim,bold,italic] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        tab_normal               "#[fg=$text,bg=$surface1] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
+                        tab_active               "#[fg=$mauve,bg=$surface1,bold,italic] {index} {focused_pane_title} {fullscreen_indicator}{sync_indicator}{floating_indicator}"
                         tab_fullscreen_indicator "□ "
                         tab_sync_indicator       "  "
                         tab_floating_indicator   "󰉈 "
@@ -606,8 +383,8 @@ in
                         // Without these keys a background-tab bell is invisible.
                         // Pink block, matching mode_locked's style.
                         tab_bell_indicator       "󰂚 "
-                        tab_normal_bell          "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
-                        tab_normal_flashing_bell "#[fg=$bg,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
+                        tab_normal_bell          "#[fg=$base,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
+                        tab_normal_flashing_bell "#[fg=$base,bg=$pink,bold] {index} {focused_pane_title} {bell_indicator}"
 
                         // More tabs than fit: show a window around the active one and
                         // render the rest as these two markers instead. {count} is
@@ -626,8 +403,8 @@ in
                         // a narrower window is what format_hide_on_overlength above
                         // is for.
                         tab_display_count        "6"
-                        tab_truncate_start_format "#[fg=$blue,bg=$dim]‹{count} "
-                        tab_truncate_end_format   "#[fg=$blue,bg=$dim] {count}›"
+                        tab_truncate_start_format "#[fg=$overlay1,bg=$surface1]‹{count} "
+                        tab_truncate_end_format   "#[fg=$overlay1,bg=$surface1] {count}›"
 
                         command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
                         command_battery_format   "${metricFormat "battery"}"
@@ -645,7 +422,7 @@ in
                         command_disk_format   "${metricFormat "disk"}"
                         command_disk_interval "30"
 
-                        datetime          "#[fg=$blue,bg=$dim,bold] ${char segments.clock.glyph} {format} "
+                        datetime          "#[fg=$overlay1,bg=$surface1,bold] ${char segments.clock.glyph} {format} "
                         datetime_format   "%H:%M:%S %d/%m/%Y"
                         datetime_timezone "Europe/Berlin"
                     }
@@ -664,10 +441,18 @@ in
       # this spawns the server, which keeps that shell's environment for the
       # session's lifetime, so a pre-sway console shell wedges every later pane
       # without WAYLAND_DISPLAY/SWAYSOCK.
+      # An EXITED session (server died -- reboot, killed zellij, OOM) is the one
+      # case `attach -c` cannot handle: it prints "Bye from Zellij!" and returns
+      # immediately, and the `kill $fish_pid` below then closes the terminal, so
+      # Mod+Return looks like a crash. Drop such a session first; a live one is
+      # attached as usual, and `-c` still creates one when there is none at all.
       "fish/conf.d/zellij.fish".text = ''
         if status is-interactive; and not set -q ZELLIJ
             set -gx ZELLIJ_AUTO_ATTACH true
             set -gx ZELLIJ_AUTO_EXIT true
+            if ${pkgs.zellij}/bin/zellij list-sessions --no-formatting 2>/dev/null | string match -qr '^local .*EXITED'
+                ${pkgs.zellij}/bin/zellij delete-session local
+            end
             ${pkgs.zellij}/bin/zellij attach local -c
             kill $fish_pid
         end
@@ -815,7 +600,6 @@ in
     zellij = {
       enable = true;
       settings = {
-        theme = "custom-dracula";
         # keep the session alive (detached) even if the terminal is force-killed
         on_force_close = "detach";
         # session_serialization defaults to true (persists layout to disk so
@@ -833,7 +617,7 @@ in
         # environment, not the shell's, so a bare "wl-copy" would depend on
         # ~/.nix-profile/bin being on that PATH.
         copy_command = "${pkgs.wl-clipboard}/bin/wl-copy";
-        # dracula-border pane frames (full border around each pane)
+        # palette-border pane frames (full border around each pane)
         pane_frames = true;
         pane_frame_style = "full";
         # The visual bell: a BEL from a pane flashes that pane's frame and the
@@ -992,30 +776,20 @@ in
             // color is configurable; the plugin passively watches PaneUpdate, no
             // wrapper or remote changes needed.
             "file:${pkgs.unstable.zellij-ssh-tint}" {
-                // NOT palette.red (#ff5555): set_pane_color paints the pane's whole
-                // grid background, not just its frame, so the tint has to stay near
-                // the background's own luminance or every colour an app draws on it
-                // loses contrast -- #ff5555 turned the whole pane into a red screen.
+                // NOT plain red: set_pane_color paints the pane's whole grid
+                // background, not just its frame, so the tint has to stay near the
+                // background's own luminance or every colour an app draws on it
+                // loses contrast -- the raw red turns the whole pane into a red
+                // screen.
                 //
-                // So: Red #ff5555 dimmed to about a quarter, with the blue of
-                // Background #282a36 left in. A spec colour cannot spell this (the
-                // palette is dracula/waybar's colors.css verbatim and has no dark
-                // red), and pure #3a0000 reads as a brown maroon next to Dracula's
-                // purple-tinted background. Comment blue stays *more* readable on
-                // this than on the plain background: 3.4:1 vs 3.0:1.
-                color "#3d1420"
+                // So: red mixed 80% of the way down towards base, which keeps
+                // the background's cool cast. Overlay grey stays *more*
+                // readable on this than on plain base.
+                color "${ctp.mix "red" "base" 0.8}"
             }
         }
 
-        // All UI components, with the spec's Background/Foreground/Selection
-        // instead of pure black-and-white: zellij's bundled dracula paints panes
-        // #000000 and drops Selection and Purple entirely. Values come from
-        // home-manager/lib/statusbar.nix (see themes/themeColors there).
-        themes {
-            custom-dracula {
-                ${themeKdl}
-            }
-        }
+        // The theme itself comes from catppuccin.zellij.
       '';
     };
   };

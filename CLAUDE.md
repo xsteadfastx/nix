@@ -76,9 +76,15 @@ Lifecycle: requires pi/Claude restart to take effect.
 - **Fix**: `hosts/dipper/matrix/default.nix` gives all four bridges `PartOf=` + `WantedBy=tuwunel.service`, so a tuwunel restart restarts them. Failed portal creations are not retried; the next message in that chat creates the room.
 - Unit names ≠ option names: `services.mautrix-telegram-go` runs as `mautrix-telegram.service`.
 
+### Theming: Catppuccin (2026-11-03)
+- Flavour + accent live **once** in `modules/catppuccin.nix` (imported by `modules/home-manager`; `catppuccin.enable = features.desktop`, which on NixOS level only themes the tty console on coltrane); `home-manager/modules/catppuccin.nix` follows enable/flavour/accent, so every program with a catppuccin/nix port is themed by its module. No hex is written in this repo.
+- Exceptions there: `waybar` (its `@import` of a store path isn't resolved by waybar's GTK CSS parser, so `waybar/default.nix` inlines `sources.waybar/<flavor>.css`) and `kvantum` (solid variant, below).
+- Programs **without** a port (waybar metric colours, zjstatus, niri borders, GIMP, trippy, GTK4 sidebar fix) name Catppuccin colours via `lib/palette.nix` (`ctp.hex "mauve"`), which reads `catppuccin.sources.palette.src` (the fetched source, so no per-platform IFD build). `modules/base` themes trippy only when `catppuccin.enable` is on. `home-manager/lib/statusbar.nix` stores segment colours as Catppuccin names.
+- pi and Claude Code use community ports (flake inputs `catppuccin-pi`, `catppuccin-claude-code`); Claude's goes through the coding-agent module's `claude.theme` option.
+
 ### Qt theming: Kvantum (2026-10-22)
-- All Qt theming lives in `home-manager/modules/gtk/default.nix`, built from the shared `palette` in `home-manager/lib/statusbar.nix`. Qt Widgets apps get their whole palette from **Kvantum**; the platform theme (gtk2) barely matters for colours there.
-- The packaged Dracula Kvantum theme makes windows 18% translucent and relies on KWin blur; niri has none, so dialogs were see-through. We ship a derived **`DraculaSolid`** (translucency/blur off, cyan links), built from `pkgs.dracula-theme` with a guard that fails if a `sed` key goes missing.
+- All Qt theming lives in `home-manager/modules/gtk/default.nix`, on the Catppuccin flavour/accent from `modules/catppuccin.nix`. Qt Widgets apps get their whole palette from **Kvantum**; the platform theme (gtk2) barely matters for colours there.
+- The packaged Kvantum theme is built for Plasma: it assumes a compositor that blurs popups (`popup_blurring=true`, `reduce_window_opacity=10`), and niri has none, so dialogs were see-through. We ship a derived **`catppuccin-mocha-mauve-solid`** (those two keys off), built from `catppuccin.sources.kvantum` (the catppuccin/nix kvantum module is off) with a guard that fails if a `sed` key goes missing.
 - **Qt Quick apps can't use Kvantum**: `QT_STYLE_OVERRIDE=kvantum` makes them look for a QML style called "kvantum" -> blank window (nixpkgs#333009). The qt6ct palette + `qt6ct.conf` that theming them required lived here until nheko (the only such app) was dropped; a new Qt Quick app needs that setup back, plus `QT_QPA_PLATFORMTHEME=qt6ct` in its own wrapper.
 
 ### Waybar self-healing (2026-09-24)

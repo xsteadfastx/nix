@@ -7,6 +7,7 @@
     ./abcde.nix
     ./aerc
     ./btop.nix
+    ./catppuccin.nix
     ./cliamp.nix
     ./fish
     ./git.nix
@@ -20,9 +21,7 @@
     # systemtools
     unstable.appimage-run
     unstable.bandwhich # traffic
-    unstable.bat
     unstable.eza
-    unstable.fzf
     unstable.nodejs
     unstable.p7zip
     unstable.progress

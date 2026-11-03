@@ -3,7 +3,6 @@
 {
   programs.neovim = {
     plugins = with pkgs.unstable.vimPlugins; [
-      dracula-nvim
       nvim-treesitter-context
       nvim-lspconfig
 
@@ -76,42 +75,8 @@
           end,
         })
 
-        local dracula = require("dracula")
-        dracula.setup({ italic_comment = true })
-        vim.cmd("colorscheme dracula")
-
-        -- Custom Highlighting Groups
-        local c = dracula.colors()
+        -- Colours: catppuccin.nvim (home-manager/modules/catppuccin.nix).
         vim.cmd("syntax off")
-
-        local hls = {
-          ["@attribute"]          = { fg = c.green, italic = true },
-          ["@boolean"]            = { fg = c.purple },
-          ["@constant"]           = { fg = c.purple, bold = true },
-          ["@field"]              = { fg = c.cyan },
-          ["@function"]           = { fg = c.green, bold = true },
-          ["@function.builtin"]   = { fg = c.cyan },
-          ["@keyword"]            = { fg = c.pink },
-          ["@method"]             = { fg = c.green },
-          ["@module"]             = { fg = c.pink },
-          ["@namespace"]          = { fg = c.pink },
-          ["@number"]             = { fg = c.purple },
-          ["@operator"]           = { fg = c.pink },
-          ["@parameter"]          = { fg = c.orange, italic = true },
-          ["@property"]           = { fg = c.cyan },
-          ["@punctuation"]        = { fg = c.fg },
-          ["@string"]             = { fg = c.yellow },
-          ["@tag"]                = { fg = c.pink },
-          ["@type"]               = { fg = c.yellow },
-          ["@type.builtin"]       = { fg = c.yellow, italic = true },
-          ["@variable"]           = { fg = c.fg },
-          ["@variable.builtin"]   = { fg = c.cyan, italic = true },
-          ["@variable.member"]    = { fg = c.cyan },
-        }
-
-        for group, settings in pairs(hls) do
-          vim.api.nvim_set_hl(0, group, settings)
-        end
       '';
   };
 }

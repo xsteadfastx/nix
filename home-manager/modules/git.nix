@@ -2,14 +2,22 @@
   pkgs,
   ...
 }:
-let
-  inherit (pkgs.unstable) git-lfs delta;
-in
 {
-  home.packages = [
-    git-lfs
-    delta
-  ];
+  home.packages = [ pkgs.unstable.git-lfs ];
+
+  # Colours come from catppuccin.delta (its feature + bat's Catppuccin syntax
+  # theme); it hooks into programs.delta, not a raw `delta` git section.
+  programs.delta = {
+    enable = true;
+    package = pkgs.unstable.delta;
+    enableGitIntegration = true;
+    options = {
+      dark = true;
+      line-numbers = true;
+      navigate = true;
+      side-by-side = true;
+    };
+  };
 
   programs.git = {
     enable = true;
@@ -30,20 +38,10 @@ in
         hist = "log --graph --pretty=format:'%Cred%h%Creset %s%C(yellow)%d%Creset %Cgreen(%cr)%Creset [%an]' --abbrev-commit --date=relative --all";
         please = "push --force-with-lease";
       };
-      core.pager = "delta";
       credential.helper = "gopass";
-      delta = {
-        dark = true;
-        lineNumbers = true;
-        navigate = true;
-        side-by-side = true;
-        smoothScroll = true;
-        theme = "Dracula";
-      };
       difftool.prompt = false;
       github.user = "xsteadfastx";
       init.defaultBranch = "main";
-      interactive.diffFilter = "delta --color-only";
       merge.ff = false;
       merge.tool = "diffview";
       mergetool.keepBackup = false;

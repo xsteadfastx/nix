@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   inputs,
@@ -82,7 +83,17 @@
     speedtest-go
     tmux
     tree
-    trippy-dracula
+    (callPackage ../../pkgs/trippy-geoip.nix {
+      # themed where Catppuccin is on (modules/catppuccin.nix, features.desktop)
+      ctp =
+        if config.catppuccin.enable or false then
+          import ../../lib/palette.nix {
+            inherit lib;
+            inherit (config) catppuccin;
+          }
+        else
+          null;
+    })
     vim
     wget
   ];

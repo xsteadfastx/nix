@@ -40,29 +40,18 @@ is `setProperty(name, "")`, i.e. `removeProperty` — the override is dropped an
 theme's bundled font stays. There is no "empty means the OS font" path;
 `system-ui` is what to type for that, and it resolves through fontconfig.
 
-The theme itself is [`lib/element-theme.nix`](../lib/element-theme.nix),
-shared with the web client's `elementWeb` config so the two cannot drift. It is
-not an upstream theme — the only public Element Dracula theme
-(`aaronraimist/element-themes`, 2021) predates Compound and only sets `colors`
-keys today's UI ignores — so it does both layers: Compound *semantic* tokens
-(surface, row, accent, text, border, status, plus the `alpha-*` tints used for
-hover and the mention flash) with the canonical palette — `#282a36` canvas,
-`#21222c` panels, `#44475a` current line/selection, `#f8f8f2` text, `#bd93f9`
-accent, `#ff5555`/`#50fa7b`/`#8be9fd` status — *and* the legacy `colors` map,
-because a custom theme makes Element load `theme-dark-custom.css`, which styles
-parts of the app from those old variables with no fallback. Intermediate shades
-(hover, disabled, secondary text) are documented blends, since the palette has
-none, and Element's stock ramps stay untouched so unrelated states keep their
-contrast. Two things stay out of reach without forking the webapp: the hardcoded
-One Dark syntax theme inside code blocks, and the Element logo/splash art.
-It shows up as *Dracula* under Settings → Appearance in both clients. Element only
+The desktop theme is the Catppuccin element port (`catppuccin.sources.element`,
+`<flavor>/<accent>.json`), read by [`home-manager/modules/matrix.nix`](../home-manager/modules/matrix.nix);
+the web client on dipper keeps Element's stock themes (Catppuccin is coltrane-only). Two things
+stay out of reach without forking the webapp: the hardcoded One Dark syntax
+theme inside code blocks, and the Element logo/splash art.
+It shows up as *Catppuccin Mocha (Mauve)* under Settings → Appearance. Element only
 auto-selects `default_theme` when there is no system colour preference
 (`use_system_theme` is a device-only setting that follows the OS), so on a dark
 session pick it once per client; the choice then lives in that client's local
 storage.
 
-The web client's copy of the theme takes effect on the next dipper deploy; the
-desktop one comes from the coltrane rebuild.
+The theme comes from the coltrane rebuild.
 
 Electron only takes nixpkgs' Wayland flags when `NIXOS_OZONE_WL` is set; it is
 set in [`hosts/coltrane/configuration.nix`](../hosts/coltrane/configuration.nix).

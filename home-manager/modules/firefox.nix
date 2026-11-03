@@ -153,7 +153,12 @@ lib.mkIf cfg.desktop {
           };
         in
         {
-          "{b743f56d-1cc1-4048-8ba6-f9c2ab7aa54d}" = amo "dracula-dark-colorscheme";
+          # Catppuccin Mocha with the mauve accent -- the same accent as the GTK
+          # theme, Kvantum, icons and cursor. Published by the Catppuccin account
+          # on AMO. (catppuccin/firefox, the "official" port, is a Firefox Color
+          # theme: it needs an extension and a click in Settings, so it cannot be
+          # set declaratively -- this static theme can.)
+          "{76aabc99-c1a8-4c1e-832b-d4f2941d5a7a}" = amo "catppuccin-mocha-mauve-git";
           "{c5867acc-54c9-4074-9574-04d8818d53e8}" = {
             installation_mode = "blocked";
           };
@@ -193,6 +198,10 @@ lib.mkIf cfg.desktop {
         };
     };
     profiles.default = {
+      # catppuccin.firefox (home-manager/modules/catppuccin.nix) also writes
+      # extensions.settings; the assertion below is Home Manager's way of
+      # acknowledging that the two sets are merged rather than one winning.
+      extensions.force = true;
       settings = {
         "browser.aboutConfig.showWarning" = false;
         # Actually *use* compact density: 0=normal, 1=compact, 2=touch. No

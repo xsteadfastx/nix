@@ -9,11 +9,10 @@ let
   cfg = nixosConfig.features;
   swayncClient = "${pkgs.unstable.swaynotificationcenter}/bin/swaync-client";
 
-  # Glyphs, the Dracula palette, and the colour/threshold of every metric both
-  # bars show -- see home-manager/lib/statusbar.nix. This module renders them
-  # into waybar's dialect (config JSON + CSS); the zellij module renders the
-  # same values into zjstatus' (layout KDL + the metrics script), which is what
-  # keeps the two bars looking the same.
+  # Glyphs and the colour/threshold of every metric both bars show -- see
+  # home-manager/lib/statusbar.nix. This module renders them into waybar's
+  # dialect (config JSON + CSS); the zellij module renders the same values into
+  # zjstatus', which is what keeps the two bars looking the same.
   statusbar = import ../../lib/statusbar.nix { inherit lib; };
 
   # Glyphs waybar has and the zellij bar does not (network, volume, mpris):
@@ -49,25 +48,23 @@ let
     ) statusbar.segments.battery.wordClasses
   );
 
-  # style.css holds the layout and the waybar-only colours; the palette and the
-  # metric colour rules are generated from the same data the zellij bar renders
-  # from, so the two cannot drift. Prepended, not appended: @define-color has to
-  # precede its uses (GTK resolves at parse time).
-  styleCss = pkgs.writeText "waybar-style.css" (
-    lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (name: hex: "@define-color ${name} ${hex};") statusbar.palette
-    )
+  # The palette is the Catppuccin waybar port's @define-color file, *inlined*:
+  # waybar's GTK css parser did not resolve `@import "/nix/store/…"`, so every
+  # colour was undefined and the bar rendered unstyled (2026-11-02). style.css
+  # and the generated metric rules then use the Catppuccin names (@base,
+  # @mauve, …).
+  styleCss =
+    builtins.readFile "${config.catppuccin.sources.waybar}/${config.catppuccin.flavor}.css"
     + "\n"
     + builtins.readFile ./style.css
     + "\n"
-    # Appended so they win over the shared `color: @foreground` in style.css's
+    # Appended so they win over the shared `color: @text` in style.css's
     # module block (same specificity, source order decides).
     + lib.concatStringsSep "\n" (lib.mapAttrsToList segmentCss statusbar.segments)
-    + "\n"
-  );
+    + "\n";
 
-  # `#cpu { color: @orange; }` plus one rule per state. `classes` is waybar's
-  # own class name where it differs from the state name (a plugged battery is
+  # `#cpu { color: @peach; }` plus one rule per state. `classes` is waybar's own
+  # class name where it differs from the state name (a plugged battery is
   # `#battery.charging` / `.plugged` / `.full`).
   segmentCss =
     _: segment:
@@ -83,15 +80,16 @@ let
         } {\n    color: @${state.color};\n}"
       ) (segment.states or [ ])
     );
+
 in
 lib.mkIf cfg.desktop {
   # The bar, replacing swaybar + bumblebee-status.
   #
-  # Flat Dracula with icons. Powerline was built first and then dropped: with
-  # Dracula's palette every second segment sat on the bar colour, so the row
+  # Flat bar with icons. Powerline was built first and then dropped: every
+  # second segment sat on the bar colour, so the row
   # read as irregular islands and a green "plugged" battery slab cut across it.
-  # See home-manager/lib/statusbar.nix for the palette and the segment
-  # colours; style.css holds the layout and the waybar-only colours.
+  # See home-manager/lib/statusbar.nix for the segment colours; style.css
+  # holds the layout and the waybar-only colours.
   #
   # `mode = "dock"` is the real mode now: always visible, a normal systemd user
   # service, not compositor-managed via `bar {}` + IPC.

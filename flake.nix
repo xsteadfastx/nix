@@ -5,6 +5,14 @@
     airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
+    catppuccin.inputs.nixpkgs.follows = "nixpkgs";
+    catppuccin.url = "github:catppuccin/nix/release-26.05";
+    # Community ports (no official ones yet): theme JSONs, read by
+    # hosts/coltrane/coding-agent.nix.
+    catppuccin-claude-code.flake = false;
+    catppuccin-claude-code.url = "github:vishwajitsarnobat/catppuccin-claude-code";
+    catppuccin-pi.flake = false;
+    catppuccin-pi.url = "github:XYenon/catppuccin-pi-coding-agent";
     christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";
     christine-preuss-de.url = "github:xsteadfastx/christine-preuss.de";
     coding-agent.inputs.home-manager.follows = "home-manager";

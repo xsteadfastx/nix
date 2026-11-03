@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   nixosConfig,
   pkgs,
@@ -45,8 +46,9 @@ let
   # Element Desktop merges a config.json from Electron's userData dir over the
   # webapp's baked-in one (apps/desktop/src/config.ts), so this is where both the
   # homeserver default and the theme go -- no element-web rebuild needed. The
-  # theme itself is shared with the web client's config; see
-  # lib/element-theme.nix.
+  # theme is the Catppuccin element port.
+  elementTheme = with config.catppuccin; lib.importJSON "${sources.element}/${flavor}/${accent}.json";
+
   elementConfig = {
     brand = "Element";
     default_server_config = {
@@ -56,8 +58,8 @@ let
       };
       "m.identity_server".base_url = "";
     };
-    default_theme = "custom-Dracula";
-    setting_defaults.custom_themes = [ (import ../../lib/element-theme.nix) ];
+    default_theme = "custom-${elementTheme.name}";
+    setting_defaults.custom_themes = [ elementTheme ];
     minimizeToTray = false;
   };
 in

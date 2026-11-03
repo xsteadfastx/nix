@@ -18,7 +18,6 @@ in
     ./better-escape.nix
     ./cmp.nix
     ./diffview.nix
-    ./dracula.nix
     ./formatter.nix
     ./ftplugin.nix
     ./fzf.nix

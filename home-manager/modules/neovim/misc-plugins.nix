@@ -53,7 +53,8 @@ in
         -- lualine-nvim
         require("lualine").setup({
         	options = {
-        		theme = "dracula-nvim",
+        		-- follows the active catppuccin flavour
+        		theme = "catppuccin-nvim",
         		-- Flat, no powerline arrows -- matches the waybar/zellij look.
         		section_separators = "",
         		component_separators = "",

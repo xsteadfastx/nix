@@ -1,16 +1,11 @@
 {
-  pkgs,
   lib,
+  pkgs,
   nixosConfig,
   ...
 }:
 let
   cfg = nixosConfig.features;
-
-  # swaylock takes bare uppercase hex, the palette table (statusbar.nix) holds
-  # the spec spellings.
-  statusbar = import ../lib/statusbar.nix { inherit lib; };
-  hex = name: lib.toUpper (lib.removePrefix "#" statusbar.palette.${name});
 
   # Screen on/off for the idle chain. niri powers DPMS through its own action;
   # under sway this was `swaymsg output * power off`, which is what the old
@@ -44,50 +39,24 @@ lib.mkIf cfg.desktop {
     };
   };
 
-  # Colours from the upstream dracula/swaylock theme, on plain swaylock. The
-  # theme targets swaylock-effects, but that fork is unmaintained (last push
-  # 2024-03) and its `screenshot` busy-loops at 100% CPU with several outputs
+  # Plain swaylock, not swaylock-effects (which the old dracula/swaylock theme
+  # targeted): that fork is unmaintained (last push 2024-03) and its `screenshot` busy-loops at 100% CPU with several outputs
   # (jirutka/swaylock-effects#46, #67): after an overnight suspend it drew the
   # ring on eDP-1 only, left the externals black and never read the password.
   # Dropped with it: clock/screenshot/blur/vignette/grace/fade-in.
   programs.swaylock = {
     enable = true;
+    # Colours come from catppuccin.swaylock (home-manager/modules/catppuccin.nix);
+    # only the behaviour flags are ours.
     settings = {
       daemonize = true;
       show-failed-attempts = true;
-      # The theme's `color=6272A4` (the spec's Comment), restored. The black
-      # deviation was for a lock screen that sat as a flat grey-blue wall behind
-      # the ring for as long as the machine was idle; swayidle now powers the
-      # outputs off 600s after the lock (see the timeouts above), so the wall is
-      # only on screen until then -- and after a resume, which is the same few
-      # minutes.
-      color = hex "comment";
       font = "JetBrainsMono Nerd Font";
       indicator-idle-visible = true;
       indicator-radius = 100;
       indicator-thickness = 20;
-      line-color = hex "background";
-      ring-color = hex "purple";
-      inside-color = hex "background";
-      key-hl-color = hex "green";
-      # Fully transparent separator (8-digit hex, alpha last) -- not a palette
-      # colour.
+      # Fully transparent separator (8-digit hex, alpha last) -- not a colour.
       separator-color = "00000000";
-      text-color = hex "foreground";
-      text-caps-lock-color = "";
-      line-ver-color = hex "purple";
-      ring-ver-color = hex "purple";
-      inside-ver-color = hex "background";
-      text-ver-color = hex "cyan";
-      ring-wrong-color = hex "red";
-      text-wrong-color = hex "red";
-      inside-wrong-color = hex "background";
-      inside-clear-color = hex "background";
-      text-clear-color = hex "cyan";
-      ring-clear-color = hex "cyan";
-      line-clear-color = hex "cyan";
-      line-wrong-color = hex "background";
-      bs-hl-color = hex "cyan";
       ignore-empty-password = true;
     };
   };

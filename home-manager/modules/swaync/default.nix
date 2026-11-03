@@ -6,6 +6,7 @@
 }:
 let
   cfg = nixosConfig.features;
+
 in
 lib.mkIf cfg.desktop {
   # The notification daemon, replacing dunst. dunst is X11 and ran under
@@ -18,8 +19,9 @@ lib.mkIf cfg.desktop {
   # which is graphical-session.target here), so nothing execs it from a session
   # script and no autostart entry is needed.
   #
-  # Style is the official Dracula port, kept as a file beside this module
-  # (642 lines -- not inlined into Nix); see style.css for its one local edit.
+  # Style: catppuccin.swaync owns it (its mocha.css). The 642-line hand layout
+  # that used to live beside this module is gone -- see git history if the
+  # upstream layout ever needs patching again.
   #
   # NOTE: home-manager's services.swaync does NOT pull in libnotify, but the
   # brightness/volume bindings in ../niri/config.nix call notify-send. Without
@@ -28,7 +30,6 @@ lib.mkIf cfg.desktop {
   services.swaync = {
     enable = true;
     package = pkgs.unstable.swaynotificationcenter;
-    style = ./style.css;
 
     # Ported from the old dunstrc where an equivalent exists. dunst's
     # `follow = mouse` has no swaync counterpart -- there is no `monitor` key in
@@ -43,12 +44,12 @@ lib.mkIf cfg.desktop {
       # Must be "user", not "application". swaync's own schema says it:
       #   "Which GTK priority to use when loading the default and user CSS
       #    files. Pick \"user\" to override XDG_CONFIG_HOME/gtk-4.0/gtk.css"
-      # That file is where this repo imports the Dracula GTK theme, and that
-      # theme paints `.background { background-color: #1e1f29 }` -- on a *user*
+      # That file is where this repo imports the Catppuccin GTK theme, and that
+      # theme paints `.background { background-color: #1e1e2e }` -- on a *user*
       # provider, which beats swaync's application-level one. Result: the
       # notification layer surface (full monitor height, mostly empty) rendered
-      # as a solid #1e1f29 slab down to the bottom of the screen. Measured the
-      # slab pixels: exactly #1e1f29, i.e. the theme's colour.
+      # as a solid #1e1e2e slab down to the bottom of the screen. Measured the
+      # slab pixels: exactly #1e1e2e, i.e. the theme's colour.
       # The transparent `.background` rule in style.css only takes effect once
       # this priority is raised.
       cssPriority = "user";

@@ -1,33 +1,33 @@
 /*
- * Waybar — Dracula.
+ * Waybar -- the layout. Colours are NOT in this file.
  *
- * The palette and the base rules (`window#waybar`, workspaces, clock) are taken
- * verbatim from the official port, github.com/dracula/waybar, so this is a real
- * Dracula theme rather than an ad-hoc one. Only three things differ from
- * upstream, all marked below:
+ * Catppuccin's waybar port is not a stylesheet: `sources.waybar/<flavor>.css`
+ * is 26 `@define-color` lines and nothing else (checked 2026-11-02). So the
+ * look has always come from a stylesheet, and this is it -- the base rules
+ * (`window#waybar`, workspaces, clock) taken verbatim from
+ * github.com/dracula/waybar, the layout that was tuned here, plus the
+ * decisions below.
+ *
+ * How the colours arrive (home-manager/modules/waybar/default.nix):
+ *   - that palette file is inlined first (an `@import` of a store path was not
+ *     resolved by waybar's GTK css parser -- the bar rendered unstyled), so
+ *     every colour below is a Catppuccin name (@base, @peach, @mauve…) and
+ *     no hex is written here;
+ *   - then the per-metric colour/state rules are appended from
+ *     lib/statusbar.nix, the same data the zellij bar renders from.
+ *
+ * Three deviations from the Dracula port that started this file:
  *   1. font-family swapped to JetBrainsMono Nerd Font (upstream asks Iosevka,
  *      which is not what this session uses).
- *   2. the module list below (upstream ships a Hyprland-oriented config).
- *   3. the palette and the metric colour rules are generated, not written here
- *      -- they come from home-manager/lib/statusbar.nix, the same values the
- *      zellij status bar renders from, and default.nix prepends/appends them
- *      to this file. This file is the layout and the waybar-only colours
- *      (`#mode`, workspaces, tray, tooltips, ...), which use the palette by
- *      name (@red, @purple, ...) exactly as upstream does.
- * Upstream's own colors.css is reproduced in that generated part unchanged --
- * if Dracula ever revises the palette, sync home-manager/lib/statusbar.nix
- * from there.
+ *   2. the module list lives in default.nix (upstream ships a Hyprland config).
+ *   3. flat modules with 1px inset separators instead of powerline arrows.
  *
  * History: this replaced a hand-built powerline (custom/separatorN modules
  * rendering U+E0B0 with colour swapped to their neighbours). That worked but
- * read badly -- with the palette below every second segment sat on the bar
- * colour, so the row looked like irregular islands. Module separation is done
- * with CSS instead (inset left border, see below).
+ * read badly -- every second segment sat on the bar colour, so the row looked
+ * like irregular islands. Module separation is done with CSS instead (inset
+ * left border, see below).
  */
-
-/* ── Official Dracula palette (dracula/waybar colors.css, verbatim) ─────── */
-/* Generated: default.nix prepends the @define-color lines from
-   home-manager/lib/statusbar.nix. */
 
 /* ── Base (upstream, font swapped) ──────────────────────────────────────── */
 * {
@@ -40,21 +40,21 @@
 
 window#waybar {
     opacity: 0.9;
-    background: @background-darker;
-    color: @foreground;
-    border-bottom: 2px solid @background;
+    background: @base;
+    color: @text;
+    border-bottom: 2px solid @base;
 }
 
 #workspaces button {
     padding: 0 10px;
-    background: @background;
-    color: @foreground;
+    background: @base;
+    color: @text;
 }
 
 #workspaces button:hover {
     box-shadow: inherit;
     text-shadow: inherit;
-    background-image: linear-gradient(0deg, @selection, @background-darker);
+    background-image: linear-gradient(0deg, @surface1, @base);
 }
 
 #workspaces button.current_output {
@@ -64,21 +64,21 @@ window#waybar {
        "that one is on the screen you are looking at".
        Kept above .focused/.urgent on purpose: identical specificity
        (#workspaces button.X), so source order decides and the focused colour
-       must win. Swap @selection for a louder colour if the tint is too quiet. */
-    background: @selection;
+       must win. Swap @surface1 for a louder colour if the tint is too quiet. */
+    background: @surface1;
 }
 
 #workspaces button.focused,
 #workspaces button.active {
-    /* Solid, not upstream's fade-to-@selection gradient -- the current
+    /* Solid, not upstream's fade-to-@surface1 gradient -- the current
        workspace should read as one clear colour, not a shadowed blend. */
     background-image: none;
-    background: @purple;
+    background: @mauve;
 }
 
 #workspaces button.urgent {
     /* Same reasoning as .focused/.active above: solid, not the
-       fade-to-@background-darker gradient, so an urgent workspace is one
+       fade-to-@base gradient, so an urgent workspace is one
        unmistakable red block. */
     background-image: none;
     background: @red;
@@ -97,7 +97,7 @@ window#waybar {
 .niri-taskbar {
     padding: 0 4px;
     margin: 5px 0;
-    border-left: 1px solid @selection;
+    border-left: 1px solid @surface1;
 }
 
 .niri-taskbar button {
@@ -107,7 +107,7 @@ window#waybar {
        a rounded block next to square ones looked bolted on. */
     padding: 0 6px;
     margin: 0;
-    background: @background;
+    background: @base;
 }
 
 .niri-taskbar button image {
@@ -118,12 +118,12 @@ window#waybar {
 .niri-taskbar button:hover {
     box-shadow: inherit;
     text-shadow: inherit;
-    background-image: linear-gradient(0deg, @selection, @background-darker);
+    background-image: linear-gradient(0deg, @surface1, @base);
 }
 
 .niri-taskbar button.focused {
     background-image: none;
-    background: @purple;
+    background: @mauve;
 }
 
 .niri-taskbar button.urgent {
@@ -148,13 +148,13 @@ window#waybar {
 #tray {
     padding: 0 10px;
     margin: 5px 0;
-    border-left: 1px solid @selection;
-    color: @foreground;
+    border-left: 1px solid @surface1;
+    color: @text;
 }
 
-/* Upstream gives the clock a @background fill; keep that, with our padding. */
+/* Upstream gives the clock a @base fill; keep that, with our padding. */
 #clock {
-    background: @background;
+    background: @base;
     padding: 0 10px;
 }
 
@@ -162,12 +162,12 @@ window#waybar {
  * The metric colours (cpu/memory/disk/battery/clock, plus battery's and disk's
  * warning/critical steps) are generated too -- same values on both bars, from
  * home-manager/lib/statusbar.nix. They are appended, so they win over the
- * `color: @foreground` every module gets in the block above.
+ * `color: @text` every module gets in the block above.
  */
 
 /* ── Notification centre button ──────────────────────────────────────────── */
 #custom-swaync {
-    color: @purple;
+    color: @mauve;
 }
 
 /* ── Tray (nm-applet / syncthingtray / blueman …) ─────────────────────── */
@@ -184,13 +184,13 @@ window#waybar {
    middle, so a divider would only separate it from empty bar. */
 #mpris {
     padding: 0 10px;
-    color: @foreground;
+    color: @text;
 }
 
 /* ── Binding-mode indicator ─────────────────────────────────────────────── */
 #mode {
     background: @red;
-    color: @foreground;
+    color: @text;
     padding: 0 8px;
     margin: 3px 2px;
     border-radius: 6px;
@@ -206,10 +206,10 @@ window#waybar {
 
 /* ── Tooltips ───────────────────────────────────────────────────────────── */
 tooltip {
-    background: @background-darker;
-    border: 1px solid @selection;
+    background: @base;
+    border: 1px solid @surface1;
 }
 
 tooltip label {
-    color: @foreground;
+    color: @text;
 }

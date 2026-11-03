@@ -17,7 +17,7 @@ lib.mkIf cfg.desktop {
     ];
     extensions = [
       { id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"; } # dark reader
-      { id = "gfapcejdoghpoidkfodoiiffaaibpaem"; } # dracula
+      { id = "bkkmolkhemgaeaeggcmfbghljjjoofoh"; } # catppuccin mocha
       { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; } # ublock origin lite
       { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # vimium
       { id = "edibdbjcniadpccecjdfdjjppcpchdlm"; } # i still dont care about cookies

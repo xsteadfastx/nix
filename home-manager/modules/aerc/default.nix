@@ -22,24 +22,9 @@ in
 
     extraConfig = {
       ui = {
-        # Not a file in this repo: aerc ships this styleset itself, at
-        # $out/share/aerc/stylesets/dracula, which is on aerc's default
-        # styleset search path (~/.config/aerc/stylesets first, then the
-        # build-time share dir). The repo carried a verbatim copy of
-        # github.com/dracula/aerc until it was measured against the bundled
-        # one: the copy was 14 lines shorter, had no [viewer] section at all
-        # (so quoted replies and patches read flat), and set
-        # default.bg=#20212b against ghostty's Dracula #282a36, painting aerc
-        # a different shade than the terminal around it.
-        # Cost of leaning on it: if an aerc bump ever drops the file, aerc
-        # refuses to start ("Can't find styleset") -- loud, and one line to fix
-        # by pointing stylesets-dirs somewhere else. Not worth owning here.
-        #
-        # styleset-name takes a comma-separated list and later files win, so
-        # the bundled set stays bundled and the local delta is `stylesets.unread`
-        # below -- it repaints unread mail, which the bundled dracula leaves
-        # #ffffff + bold, i.e. "just bold" on a list that is white anyway.
-        styleset-name = "dracula,unread";
+        # The colours are catppuccin.aerc's (home-manager/modules/catppuccin.nix): its module
+        # writes the styleset and points `styleset-name` at it, so nothing
+        # theme-related belongs in this file.
         # Threading client-side rather than trusting the server's THREAD
         # (aerc's upstream defaults, kept rather than dropped).
         threading-enabled = true;
@@ -110,19 +95,6 @@ in
         mail-received = ''notify-send -a aerc "[$AERC_ACCOUNT/$AERC_FOLDER] New mail from $AERC_FROM_NAME" "$AERC_SUBJECT"'';
       };
     };
-
-    # Loaded after the bundled dracula (see styleset-name above), so only the
-    # differences from it belong here. Raw text, not attrs: as attrs the keys
-    # would come out alphabetised, and dracula's `*.default=true` (which resets
-    # styles) is not order-independent of the specific rules around it.
-    stylesets.unread = ''
-      # Dracula green on unread mail, in the list and in the folder list. The
-      # bundled dracula paints it #ffffff + bold, which reads as plain bold
-      # next to the white read rows; this is the colour mail had before we
-      # dropped the vendored copy of the styleset.
-      msglist_unread.fg=#50fa7b
-      dirlist_unread.fg=#50fa7b
-    '';
 
     # tmux-flavoured binds on top of aerc's defaults. `global` is the section
     # without a heading (aerc's own convention), hence the module's special

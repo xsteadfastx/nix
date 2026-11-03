@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   nixosConfig,
   pkgs,
@@ -57,14 +58,15 @@ lib.mkIf cfg.desktop {
       # `pkgs.formats` ships json/toml/yaml/ini/… but not kdl -- so nothing else
       # would catch it. `passAsFile` keeps the 400-line config out of a shell
       # string.
-      config = import ./config.nix {
+      kdl = import ./config.nix {
         inherit lib pkgs;
+        inherit (config) catppuccin;
         windowSwitch = "${niri-window-switch}/bin/niri-window-switch";
       };
     in
     pkgs.runCommand "niri-config.kdl"
       {
-        inherit config;
+        config = kdl;
         passAsFile = [ "config" ];
         nativeBuildInputs = [ nixosConfig.programs.niri.package ];
       }

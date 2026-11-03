@@ -1,4 +1,5 @@
 {
+  config,
   nixosConfig,
   lib,
   pkgs,
@@ -7,67 +8,107 @@
 let
   cfg = nixosConfig.features;
 
-  inherit ((import ../../lib/statusbar.nix { inherit lib; })) palette;
+  inherit (config.catppuccin) flavor accent;
+  ctp = import ../../../lib/palette.nix {
+    inherit lib;
+    inherit (config) catppuccin;
+  };
 
-  # Dracula's Kvantum theme makes every window 18% translucent and leaves the
-  # see-through to KWin's blur. niri has no blur, so dialogs showed the window
-  # behind them (MediaElch settings, 2026-10-22). Same theme, solid, plus link
-  # colours that read on #282a36 (upstream: #646464 / #7f8c8d).
-  draculaSolidKvantum = pkgs.runCommand "kvantum-dracula-solid" { } ''
-    src=${pkgs.dracula-theme}/share/Kvantum/Dracula
-    dst=$out/share/Kvantum/DraculaSolid
+  # Catppuccin's Kvantum style is built for Plasma: `popup_blurring=true` and
+  # `reduce_window_opacity=10` assume a compositor that blurs what is behind a
+  # dialog. niri has no blur, so dialogs showed the window behind them
+  # (MediaElch settings, 2026-10-22). Main windows are already solid upstream
+  # (`translucent_windows=false`), so only those two keys need turning off.
+  kvantumName = "catppuccin-${flavor}-${accent}";
+  kvantumSolid = pkgs.runCommand "kvantum-${kvantumName}-solid" { } ''
+    src=${config.catppuccin.sources.kvantum}/share/Kvantum/${kvantumName}
+    dst=$out/share/Kvantum/${kvantumName}-solid
     mkdir -p $dst
-    cp $src/Dracula.svg $dst/DraculaSolid.svg
+    cp $src/${kvantumName}.svg $dst/${kvantumName}-solid.svg
     sed \
-      -e 's/^translucent_windows=.*/translucent_windows=false/' \
-      -e 's/^blurring=.*/blurring=false/' \
       -e 's/^popup_blurring=.*/popup_blurring=false/' \
       -e 's/^reduce_window_opacity=.*/reduce_window_opacity=0/' \
-      -e 's/^link.color=.*/link.color=${palette.cyan}/' \
-      -e 's/^link.visited.color=.*/link.visited.color=${palette.purple}/' \
-      $src/Dracula.kvconfig > $dst/DraculaSolid.kvconfig
+      $src/${kvantumName}.kvconfig > $dst/${kvantumName}-solid.kvconfig
     # an upstream key rename would make a substitution miss silently
-    for want in translucent_windows=false blurring=false popup_blurring=false \
-      reduce_window_opacity=0 'link.color=${palette.cyan}' 'link.visited.color=${palette.purple}'; do
-      grep -qx "$want" $dst/DraculaSolid.kvconfig || { echo "missing: $want"; exit 1; }
+    for want in popup_blurring=false reduce_window_opacity=0; do
+      grep -qx "$want" $dst/${kvantumName}-solid.kvconfig || { echo "missing: $want"; exit 1; }
     done
   '';
 
+  # GIMP 3 has no Catppuccin port and reads no palette file, so its
+  # @define-color block is generated from lib/palette.nix and prepended to the
+  # layout CSS beside this module (which keeps no colours of its own).
+  gimpColors = {
+    "fg-color" = "text";
+    "bg-color" = "base";
+    "bg-dark-color" = "crust";
+    "border-color" = "surface1";
+    "bg-extra-dark-color" = "crust";
+    "light-special-color" = "mauve";
+    "dimmed-fg-color" = "subtext0";
+    "disabled-fg-color" = "overlay0";
+    "disabled-button-color" = "surface0";
+    "hover-color" = "surface1";
+    "bright-border-color" = "mauve";
+    sap = "crust";
+    border = "surface1";
+    canvas = "base";
+    slider = "mauve";
+    "fg2-color" = "text";
+    "widget-bg-color" = "surface1";
+    "selected-color" = "surface0";
+    "extreme-bg-color" = "surface1";
+    "extreme-selected-color" = "crust";
+    "strong-border-color" = "crust";
+    "stronger-border-color" = "overlay0";
+    "edge-border-color" = "crust";
+    "scrollbar-slider-color" = "mauve";
+    "scrollbar-trough-color" = "crust";
+    "ruler-color" = "crust";
+  };
+  gimpCss =
+    lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: color: "@define-color ${name} ${ctp.hex color};") gimpColors
+    )
+    + "\n\n"
+    + builtins.readFile ../gimp/Catppuccin/gimp.css;
+
+  # One build of each theme, used by gtk.theme and gtk4.theme alike.
+  gtkTheme = pkgs.catppuccin-gtk.override {
+    variant = flavor;
+    accents = [ accent ];
+  };
 in
 lib.mkIf cfg.desktop {
   home = {
-    packages = with pkgs; [
-      dracula-theme
-      dracula-icon-theme
-      jetbrainsmono-nerdfont-zero
-    ];
+    # Name/package come from catppuccin.cursors (home-manager/modules/catppuccin.nix); only
+    # the GTK/X11 propagation is ours -- its module does not set `gtk.enable`,
+    # so without this the cursor name never lands in gtk-3.0/settings.ini.
     pointerCursor = {
-      package = pkgs.dracula-theme;
-      # The package ships the theme dir as "Dracula-cursors" (lowercase c) --
-      # this used to say "Dracula-Cursors", a name that doesn't exist on a
-      # case-sensitive filesystem, so the whole cursor theme silently failed to
-      # load (not just the specific glyphs GTK warned about, e.g. "Unable to
-      # load hand2/arrow from the cursor theme" -- confirmed live: the
-      # generated symlink chain resolved to a nonexistent path).
-      name = "Dracula-cursors";
       size = 24;
       gtk.enable = true;
       x11.enable = true;
     };
 
+    # The Papirus icon theme comes from catppuccin.gtk.icon.
+    packages = with pkgs; [
+      gtkTheme
+      jetbrainsmono-nerdfont-zero
+    ];
+
     # GIMP 3 uses its own CSS theme engine with custom widget classes
     # (GimpDock, GimpToolPalette, etc.) that standard GTK themes don't target.
-    # Force GIMP's internal theme to Dracula on every rebuild. GIMP writes
+    # Force GIMP's internal theme to Catppuccin on every rebuild. GIMP writes
     # gimprc on exit, so this is an activation script (not a managed file) to
     # avoid making gimprc read-only and breaking GIMP's own preference saving.
-    activation.gimpDraculaTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    activation.gimpCatppuccinTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       for ver in 3.0 3.2; do
         rc="$HOME/.config/GIMP/$ver/gimprc"
         if [ -f "$rc" ]; then
           if grep -q '(theme ' "$rc"; then
-            sed -i 's/(theme .*)/(theme "Dracula")/' "$rc"
+            sed -i 's/(theme .*)/(theme "Catppuccin")/' "$rc"
           else
-            echo '(theme "Dracula")' >> "$rc"
+            echo '(theme "Catppuccin")' >> "$rc"
           fi
         fi
       done
@@ -81,13 +122,8 @@ lib.mkIf cfg.desktop {
     enable = true;
 
     theme = {
-      name = "Dracula";
-      package = pkgs.dracula-theme;
-    };
-
-    iconTheme = {
-      name = "Dracula";
-      package = pkgs.dracula-icon-theme;
+      name = "catppuccin-${flavor}-${accent}-standard";
+      package = gtkTheme;
     };
 
     font = {
@@ -106,10 +142,10 @@ lib.mkIf cfg.desktop {
     # color-scheme instead.
     gtk4.extraConfig = { };
     gtk4.theme = {
-      name = "Dracula";
-      package = pkgs.dracula-theme;
+      name = "catppuccin-${flavor}-${accent}-standard";
+      package = gtkTheme;
     };
-    # libadwaita paints sidebar widgets from its own colour set. The Dracula
+    # libadwaita paints sidebar widgets from its own colour set. The Catppuccin
     # GTK4 port only defines theme_bg_color, so @sidebar_bg_color and
     # @sidebar_fg_color resolve to nothing there and the sidebar falls back to
     # light defaults -- NewsFlash's unread badge (`.item-count`, i.e.
@@ -117,8 +153,8 @@ lib.mkIf cfg.desktop {
     # came out white text on a white pill. HM appends this after the @import,
     # so it wins over the theme.
     gtk4.extraCss = ''
-      @define-color sidebar_bg_color ${palette.background};
-      @define-color sidebar_fg_color ${palette.foreground};
+      @define-color sidebar_bg_color ${ctp.hex "base"};
+      @define-color sidebar_fg_color ${ctp.hex "text"};
 
       /* The @define-colors above do not reach an app rule that was parsed
          before them, so NewsFlash's unread badge stays white-on-white:
@@ -126,27 +162,27 @@ lib.mkIf cfg.desktop {
          paints the number in @sidebar_bg_color. Overriding the rule itself at
          user priority is the only reliable way in. */
       .custom-sidebar .item-count {
-        background-color: ${palette.foreground};
-        color: ${palette.background};
+        background-color: ${ctp.hex "text"};
+        color: ${ctp.hex "base"};
       }
       /* NewsFlash adds its own provider to the display as well, so the plain
          selector ties with it. The doubled class wins on specificity whatever
          order the providers landed in. */
       .custom-sidebar .item-count.item-count {
-        background-color: ${palette.foreground};
-        color: ${palette.background};
+        background-color: ${ctp.hex "text"};
+        color: ${ctp.hex "base"};
       }
     '';
     colorScheme = "dark";
   };
   dconf.enable = true;
 
-  # Qt apps mirror the GTK theme + font, and use the Dracula Kvantum style
-  # (shipped by pkgs.dracula-theme) instead of adwaita-dark. The kvconfig is
+  # Qt apps mirror the GTK theme + font, and use the Catppuccin Kvantum style
+  # (solid, see kvantumSolid above) instead of adwaita-dark. The kvconfig is
   # generated by qt.kvantum from these settings — writing
   # xdg.configFile."Kvantum/kvantum.kvconfig" by hand loses: the module owns that
-  # path (it generates "kvantum-config"), so the hand-written theme=Dracula was
-  # silently replaced by the default theme=null and Qt stayed unthemed.
+  # path (it generates "kvantum-config"), so a hand-written theme= value is
+  # silently replaced by the default theme=null and Qt stays unthemed.
   qt = {
     enable = true;
     # gtk3, not gtk: the GTK3 platform theme plugin (libqgtk3.so) ships inside
@@ -157,8 +193,8 @@ lib.mkIf cfg.desktop {
     style.name = "kvantum";
     kvantum = {
       enable = true;
-      themes = [ draculaSolidKvantum ];
-      settings.General.theme = "DraculaSolid";
+      themes = [ kvantumSolid ];
+      settings.General.theme = "${kvantumName}-solid";
     };
   };
 
@@ -198,14 +234,8 @@ lib.mkIf cfg.desktop {
 
       # GIMP 3 uses its own CSS theme engine with custom widget classes
       # (GimpDock, GimpToolPalette, etc.) that standard GTK themes don't target.
-      "GIMP/3.0/themes/Dracula" = {
-        source = ../gimp/Dracula;
-        recursive = true;
-      };
-      "GIMP/3.2/themes/Dracula" = {
-        source = ../gimp/Dracula;
-        recursive = true;
-      };
+      "GIMP/3.0/themes/Catppuccin/gimp.css".text = gimpCss;
+      "GIMP/3.2/themes/Catppuccin/gimp.css".text = gimpCss;
     };
   };
 }

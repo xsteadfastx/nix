@@ -1,9 +1,12 @@
 {
+  config,
   inputs,
   lib,
   ...
 }:
 {
+  imports = [ ../catppuccin.nix ];
+
   # Per-host capability switches: a host opts into the subsystems it runs, so a
   # future machine can take a subset -- and features.wobcom stays off anywhere
   # that is not the work machine. Host-scoped, not per-user.
@@ -18,6 +21,9 @@
   };
 
   config = {
+    # The graphical desktop is Catppuccin (modules/catppuccin.nix).
+    catppuccin.enable = config.features.desktop;
+
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = false; # Put the stuff to .nix-profile

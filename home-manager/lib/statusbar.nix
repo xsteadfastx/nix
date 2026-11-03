@@ -6,8 +6,8 @@
 # renders them into its own dialect:
 #
 #   waybar    config JSON (icons, states, format-icons) and the generated part
-#             of style.css (@define-color palette, the metric colour/state
-#             rules) -- see home-manager/modules/waybar/default.nix
+#             of style.css (the metric colour/state rules) -- see
+#             home-manager/modules/waybar/default.nix
 #   zjstatus  the layout's color_* vars and command_*_format strings, and the
 #             zellij-statusbar-metrics shell script (glyphs, thresholds, and the
 #             SGR it prints for a warning/critical value) -- see
@@ -22,12 +22,9 @@
 # entry in `segments` here and one consumer-side line for it; the values each
 # consumer needs (glyph, colour, thresholds) are already in the entry.
 #
-# Colours are the Dracula palette, checked against the spec
-# (spec.draculatheme.com, 1.2.1 Standard) -- all eleven values match it. The
-# spec's ANSI set (1.2.2: AnsiBlack #21222c, AnsiBrightRed #ff6e6e, ...) is
-# deliberately not here: nothing in these two bars uses it, and an unused
-# colour is one more thing to keep in sync. Add an entry when a consumer
-# needs one, the same as any other colour.
+# `color` is a Catppuccin colour name (lib/palette.nix); each bar resolves it
+# itself -- waybar as `@<name>` from the port's @define-color file, zjstatus as
+# its `$<name>` var.
 { lib }:
 let
   # Glyph codepoints are written as hex strings: nixfmt (1.5.0) rewrites a
@@ -54,26 +51,6 @@ let
       # 55296 = 0xD800, 56320 = 0xDC00 (the UTF-16 surrogate bases)
       "\\u${hex4 (55296 + n / 1024)}\\u${hex4 (56320 + lib.mod n 1024)}";
 
-  # "#50fa7b" -> [ 80 250 123 ]: the three channels of a palette colour. Both
-  # consumers that need numbers rather than hex (zellij's theme, which takes
-  # `r g b`, and the SGR the metrics script prints) are built on this.
-  rgb =
-    hex:
-    let
-      n = lib.fromHexString (lib.removePrefix "#" hex);
-    in
-    [
-      (n / 65536)
-      (lib.mod (n / 256) 256)
-      (lib.mod n 256)
-    ];
-
-  # "#50fa7b" -> "38;2;80;250;123": the SGR parameters for a palette colour.
-  # zjstatus parses `#[fg=...]` only in the format string it is handed
-  # (src/render.rs `from_format_string`), never in a command's stdout, so a
-  # command that has to change colour on its own prints the raw SGR instead.
-  sgr = hex: "38;2;" + lib.concatStringsSep ";" (map toString (rgb hex));
-
   # Glyphs for the metrics below -- the segments *both* bars carry. A bar with
   # segments of its own keeps their glyphs in its own module (waybar's network,
   # volume and mpris icons live in home-manager/modules/waybar/default.nix).
@@ -98,7 +75,7 @@ let
   };
 
   # The metrics on both bars. `waybar` / `zjstatus` are the names each side
-  # knows the segment by; `color` is a palette key; `states` are the
+  # knows the segment by; `color` is a Catppuccin colour name; `states` are the
   # warning/critical steps each side renders (waybar as CSS classes, the shell
   # script as SGR).
   segments = {
@@ -106,13 +83,13 @@ let
       waybar = "cpu";
       zjstatus = "command_cpu";
       glyph = icons.cpu;
-      color = "orange";
+      color = "peach";
     };
     memory = {
       waybar = "memory";
       zjstatus = "command_ram";
       glyph = icons.memory;
-      color = "cyan";
+      color = "sky";
     };
     disk = {
       waybar = "disk";
@@ -176,8 +153,7 @@ let
         }
         # Not thresholds: waybar puts one of these classes on the module from
         # the battery status instead. Last, so a plugged-in battery reads
-        # green even when it is also low -- the order the Dracula port's CSS
-        # gives them.
+        # green even when it is also low.
         {
           name = "charging";
           classes = [
@@ -197,37 +173,15 @@ let
       waybar = "clock";
       zjstatus = "datetime";
       glyph = icons.clock;
-      color = "comment";
+      color = "overlay1";
     };
   };
 in
 rec {
-  # dracula/waybar's colors.css, verbatim: the eleven spec colours plus the
-  # port's own translucent bar surface. `background-darker` is the one entry
-  # the spec (1.2.1 Standard) does not have -- the spec's ANSI set lists
-  # #21222c as AnsiBlack, an opaque shade the notification centre uses -- but
-  # this is the port the bar takes its colours from, so it stays with them.
-  palette = {
-    background-darker = "rgba(30, 31, 41, 230)";
-    background = "#282a36";
-    selection = "#44475a";
-    foreground = "#f8f8f2";
-    comment = "#6272a4";
-    cyan = "#8be9fd";
-    green = "#50fa7b";
-    orange = "#ffb86c";
-    pink = "#ff79c6";
-    purple = "#bd93f9";
-    red = "#ff5555";
-    yellow = "#f1fa8c";
-  };
-
   inherit
     icons
     segments
     jsonEscape
-    rgb
-    sgr
     ;
 
   # The glyph itself, decoded back out of its JSON escape -- for the places

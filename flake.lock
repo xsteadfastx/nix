@@ -45,6 +45,59 @@
         "type": "github"
       }
     },
+    "catppuccin": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787752705,
+        "narHash": "sha256-9eJSxncX01i6tV/yushVG0+JadQhdll+aNfyDT3YvWg=",
+        "owner": "catppuccin",
+        "repo": "nix",
+        "rev": "30ad3b76f1b20ed045d1dfd10ac2f3d89ff1df50",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "ref": "release-26.05",
+        "repo": "nix",
+        "type": "github"
+      }
+    },
+    "catppuccin-claude-code": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793206601,
+        "narHash": "sha256-uSDJIxh0j3/S/VIhN7ha6mCQTsGt48CC04Fi4tOvzDc=",
+        "owner": "vishwajitsarnobat",
+        "repo": "catppuccin-claude-code",
+        "rev": "8914c42ca99aa51f191354f9950761e851096f63",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vishwajitsarnobat",
+        "repo": "catppuccin-claude-code",
+        "type": "github"
+      }
+    },
+    "catppuccin-pi": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791613881,
+        "narHash": "sha256-zY9WaQdaGQG0dGq46TtssqRlnGCy2r4oJtc5VShtlXw=",
+        "owner": "XYenon",
+        "repo": "catppuccin-pi-coding-agent",
+        "rev": "e70ba36f406a8b514ac676cdfdb13ea412249a1b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "XYenon",
+        "repo": "catppuccin-pi-coding-agent",
+        "type": "github"
+      }
+    },
     "christine-preuss-de": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -79,11 +132,11 @@
         "pre-commit": "pre-commit_2"
       },
       "locked": {
-        "lastModified": 1792739880,
-        "narHash": "sha256-vfe/zmMAzxTjS5MsL3uO0WHovcaVi+DpXctUrx3hkeY=",
+        "lastModified": 1793700589,
+        "narHash": "sha256-CHAN3bkD0GKhSyxlJ8Fr5/U5iZqNkyOLU7/4zveAW4g=",
         "ref": "refs/heads/main",
-        "rev": "388d51be475bf285ba09ec34ba8c41d6fa0eb988",
-        "revCount": 78,
+        "rev": "d3856363821c71490dfca8a68abb2dc612884ec0",
+        "revCount": 79,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/coding-agent.git"
       },
@@ -864,11 +917,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1793341285,
-        "narHash": "sha256-Y1CiZ4SoBUjLQyQM/pY+rS2dXD3CHLPstF0lmOc73D4=",
+        "lastModified": 1793540411,
+        "narHash": "sha256-fiPJ88izTVucjeo2EQ3jk4aWmLg03I1D4vxnX2QjEgE=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "1c89083e451e891152365b799595cf7790a43325",
+        "rev": "0bb2eedc20e4739f29e8045034f2828ad7054f8f",
         "type": "github"
       },
       "original": {
@@ -960,11 +1013,11 @@
     },
     "nixpkgs_7": {
       "locked": {
-        "lastModified": 1793526781,
-        "narHash": "sha256-2Cxxgpz1+cRgKZJFi12/9LG3aIBN66f2RvFs34Oj/A0=",
+        "lastModified": 1793633738,
+        "narHash": "sha256-tItrb9M8eYA6WhFgmT9tpGKueri3+wRuVA952o/2xSU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "9bb52223f4f6a0cc606fd0852d8784f896c137d5",
+        "rev": "7dcdd87373d72e7a2173e4db02e20d3d7f495cfd",
         "type": "github"
       },
       "original": {
@@ -1163,6 +1216,9 @@
       "inputs": {
         "airmtp": "airmtp",
         "attic": "attic",
+        "catppuccin": "catppuccin",
+        "catppuccin-claude-code": "catppuccin-claude-code",
+        "catppuccin-pi": "catppuccin-pi",
         "christine-preuss-de": "christine-preuss-de",
         "coding-agent": "coding-agent",
         "colmena": "colmena",
@@ -1190,11 +1246,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793052255,
-        "narHash": "sha256-Y/JIHTnMlOabDfyaSBubWGLDIVGihLEUuoMhFvQKaDo=",
+        "lastModified": 1793657466,
+        "narHash": "sha256-GoOvpdsjO5hqZuO6T6ok9u6sJEjO0iPli2zRr9oNUNw=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "60182817ee048ac94b4c68ea76d5ef2e8aac730d",
+        "rev": "b18e01ce148eb3efff5de2f2d3181ca53b2b2a54",
         "type": "github"
       },
       "original": {
