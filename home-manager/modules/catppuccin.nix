@@ -20,8 +20,8 @@
     cursors.enable = true;
 
     # swaync's stylesheet hardcodes "Ubuntu Nerd Font"; match the session.
+    # Size stays at the port's 14px: 12px Lilex reads thin at ~92 DPI.
     swaync.font = "Lilex Nerd Font";
-    swaync.fontSize = "12";
 
     # Exceptions, themed by hand from the same sources:
     # - waybar: its `@import` of a store path is not resolved by waybar's GTK
