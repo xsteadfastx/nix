@@ -21,7 +21,7 @@ lib.mkIf cfg.desktop {
     package = pkgs.unstable.ghostty;
     settings = {
       font-family = "Lilex Nerd Font";
-      font-style = "Regular";
+      font-style = "Medium";
       font-size = 14;
       shell-integration = "fish";
       window-decoration = false;
