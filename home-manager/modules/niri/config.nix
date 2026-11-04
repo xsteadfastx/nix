@@ -263,9 +263,13 @@ in
       Mod+Shift+Up { focus-monitor-up; }
       Mod+Shift+Right { focus-monitor-right; }
       Mod+Shift+Ctrl+Left { move-column-to-monitor-left; }
+      Mod+Shift+Ctrl+H { move-column-to-monitor-left; }
       Mod+Shift+Ctrl+Down { move-column-to-monitor-down; }
+      Mod+Shift+Ctrl+J { move-column-to-monitor-down; }
       Mod+Shift+Ctrl+Up { move-column-to-monitor-up; }
+      Mod+Shift+Ctrl+K { move-column-to-monitor-up; }
       Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+      Mod+Shift+Ctrl+L { move-column-to-monitor-right; }
 
       // Workspace up/down (the Mod+<digit> keys are further down).
       Mod+Page_Down { focus-workspace-down; }
