@@ -28,6 +28,13 @@ lib.mkIf cfg.desktop {
       # Explicit as well: the fontconfig Lilex Regular -> Medium rule
       # (home-manager/modules/gtk) cannot catch a request by style name.
       font-style = "Medium";
+      # Lilex draws `->`, `=>` & co. from two glyphs, which FreeType hints
+      # separately: at 15pt the shaft snapped a pixel below the arrowhead
+      # (mishamyrt/Lilex#50, size-dependent, wontfix upstream). Unhinted, both
+      # stay on the same row at every size, at the cost of slightly softer
+      # edges. Measured in ghostty 1.4: hinted 11.45 vs 10.58, unhinted 11.43
+      # vs 11.38 (row of shaft vs head).
+      freetype-load-flags = "no-hinting";
       shell-integration = "fish";
       window-decoration = false;
       gtk-single-instance = true;
