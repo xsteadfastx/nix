@@ -196,6 +196,12 @@ lib.mkIf cfg.desktop {
           "jid1-KKzOGWgsW3Ao4Q@jetpack" = {
             installation_mode = "blocked";
           };
+          # Dark Reader: replaced by the Catppuccin userstyles (userContent
+          # below) plus the dark website appearance above. Left on, it would
+          # recolour the already themed sites a second time.
+          "addon@darkreader.org" = {
+            installation_mode = "blocked";
+          };
         };
     };
     profiles.default = {
