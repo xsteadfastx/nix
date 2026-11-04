@@ -5,14 +5,12 @@
     airmtp.inputs.nixpkgs.follows = "nixpkgs";
     airmtp.url = "github:xsteadfastx/airmtp";
     attic.url = "github:zhaofengli/attic";
-    catppuccin.inputs.nixpkgs.follows = "nixpkgs";
-    catppuccin.url = "github:catppuccin/nix/release-26.05";
-    # Community ports (no official ones yet): theme JSONs, read by
-    # hosts/coltrane/coding-agent.nix.
     catppuccin-claude-code.flake = false;
     catppuccin-claude-code.url = "github:vishwajitsarnobat/catppuccin-claude-code";
     catppuccin-pi.flake = false;
     catppuccin-pi.url = "github:XYenon/catppuccin-pi-coding-agent";
+    catppuccin.inputs.nixpkgs.follows = "nixpkgs";
+    catppuccin.url = "github:catppuccin/nix/release-26.05";
     christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";
     christine-preuss-de.url = "github:xsteadfastx/christine-preuss.de";
     coding-agent.inputs.home-manager.follows = "home-manager";
@@ -31,11 +29,11 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     microvm.inputs.nixpkgs.follows = "nixpkgs-unstable";
     microvm.url = "github:microvm-nix/microvm.nix";
-    nixpak.url = "github:nixpak/nixpak";
     nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
     nixos-anywhere.url = "github:nix-community/nixos-anywhere";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixpak.url = "github:nixpak/nixpak";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     pre-commit.inputs.pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs-unstable";
