@@ -108,7 +108,12 @@ in
     ++ lib.optional nixosConfig.services.syncthing.enable pkgs.unstable.syncthingtray
   );
 
-  home.sessionVariables.DEFAULT_BROWSER = "firefox";
+  home.sessionVariables = {
+    DEFAULT_BROWSER = "firefox";
+    # On Linux calibre ignores QT_STYLE_OVERRIDE and forces its own Fusion-based
+    # style + palette unless this is set; with it, calibre follows Kvantum.
+    CALIBRE_USE_SYSTEM_THEME = lib.mkIf cfg.desktop "1";
+  };
 
   # Detailed list instead of icons for every folder that has no view of its own.
   # Thunar reads the xfconf key "thunar"/"default-view" on each new window and
