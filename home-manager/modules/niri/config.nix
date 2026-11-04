@@ -197,7 +197,7 @@ in
   // above the top layer, so the bar goes with it. Mod+F leaves fullscreen.
   window-rule {
       match app-id="com.mitchellh.ghostty"
-      open-fullscreen true
+      open-fullscreen false
   }
   // gpg's pinentry-gnome3 prompt (gopass). niri hides floating windows while a
   // fullscreen window has focus and, by design, does not hand focus to a new
