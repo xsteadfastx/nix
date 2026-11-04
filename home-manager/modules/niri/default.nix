@@ -96,4 +96,8 @@ lib.mkIf cfg.desktop {
     '';
   };
 
+  # The XF86Audio* binds in config.nix call a bare `playerctl`, which without
+  # playerctld picks whichever player registered first rather than the one
+  # last played.
+  services.playerctld.enable = true;
 }

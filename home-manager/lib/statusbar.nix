@@ -14,7 +14,7 @@
 #             home-manager/modules/zellij/default.nix
 #
 # A bar with segments of its own keeps them entirely in its own module: not
-# every waybar module has a zjstatus counterpart (network, volume, mpris), and
+# every waybar module has a zjstatus counterpart (network, volume), and
 # nothing but the five metrics above is shared.
 #
 # So "the two bars disagree" is impossible by construction rather than by two
@@ -53,7 +53,7 @@ let
 
   # Glyphs for the metrics below -- the segments *both* bars carry. A bar with
   # segments of its own keeps their glyphs in its own module (waybar's network,
-  # volume and mpris icons live in home-manager/modules/waybar/default.nix).
+  # and volume icons live in home-manager/modules/waybar/default.nix).
   #
   # Every codepoint here was checked against the built font's charset
   # (fc-query / fontTools cmap) of pkgs/lilex-nerdfont-zero.nix -- the

@@ -38,6 +38,7 @@ let
   wl-copy = "${pkgs.wl-clipboard}/bin/wl-copy";
   swaylock = "${pkgs.swaylock}/bin/swaylock";
   playerctl = "${pkgs.playerctl}/bin/playerctl";
+  swaync-client = "${pkgs.unstable.swaynotificationcenter}/bin/swaync-client";
   gopass = "${pkgs.gopass}/bin/gopass";
 
   ctp = import ../../../lib/palette.nix { inherit lib catppuccin; };
@@ -384,6 +385,10 @@ in
       // niri's own screenshot UI keeps bare Print.
       Mod+Print { spawn-sh ${q clipShot}; }
       Mod+Shift+Print { spawn-sh ${q sattyShot}; }
+
+      // ── notifications ────────────────────────────────────────────────────────
+      // Same toggle as the bell in waybar.
+      Mod+N { spawn ${q swaync-client} "-t" "-sw"; }
 
       // ── OSDs ─────────────────────────────────────────────────────────────────
       // sway's brightness/volume keys, with swaync standing in for dunst. niri's

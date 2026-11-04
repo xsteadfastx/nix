@@ -15,7 +15,7 @@ let
   # zjstatus', which is what keeps the two bars looking the same.
   statusbar = import ../../lib/statusbar.nix { inherit lib; };
 
-  # Glyphs waybar has and the zellij bar does not (network, volume, mpris):
+  # Glyphs waybar has and the zellij bar does not (network, volume):
   # segments of its own, so their glyphs live here. Codepoints written as hex
   # strings, same as the shared ones -- see statusbar.nix for why (nixfmt) and
   # for the font-charset check every codepoint here went through.
@@ -30,8 +30,6 @@ let
       bell = glyph "F009A"; # md-bell
       volume = glyph "F057E"; # md-volume_high
       muted = glyph "F0581"; # md-volume_off
-      music = glyph "F075A"; # md-music
-      pause = glyph "F03E4"; # md-pause
     }
   );
 
@@ -97,15 +95,6 @@ lib.mkIf cfg.desktop {
   # NOTE: module definitions sit directly on the bar, NOT nested under a
   # `modules = { ... }` attr -- Home Manager removed that nesting and writing it
   # that way makes the whole system fail to evaluate.
-  # The `mpris` module below attaches to the `playerctld` player, which is a
-  # D-Bus name rather than a real player: with no daemon owning it waybar has
-  # nothing to show and hides the module, however happily chromium (or anything
-  # else) is playing. Nothing in this repo ever installed playerctl, so nothing
-  # ever owned that name. Home Manager's module for it also puts `playerctl`
-  # into home.packages, whose `share/dbus-1/services` entry is the other way
-  # the session bus can get the daemon started.
-  services.playerctld.enable = true;
-
   # Waybar does not heal itself, so systemd does it:
   #
   # - Restart on config change, never reload. Home Manager's default sends
@@ -147,15 +136,6 @@ lib.mkIf cfg.desktop {
 
         modules-left = [ "cffi/niri-taskbar" ];
 
-        # MPRIS "now playing" -- centered since it's the one module that's
-        # empty most of the time (waybar hides a module with nothing to show
-        # rather than drawing a blank one), so it doesn't crowd either
-        # cluster. play/pause on click, skip on right-click -- waybar's builtin
-        # click actions go through the libplayerctl it links at build time, not
-        # a shell-out, so the only thing `services.playerctld` above has to
-        # supply is the daemon those actions are sent to.
-        modules-center = [ "mpris" ];
-
         # The old bumblebee bar's modules -- nic -> network, pipewire ->
         # wireplumber, datetime -> clock -- in our own order, then the
         # notification-centre button and the tray.
@@ -173,43 +153,6 @@ lib.mkIf cfg.desktop {
           "custom/swaync"
           "tray"
         ];
-
-        # ── Now playing ─────────────────────────────────────────────────────
-        # Waybar's default mpris format is "{player} ({status}) {dynamic}" --
-        # a bare player name, no icon. Note + track, and the paused state swaps
-        # the note for a pause glyph and italicises the title.
-        mpris = {
-          format = " ${icons.music} {dynamic}";
-          format-paused = " ${icons.pause} <i>{dynamic}</i>";
-          # Measured against the 1360px output: only ~470px sits between the
-          # workspace buttons and the right-hand cluster (which is ~735px on its
-          # own), while an unchecked YouTube title runs to ~670px and clips that
-          # cluster. Bounding the individual tags rather than the whole label is
-          # what keeps the elapsed time. 26 title + 14 artist rendered at
-          # ~355px (~6px/char); the tailscale + wobcom indicators then took
-          # ~135px of the ~115px slack. 14 + 6 sheds ~120px: ~235px, ~100px
-          # slack with both VPNs up.
-          title-len = 14;
-          artist-len = 6;
-          dynamic-len = 36;
-          # Position/length are truncated LAST here, not first: the default
-          # importance order (title, artist, album, position, length) sacrifices
-          # the elapsed time the moment a title is long -- with a plain dynamic
-          # cap, that is what swallowed "[28:54/40:06]". Earlier entry = cut
-          # later, so the artist absorbs the squeeze instead. Whatever still
-          # overflows gets a "…"; the tooltip ignores these limits, so hovering
-          # still shows the full title.
-          dynamic-importance-order = [
-            "position"
-            "length"
-            "title"
-            "artist"
-            "album"
-          ];
-          # Without this the module only re-reads the player on events
-          # (metadata/play/pause), so the elapsed time sits frozen in the bar.
-          interval = 1;
-        };
 
         # ── Taskbar ─────────────────────────────────────────────────────────
         # One button per window, ordered by niri's layout. waybar's own
