@@ -9,6 +9,8 @@
     catppuccin-claude-code.url = "github:vishwajitsarnobat/catppuccin-claude-code";
     catppuccin-pi.flake = false;
     catppuccin-pi.url = "github:XYenon/catppuccin-pi-coding-agent";
+    catppuccin-userstyles.flake = false;
+    catppuccin-userstyles.url = "github:catppuccin/userstyles";
     catppuccin.inputs.nixpkgs.follows = "nixpkgs";
     catppuccin.url = "github:catppuccin/nix/release-26.05";
     christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";

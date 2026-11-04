@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   nixosConfig,
   pkgs,
   lib,
@@ -227,8 +228,18 @@ lib.mkIf cfg.desktop {
         # browser.sessionstore.resume_from_crash and max_resumed_crashes are
         # deliberately absent: both are only consulted when startup.page != 3.
         "browser.startup.page" = 3;
-        # userChrome.css is ignored without this.
+        # userChrome.css and userContent.css are ignored without this.
         "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+      };
+      # Catppuccin's userstyles for ~140 sites, precompiled (Stylus not needed:
+      # Firefox applies the `@-moz-document` blocks of userContent.css itself).
+      # Read at startup only, so restart Firefox after a switch. A derivation,
+      # not a "${…}" string: home-manager writes any *string* here as the
+      # file's text (`builtins.isString` -> `text`), so a store path string
+      # ended up as the CSS itself.
+      userContent = pkgs.callPackage ../../pkgs/catppuccin-userstyles {
+        src = inputs.catppuccin-userstyles;
+        inherit (config.catppuccin) flavor accent;
       };
       # The "Show sidebar" launcher. No pref can turn it off: sidebar.revamp
       # injects it into the navbar's default placements, and removing it in the

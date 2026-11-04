@@ -98,6 +98,22 @@
         "type": "github"
       }
     },
+    "catppuccin-userstyles": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793728384,
+        "narHash": "sha256-bQdSt5qW3R0jAcBiciX3s2/omugDSjlTM5a5mGsWVBE=",
+        "owner": "catppuccin",
+        "repo": "userstyles",
+        "rev": "36e8398623e38f045d8845519d3268d9e45999b9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "repo": "userstyles",
+        "type": "github"
+      }
+    },
     "christine-preuss-de": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -1219,6 +1235,7 @@
         "catppuccin": "catppuccin",
         "catppuccin-claude-code": "catppuccin-claude-code",
         "catppuccin-pi": "catppuccin-pi",
+        "catppuccin-userstyles": "catppuccin-userstyles",
         "christine-preuss-de": "christine-preuss-de",
         "coding-agent": "coding-agent",
         "colmena": "colmena",
