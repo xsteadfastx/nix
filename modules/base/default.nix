@@ -58,6 +58,13 @@
   # default `true`). mkDefault keeps any real ZFS host able to override.
   boot.zfs.forceImportRoot = lib.mkDefault false;
 
+  # systemd's own /tmp rule (`q /tmp 1777 root root 10d` in tmp.conf) ages
+  # entries by atime as well as mtime, and anything that merely walks /tmp
+  # (find, du, a backup) refreshes atime -- so it never fires. Restricted to
+  # mtime (`mM:`), 10d stays the threshold. Sorts before tmp.conf as
+  # 00-nixos.conf, and tmpfiles drops the later duplicate, so this wins.
+  systemd.tmpfiles.rules = [ "q /tmp 1777 root root mM:10d" ];
+
   services.resolved = {
     enable = lib.mkDefault true;
     settings.Resolve.FallbackDNS = lib.mkDefault [
