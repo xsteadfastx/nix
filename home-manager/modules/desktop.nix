@@ -127,6 +127,11 @@ in
         "-a"
         "${pkgs.calibre-dedrm-plugin}/Obok_plugin.zip"
       ]}
+      ${lib.escapeShellArgs [
+        "${pkgs.calibre}/bin/calibre-customize"
+        "-a"
+        "${pkgs.calibre-deacsm-plugin}/DeACSM_plugin.zip"
+      ]}
     ''
   );
 
@@ -135,6 +140,10 @@ in
     # On Linux calibre ignores QT_STYLE_OVERRIDE and forces its own Fusion-based
     # style + palette unless this is set; with it, calibre follows Kvantum.
     CALIBRE_USE_SYSTEM_THEME = lib.mkIf cfg.desktop "1";
+    # DeACSM bundles oscrypto, whose ctypes lookup for libcrypto/libssl fails on
+    # NixOS (no ldconfig cache); the plugin reads these two if set.
+    ACSM_LIBCRYPTO = lib.mkIf cfg.desktop "${pkgs.openssl.out}/lib/libcrypto.so.3";
+    ACSM_LIBSSL = lib.mkIf cfg.desktop "${pkgs.openssl.out}/lib/libssl.so.3";
   };
 
   # Detailed list instead of icons for every folder that has no view of its own.
