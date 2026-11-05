@@ -2,6 +2,7 @@
 {
   imports = [
     ./base.nix
+    ./calibre.nix
     ./bash.nix
     ./games.nix
     ./kodi.nix
