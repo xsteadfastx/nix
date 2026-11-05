@@ -1,36 +1,30 @@
 {
-  fetchFromGitHub,
+  fetchurl,
   runCommand,
-  python3,
   unzip,
 }:
 
-# DeDRM calibre plugins, built the way upstream builds its releases: upstream
-# ships sources only (the newest release asset is v10.0.3 from 2022), and
-# `make_release.py` splices `__calibre_compat_code.py` into every .py before
-# zipping, so zipping the tree ourselves would produce a plugin that silently
-# lacks the calibre-version compatibility shims.
+# DeDRM calibre plugins, taken from the release asset rather than built here.
 #
-# Output contains the plugin zips (DeDRM_plugin.zip, Obok_plugin.zip) plus the
-# readmes; they are installed into ~/.config/calibre/plugins/ by
-# home-manager/modules/desktop.nix.
+# Why this fork: Apprentice Harper's original is dead, noDRM took over in 2021
+# but has been frozen since 2024-11-10 (latest tags v10.0.3 stable / v10.0.9
+# beta), and the work that keeps up with Amazon now happens in Satsuoni's fork
+# (Kindle MSIX installs, the newer Kindle key store, KFX validation; a release
+# every few weeks). Its release notes call the builds experimental, so treat
+# this as a pin to bump, not a "stable" tag.
+#
+# The release asset carries Windows-only extras (KFXKeyExtractor.exe,
+# kindledecr_*, Frida scripts) next to the two plugin zips; only the zips are
+# extracted.
 runCommand "calibre-dedrm-plugin"
   {
-    src = fetchFromGitHub {
-      owner = "noDRM";
-      repo = "DeDRM_tools";
-      # master as of 2024-11-10, i.e. post-v10.0.9.
-      rev = "7379b453199ed1ba91bf3a4ce4875d5ed3c309a9";
-      hash = "sha256-Hq/DBYeJ2urJtxG+MiO2L8TGZ9/kLue1DXbG4/KJFhc=";
+    src = fetchurl {
+      url = "https://github.com/Satsuoni/DeDRM_tools/releases/download/v10.0.34/DeDRM_tools.zip";
+      hash = "sha256-+XQxNBSQeKBz3i0p2nUP11NiINtesm0SznWNUv3qFOE=";
     };
-    nativeBuildInputs = [
-      python3
-      unzip
-    ];
+    nativeBuildInputs = [ unzip ];
   }
   ''
-    cp -r --no-preserve=mode "$src"/. .
-    python3 make_release.py
-    # make_release.py drops the outer archive in $PWD and deletes release/.
-    unzip -q DeDRM_tools.zip -d "$out"
+    mkdir -p "$out"
+    unzip -q -j "$src" DeDRM_plugin.zip Obok_plugin.zip -d "$out"
   ''
