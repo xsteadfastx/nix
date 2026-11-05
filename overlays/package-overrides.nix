@@ -147,6 +147,7 @@ in
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };
   importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
   paperless-gpt = prev.callPackage ../pkgs/paperless-gpt/package.nix { };
+  calibre-dedrm-plugin = prev.callPackage ../pkgs/calibre-dedrm-plugin/package.nix { };
   niri-taskbar = prev.callPackage ../pkgs/niri-taskbar/package.nix { };
 
   attic = inputs.attic.packages.${system}.attic;

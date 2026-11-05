@@ -108,6 +108,28 @@ in
     ++ lib.optional nixosConfig.services.syncthing.enable pkgs.unstable.syncthingtray
   );
 
+  # calibre keeps the list of installed plugins in its own config
+  # (config['plugins'], name -> zip path) and only then loads the zip from
+  # ~/.config/calibre/plugins/. Merely dropping the zip there is not enough, and
+  # that config file is rewritten by calibre itself, so managing it as a
+  # home.file would fight the app. `calibre-customize -a` is the supported
+  # registration path: it is idempotent (removes and re-copies), so re-running it
+  # on every activation both installs and upgrades the plugins.
+  home.activation.calibre-plugins = lib.mkIf cfg.desktop (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      ${lib.escapeShellArgs [
+        "${pkgs.calibre}/bin/calibre-customize"
+        "-a"
+        "${pkgs.calibre-dedrm-plugin}/DeDRM_plugin.zip"
+      ]}
+      ${lib.escapeShellArgs [
+        "${pkgs.calibre}/bin/calibre-customize"
+        "-a"
+        "${pkgs.calibre-dedrm-plugin}/Obok_plugin.zip"
+      ]}
+    ''
+  );
+
   home.sessionVariables = {
     DEFAULT_BROWSER = "firefox";
     # On Linux calibre ignores QT_STYLE_OVERRIDE and forces its own Fusion-based
