@@ -49,9 +49,11 @@
         commit carrying that work names it — a ticket whose commits are missing
         is one nobody can reconstruct later. Never invent an ID: no ticket
         known, no reference, and ask if you suspect one exists.
-      - **Link only:** a bare ticket ID in the body. The house wording is a
-        trailer line `Refs IoT-224` — the bare ID is what YouTrack matches,
-        `Refs` is for human readers.
+      - **Link only:** `^IoT-224` on its own line in the body, with nothing
+        after it. The caret is what YouTrack matches; with no command following
+        it the reference is inert. A bare ID in a `Refs IoT-224` trailer does
+        *not* appear under the ticket's VCS changes — observed on SMLOR-87,
+        whose project is mapped.
       - **Link and apply a command:** `^IoT-224 Fixed`. The caret flags an ID
         that is followed by a command; everything after the ID on that line is
         parsed as the command, and a command may not wrap to the next line.
