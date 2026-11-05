@@ -46,9 +46,5 @@ in
     # On Linux calibre ignores QT_STYLE_OVERRIDE and forces its own Fusion-based
     # style + palette unless this is set; with it, calibre follows Kvantum.
     CALIBRE_USE_SYSTEM_THEME = "1";
-    # DeACSM bundles oscrypto, whose ctypes lookup for libcrypto/libssl fails on
-    # NixOS (no ldconfig cache); the plugin reads these two if set.
-    ACSM_LIBCRYPTO = "${pkgs.openssl.out}/lib/libcrypto.so.3";
-    ACSM_LIBSSL = "${pkgs.openssl.out}/lib/libssl.so.3";
   };
 }

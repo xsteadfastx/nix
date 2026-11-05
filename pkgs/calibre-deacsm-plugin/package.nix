@@ -1,6 +1,7 @@
 {
   fetchFromGitHub,
   fetchurl,
+  openssl,
   runCommand,
   python3,
   zip,
@@ -18,8 +19,12 @@
 #   * keyextract/ compiles Windows .exe key decryptors with mingw. They are only
 #     used to read ADE's keys on Windows; the base64 slots in
 #     keyextractDecryptor.py are then left as inert placeholders.
-#   * NixOS needs no source patch for libcrypto: the plugin already honours
-#     ACSM_LIBCRYPTO / ACSM_LIBSSL (desktop.nix sets them).
+#   * NixOS: the plugin looks for libcrypto/libssl through ctypes, which cannot
+#     find Nix-store libraries (no ldconfig cache). It accepts them via
+#     ACSM_LIBCRYPTO / ACSM_LIBSSL, but those are baked in below instead of
+#     exported at runtime: the paths are ours, known at build time, and having
+#     the plugin work without an environment makes it independent of whatever
+#     shell or activation hook happens to launch calibre.
 let
   src = fetchFromGitHub {
     owner = "Leseratte10";
@@ -70,9 +75,35 @@ runCommand "calibre-deacsm-plugin"
             path.write_text(source.replace("#@@CALIBRE_COMPAT_CODE@@", compat))
     PY
 
+    # Point oscrypto at this system's OpenSSL. Upstream supports this via
+    # ACSM_LIBCRYPTO/ACSM_LIBSSL, but the paths are known here at build time, and
+    # baking them in frees every consumer from exporting them (a shell, a systemd
+    # user session, an activation hook) before calibre may start.
+    python3 - <<'PY'
+    import pathlib
+
+    init = pathlib.Path("__init__.py")
+    source = init.read_text()
+    patched = source.replace(
+        'os.getenv("ACSM_LIBCRYPTO", None)', '"${openssl.out}/lib/libcrypto.so.3"'
+    ).replace('os.getenv("ACSM_LIBSSL", None)', '"${openssl.out}/lib/libssl.so.3"')
+    if patched == source:
+        raise SystemExit("OpenSSL lookup not found, upstream changed")
+    init.write_text(patched)
+    PY
+
     printf '%s' "${moduleId}" > module_id.txt
 
     find . -name __pycache__ -prune -exec rm -rf {} +
+
+    # zip stores mtimes, including those of the files patched above, which would
+    # otherwise make the output depend on the build time (nix: "may not be
+    # deterministic"). 1980-01-01 is zip's own epoch.
+    find . -exec touch -h -d '1980-01-01 00:00:00' {} +
+
+    # A sorted file list and -X (drop uid/gid/extra fields) keep the archive
+    # identical across builds; plain `zip -r .` walks the directory in readdir
+    # order, which is not guaranteed.
     mkdir -p "$out"
-    zip -q -r "$out/DeACSM_plugin.zip" .
+    find . -type f -print | sort | TZ=UTC zip -q -X "$out/DeACSM_plugin.zip" -@
   ''
