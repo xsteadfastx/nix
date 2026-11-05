@@ -192,10 +192,7 @@ in
     };
   };
 
-  environment.systemPackages = [
-    pkgs.ollama
-    pkgs.unstable.opencode
-  ];
+  environment.systemPackages = [ pkgs.ollama ];
 
   users.users.marv.extraGroups = [
     "video"
