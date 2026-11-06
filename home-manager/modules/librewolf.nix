@@ -271,6 +271,11 @@ lib.mkIf cfg.desktop {
         "media.gmp-provider.enabled" = true;
         # LibreWolf sets this false (mozilla.cfg:418), so it is load-bearing.
         "media.gmp-widevinecdm.enabled" = true;
+        # Same deal one line up in mozilla.cfg (:413): the OpenH264 codec GMP.
+        # Settings calls it "Enable the OpenH264 plugin"; without it screen
+        # sharing fails on sites that insist on H.264, Discord being the one
+        # that bites. Rides on the same updater re-enabled above.
+        "media.gmp-gmpopenh264.enabled" = true;
         # A no-op on 159 (it leaves Mozilla's default in place), but
         # librewolf.cfg on master points it at `data:text/plain,`, which would
         # silently un-enable the switches above.
