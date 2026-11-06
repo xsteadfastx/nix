@@ -251,6 +251,17 @@ lib.mkIf cfg.desktop {
         # the UA-switcher policy above, not by RFP pretending to be Windows.
         "privacy.resistFingerprinting" = false;
         "webgl.disabled" = false;
+        # webgl.disabled = false only clears Mozilla's switch. LibreWolf's
+        # lw-permissions.patch also makes WebGL a *site permission*
+        # (SitePermissions.sys.mjs, `webgl`), gated by librewolf.webgl.prompt --
+        # default true, so a context is denied until granted for that site. That
+        # gate stays, like the untouched media.eme.require-app-approval; turning
+        # it off is what Settings calls "Always allow WebGL". What it must not do
+        # is deny *silently*: with .hide there is no popup, getContext() returns
+        # null and nothing is logged, so a page that builds its map first throws
+        # in the constructor and looks exactly like the site being down
+        # (2026-11-06, the eventortung kiosk). The URL-bar icon grants it.
+        "librewolf.webgl.prompt.hide" = false;
         # Netflix/DRM. `media.gmp-manager.updateEnabled` is the switch no
         # "enable DRM" checkbox covers: LibreWolf turns the GMP *updater* off
         # (mozilla.cfg:403), so EME can be on and the Widevine CDM still never
