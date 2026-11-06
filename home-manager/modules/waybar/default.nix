@@ -155,7 +155,9 @@ lib.mkIf cfg.desktop {
         ];
 
         # ── Taskbar ─────────────────────────────────────────────────────────
-        # One button per window, ordered by niri's layout. waybar's own
+        # One button per window, ordered by niri's layout -- and only the
+        # windows on this bar's own output, while their workspace is the one
+        # that output shows (pkgs/niri-taskbar/local-fixes.patch). waybar's own
         # wlr/taskbar cannot do this: wlr-foreign-toplevel-management defines no
         # ordering (niri discussion #549), so buttons arrive in whatever order
         # the compositor sent the toplevels. This CFFI module talks to niri's

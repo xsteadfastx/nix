@@ -20,6 +20,18 @@
 # and the taskbar stops updating. Cargo.lock next to this file is the crate's
 # lock with `cargo update -p niri-ipc --precise 26.4.0`
 # (niri-ipc 26.4.0, serde_json 1.0.154, + zmij), which is all it takes.
+#
+# `local-fixes.patch` adds what the released crate does not do:
+#
+# - a button for the windows on the bar's own output only, and only while
+#   their workspace is the one that output is showing. Upstream lists every
+#   window of every workspace in every bar, in niri's layout order.
+# - it waits for the bar's output to be known instead of resolving it once at
+#   module init. GDK learns a window's output from the compositor's
+#   `wl_surface.enter`, which arrives after `init` has run; a bar created
+#   before that resolved to "show every window" and stayed there until the
+#   next workspace switch. Waybar recreates all its bars whenever the monitor
+#   set changes, so that was every dock/unplug, not just login.
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "niri-taskbar";
   version = "0.4.0+niri.25.11";
@@ -34,7 +46,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     chmod -R u+w $out
     substituteInPlace $out/Cargo.toml --replace-fail '>=25.11.0, <25.12.0' '>=26.4.0, <26.5.0'
     cp ${./Cargo.lock} $out/Cargo.lock
-    patch -p1 --batch --forward -d $out < ${./workspace-filter.patch}
+    patch -p1 --batch --forward -d $out < ${./local-fixes.patch}
   '';
 
   cargoHash = "sha256-qcfqt8eDJgtJUBYUqIVWKZx0/wnRhG63qXmBnQoKEdc=";

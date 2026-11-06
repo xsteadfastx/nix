@@ -1,0 +1,163 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 67a7eb0..545dd20 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,6 +1,7 @@
+ use std::{
+     collections::{BTreeMap, BTreeSet, HashMap, btree_map::Entry},
+     sync::{Arc, LazyLock, Mutex},
++    time::Duration,
+ };
+ 
+ use button::Button;
+@@ -85,6 +86,10 @@ struct Instance {
+     buttons: BTreeMap<u64, Button>,
+     container: gtk::Box,
+     last_snapshot: Option<Snapshot>,
++    // Ids of the workspaces that are currently displayed on their output. Only
++    // these are worth a button: Niri's window list covers every workspace, and
++    // a taskbar that lists the windows you cannot see is just noise.
++    active_workspaces: Arc<Mutex<BTreeSet<u64>>>,
+     state: State,
+ }
+ 
+@@ -94,6 +99,7 @@ impl Instance {
+             buttons: Default::default(),
+             container,
+             last_snapshot: None,
++            active_workspaces: Arc::new(Mutex::new(BTreeSet::new())),
+             state,
+         }
+     }
+@@ -101,7 +107,7 @@ impl Instance {
+     pub async fn task(&mut self) {
+         // We have to build the output filter here, because until the Glib event loop has run the
+         // container hasn't been realised, which means we can't figure out which output we're on.
+-        let output_filter = Arc::new(Mutex::new(self.build_output_filter().await));
++        let output_filter = Arc::new(Mutex::new(self.resolve_output_filter().await));
+ 
+         let mut stream = match self.state.event_stream() {
+             Ok(stream) => Box::pin(stream),
+@@ -117,15 +123,66 @@ impl Instance {
+                     self.process_window_snapshot(windows, output_filter.clone())
+                         .await
+                 }
+-                Event::Workspaces(_) => {
+-                    // We're just using this as a signal that the outputs may have changed.
+-                    let new_filter = self.build_output_filter().await;
+-                    *output_filter.lock().expect("output filter lock") = new_filter;
++                Event::Workspaces(workspaces) => {
++                    *self
++                        .active_workspaces
++                        .lock()
++                        .expect("active workspace lock") = workspaces
++                        .iter()
++                        .filter(|workspace| workspace.is_active)
++                        .map(|workspace| workspace.id)
++                        .collect();
++
++                    // The outputs may have changed too -- but only take a new filter when GDK can
++                    // still tell us which output we're on. It forgets for a moment while the bar's
++                    // surface is moved or recreated, and a filter built then comes back as
++                    // `ShowAll`, i.e. every window on every bar.
++                    if self.gdk_output_known() {
++                        let new_filter = self.build_output_filter().await;
++                        *output_filter.lock().expect("output filter lock") = new_filter;
++                    }
++
++                    // A workspace switch does not produce a window snapshot, so
++                    // re-render what we already have.
++                    if let Some(snapshot) = self.last_snapshot.clone() {
++                        self.process_window_snapshot(snapshot, output_filter.clone())
++                            .await;
++                    }
+                 }
+             }
+         }
+     }
+ 
++    /// The output filter, waiting until GDK can tell us which output we are on.
++    ///
++    /// GDK knows a window's output only from the compositor's `wl_surface.enter`, which arrives a
++    /// roundtrip or two after the bar is mapped -- but `init` runs before that. Asking anyway gives
++    /// `ShowAll`, and a bar that resolves before its window is announced therefore lists every
++    /// window in the session until something happens to switch workspaces. Waybar recreates its
++    /// bars whenever the monitor set changes (docking, a display coming or going), so this is not
++    /// a one-off at login: it is every bar that is created too early, i.e. usually the first one.
++    async fn resolve_output_filter(&self) -> output::Filter {
++        // ~2s: far more than the roundtrip needs; the bound is only there so a bar that is never
++        // announced at all cannot wedge startup.
++        for _ in 0..100 {
++            if self.gdk_output_known() {
++                break;
++            }
++            gtk::glib::timeout_future(Duration::from_millis(20)).await;
++        }
++
++        self.build_output_filter().await
++    }
++
++    /// Whether GDK has been told which output the bar's window is on.
++    fn gdk_output_known(&self) -> bool {
++        let Some(window) = self.container.window() else {
++            return false;
++        };
++
++        window.display().monitor_at_window(&window).is_some()
++    }
++
+     #[tracing::instrument(level = "DEBUG", skip(self))]
+     async fn build_output_filter(&self) -> output::Filter {
+         if self.state.config().show_all_outputs() {
+@@ -364,11 +421,25 @@ impl Instance {
+         // We need to track which, if any, windows are no longer present.
+         let mut omitted = self.buttons.keys().copied().collect::<BTreeSet<_>>();
+ 
++        let active_workspaces = self
++            .active_workspaces
++            .lock()
++            .expect("active workspace lock")
++            .clone();
++        let show_all_workspaces = active_workspaces.is_empty();
++
+         for window in windows.iter().filter(|window| {
+-            filter
++            let on_this_output = filter
+                 .lock()
+                 .expect("output filter lock")
+-                .should_show(window.output().unwrap_or_default())
++                .should_show(window.output().unwrap_or_default());
++            // Until the first workspace list arrives, show everything rather
++            // than nothing.
++            let on_active_workspace = show_all_workspaces
++                || window
++                    .workspace_id
++                    .is_some_and(|id| active_workspaces.contains(&id));
++            on_this_output && on_active_workspace
+         }) {
+             let button = match self.buttons.entry(window.id) {
+                 Entry::Occupied(entry) => entry.into_mut(),
+diff --git a/src/state.rs b/src/state.rs
+index 16708b9..0e0bd6b 100644
+--- a/src/state.rs
++++ b/src/state.rs
+@@ -79,7 +79,7 @@ struct Inner {
+ pub enum Event {
+     Notification(Box<EnrichedNotification>),
+     WindowSnapshot(Snapshot),
+-    Workspaces(()),
++    Workspaces(Vec<Workspace>),
+ }
+ 
+ async fn notify_stream(tx: Sender<Event>) {
+@@ -102,8 +102,8 @@ async fn window_stream(tx: Sender<Event>, window_stream: WindowStream) {
+ 
+ async fn workspace_stream(tx: Sender<Event>, workspace_stream: impl Stream<Item = Vec<Workspace>>) {
+     let mut workspace_stream = Box::pin(workspace_stream);
+-    while workspace_stream.next().await.is_some() {
+-        if let Err(e) = tx.send(Event::Workspaces(())).await {
++    while let Some(workspaces) = workspace_stream.next().await {
++        if let Err(e) = tx.send(Event::Workspaces(workspaces)).await {
+             tracing::error!(%e, "error sending workspaces");
+         }
+     }
