@@ -1,29 +1,31 @@
 {
   config,
   inputs,
+  lib,
   nixosConfig,
   pkgs,
-  lib,
   ...
 }:
 let
   cfg = nixosConfig.features;
 in
 lib.mkIf cfg.desktop {
-  programs.firefox = {
+  programs.librewolf = {
     enable = true;
-    # Deliberately the plain package: Marionette/BiDi set
-    # navigator.webdriver = true on every page, and Mozilla's own README warns
-    # that this "can trigger bot detection on sites protected by Cloudflare,
-    # Akamai, etc." (2026-10-05: Cloudflare `cf-mitigated: challenge` loops that
-    # end in a block on slapmagazine.com). The Firefox DevTools MCP therefore
-    # launches its own Firefox in its own profile instead -- see
-    # hosts/coltrane/coding-agent.nix (extra.firefox).
-    package = pkgs.firefox;
-    # home-manager 26.05 moved this default under XDG. Adopted 2026-10-05: the
-    # profile was moved from ~/.mozilla/firefox to here at the same time (see
-    # the commit message), and ~/.mozilla now only carries native-messaging-hosts.
-    configPath = "${config.xdg.configHome}/mozilla/firefox";
+
+    # The source build (`librewolf-bin` is the prebuilt alternative), carrying
+    # no Marionette/BiDi wrapper flags: those set navigator.webdriver = true on
+    # every page, and Mozilla's own README warns that this "can trigger bot
+    # detection on sites protected by Cloudflare, Akamai, etc." (2026-10-05:
+    # Cloudflare cf-mitigated challenge loops ending in a block on
+    # slapmagazine.com). The DevTools MCP drives its own instance off
+    # librewolf-unwrapped instead -- see hosts/coltrane/coding-agent.nix.
+    package = pkgs.librewolf;
+
+    # No configPath: LibreWolf's own default (~/.librewolf) is what
+    # librewolf.cfg points autoadmin.global_config_url at. Moving it under XDG
+    # would leave that hook dangling and start a fresh, empty profile.
+
     policies = {
       # Firefox's AI features, all of them: sidebar chatbot, link-preview key
       # points, smart tab groups, smart windows, on-device speech recognition,
@@ -36,8 +38,8 @@ lib.mkIf cfg.desktop {
       # This is the policy to use: the older GenerativeAI policy (same four
       # prefs, no translations/pdfAltText/speech) is *ignored* whenever
       # AIControls is present -- "Ignoring GenerativeAI policy in favor of
-      # AIControls", Policies.sys.mjs. Restart Firefox for it to take effect;
-      # the schema marks it restart-required.
+      # AIControls", Policies.sys.mjs. Restart the browser for it to take
+      # effect; the schema marks it restart-required.
       AIControls.Default = {
         Value = "blocked";
         Locked = true;
@@ -142,10 +144,10 @@ lib.mkIf cfg.desktop {
         "layout.css.prefers-color-scheme.content-override" = 0;
       };
       # Add-ons through Firefox's own policy, not home-manager's
-      # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis
-      # and release Firefox refuses to load those (it only works with
-      # firefox-esr). These come from AMO, so they are signed and self-updating.
-      # `normal_installed` keeps them disableable in about:addons.
+      # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis,
+      # which LibreWolf would load (`requireSigning = false`) but which then
+      # never self-update. These come from AMO, so they are signed and
+      # self-updating. `normal_installed` keeps them disableable in about:addons.
       ExtensionSettings =
         let
           amo = slug: {
@@ -156,9 +158,9 @@ lib.mkIf cfg.desktop {
         {
           # Catppuccin Mocha with the mauve accent -- the same accent as the GTK
           # theme, Kvantum, icons and cursor. Published by the Catppuccin account
-          # on AMO. (catppuccin/firefox, the "official" port, is a Firefox Color
-          # theme: it needs an extension and a click in Settings, so it cannot be
-          # set declaratively -- this static theme can.)
+          # on AMO. (catppuccin/*'s firefox port is a Firefox Color theme: it
+          # needs an extension and a click in Settings, so it cannot be set
+          # declaratively -- this static theme can.)
           "{76aabc99-c1a8-4c1e-832b-d4f2941d5a7a}" = amo "catppuccin-mocha-mauve-git";
           "{c5867acc-54c9-4074-9574-04d8818d53e8}" = {
             installation_mode = "blocked";
@@ -204,11 +206,10 @@ lib.mkIf cfg.desktop {
           };
         };
     };
+
     profiles.default = {
-      # catppuccin.firefox (home-manager/modules/catppuccin.nix) also writes
-      # extensions.settings; the assertion below is Home Manager's way of
-      # acknowledging that the two sets are merged rather than one winning.
-      extensions.force = true;
+      # Written to user.js, which is re-applied every start -- so anything set
+      # here cannot be changed from the UI, on purpose.
       settings = {
         "browser.aboutConfig.showWarning" = false;
         # Actually *use* compact density: 0=normal, 1=compact, 2=touch. No
@@ -220,7 +221,7 @@ lib.mkIf cfg.desktop {
         "browser.tabs.tabMinWidth" = 30;
         "browser.tabs.tabClipWidth" = 60;
         "signon.rememberSignons" = false;
-        # GPU canvas (the CanvasRenderer thread) was the biggest Firefox source of
+        # GPU canvas (the CanvasRenderer thread) was the biggest browser source of
         # order-8/9 TTM allocations on xe; under fragmentation those feed the
         # kswapd -> xe shrinker -> rebind loop that lagged the whole desktop
         # (2026-10-05 trace). Kernel fix is 7.1.6+/7.1.8; ZFS pins us to 6.18.
@@ -236,10 +237,73 @@ lib.mkIf cfg.desktop {
         "browser.startup.page" = 3;
         # userChrome.css and userContent.css are ignored without this.
         "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+
+        # LibreWolf's own defaults are privacy-first in ways that change how the
+        # session behaves. All of them are `defaultPref` in its mozilla.cfg
+        # (overridable -- its ~20 `lockPref`s touch none of these), so this block
+        # is the whole delta.
+        #
+        # Wipes cookies and site storage on every shutdown, so no login would
+        # survive a restart.
+        "privacy.sanitize.sanitizeOnShutdown" = false;
+        "privacy.clearOnShutdown.offlineApps" = false;
+        # UA/timezone/canvas/viewport spoofing. Slack's huddles are handled by
+        # the UA-switcher policy above, not by RFP pretending to be Windows.
+        "privacy.resistFingerprinting" = false;
+        "webgl.disabled" = false;
+        # Netflix/DRM. `media.gmp-manager.updateEnabled` is the switch no
+        # "enable DRM" checkbox covers: LibreWolf turns the GMP *updater* off
+        # (mozilla.cfg:403), so EME can be on and the Widevine CDM still never
+        # installs -- about:addons sits at "will be installed shortly" forever.
+        "media.gmp-manager.updateEnabled" = true;
+        "media.eme.enabled" = true;
+        "media.gmp-provider.enabled" = true;
+        # LibreWolf sets this false (mozilla.cfg:418), so it is load-bearing.
+        "media.gmp-widevinecdm.enabled" = true;
+        # A no-op on 159 (it leaves Mozilla's default in place), but
+        # librewolf.cfg on master points it at `data:text/plain,`, which would
+        # silently un-enable the switches above.
+        "media.gmp-manager.url" =
+          "https://aus5.mozilla.org/update/3/GMP/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml";
+        # LibreWolf blocks all autoplay; Firefox's default is "allow". Set to 5
+        # to keep LibreWolf's behaviour instead.
+        "media.autoplay.default" = 0;
       };
+
+      # Google AI Mode, declaratively. LibreWolf's build ships no search-config
+      # dump, so its engine *names* are not resolvable -- the engine is described
+      # here. `force` because Gecko rewrites search.json.mozlz4 on launch, so
+      # engines added in the UI would vanish on the next switch.
+      #
+      # `udm=50` is AI Mode: google.com/aimode 301s to search?udm=50&aep=11
+      # (verified 2026-11-06). Drop the udm param for classic results.
+      search = {
+        force = true;
+        default = "google";
+        engines.google = {
+          name = "Google";
+          urls = [
+            {
+              template = "https://www.google.com/search";
+              params = [
+                {
+                  name = "udm";
+                  value = "50";
+                }
+                {
+                  name = "q";
+                  value = "{searchTerms}";
+                }
+              ];
+            }
+          ];
+          definedAliases = [ "@g" ];
+        };
+      };
+
       # Catppuccin's userstyles for ~140 sites, precompiled (Stylus not needed:
-      # Firefox applies the `@-moz-document` blocks of userContent.css itself).
-      # Read at startup only, so restart Firefox after a switch. A derivation,
+      # Gecko applies the `@-moz-document` blocks of userContent.css itself).
+      # Read at startup only, so restart the browser after a switch. A derivation,
       # not a "${…}" string: home-manager writes any *string* here as the
       # file's text (`builtins.isString` -> `text`), so a store path string
       # ended up as the CSS itself.
@@ -247,6 +311,7 @@ lib.mkIf cfg.desktop {
         src = inputs.catppuccin-userstyles;
         inherit (config.catppuccin) flavor accent;
       };
+
       # The "Show sidebar" launcher. No pref can turn it off: sidebar.revamp
       # injects it into the navbar's default placements, and removing it in the
       # UI would only live in browser.uiCustomization.state -- a blob user.js
@@ -260,7 +325,7 @@ lib.mkIf cfg.desktop {
     };
   };
 
-  # MusicBrainz userscripts. Firefox gives no way to put a script into a
+  # MusicBrainz userscripts. Gecko gives no way to put a script into a
   # userscript manager's storage, so the set is declared here (the scripts
   # themselves install from upstream, and Violentmonkey keeps them updated via
   # their @updateURL). Open the generated page once and click them in:

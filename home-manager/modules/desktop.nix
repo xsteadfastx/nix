@@ -55,7 +55,7 @@ in
 {
   imports = [
     # ./chromium.nix
-    ./firefox.nix
+    ./librewolf.nix
     ./fonts
     ./ghostty.nix
     ./gtk
@@ -108,7 +108,7 @@ in
   );
 
   home.sessionVariables = {
-    DEFAULT_BROWSER = "firefox";
+    DEFAULT_BROWSER = "librewolf";
   };
 
   # Detailed list instead of icons for every folder that has no view of its own.
@@ -123,8 +123,8 @@ in
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = lib.mkIf cfg.desktop (
     {
-      "x-scheme-handler/http" = [ "firefox.desktop" ];
-      "x-scheme-handler/https" = [ "firefox.desktop" ];
+      "x-scheme-handler/http" = [ "librewolf.desktop" ];
+      "x-scheme-handler/https" = [ "librewolf.desktop" ];
       "inode/directory" = [ "thunar.desktop" ];
       # Calibre claims this on install; PDFs are documents first, ebooks second.
       "application/pdf" = [ "org.gnome.Evince.desktop" ];

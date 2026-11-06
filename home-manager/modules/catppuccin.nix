@@ -28,8 +28,14 @@
     # - swaync: the port's stylesheet is a whole file with no hook for extra
     #   rules, and it leaves toggle buttons unstyled (on looks like off), so
     #   home-manager/modules/swaync derives its own from the same source.
+    # - firefox/librewolf: both ports are the Firefox Color route (theme
+    #   extension plus a click in Settings), which cannot be set
+    #   declaratively; librewolf.nix installs the static Catppuccin AMO theme
+    #   by policy instead.
     waybar.enable = false;
     kvantum.enable = false;
     swaync.enable = false;
+    firefox.enable = false;
+    librewolf.enable = false;
   };
 }

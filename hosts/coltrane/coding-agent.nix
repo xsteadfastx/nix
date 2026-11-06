@@ -196,7 +196,7 @@
       # this "can trigger bot detection on sites protected by Cloudflare, Akamai,
       # etc." (2026-10-05: Cloudflare `cf-mitigated: challenge` loops ending in a
       # block on slapmagazine.com). So the daily driver stays clean
-      # (home-manager/modules/firefox.nix: plain pkgs.firefox, no wrapper flags)
+      # (home-manager/modules/librewolf.nix: plain pkgs.librewolf, no wrapper flags)
       # and the agent gets its own browser. --profilePath keeps that browser
       # persistent instead of a fresh temp profile per session. The MCP never uses
       # the path directly: it appends `firefox_devtools_mcp_profile/` (and warns if
@@ -215,9 +215,19 @@
         # No --marionette-port: 2828 is Firefox's own default (greprefs
         # marionette.port). --enable-script: evaluate_script, without which framed
         # legacy apps (primion) are opaque -- the snapshot does not descend into
-        # <frame>s.
+        # <frame>s. --firefoxPath: the daily browser is LibreWolf
+        # (home-manager/modules/librewolf.nix), and geckodriver happily drives it
+        # -- but only the *unwrapped* binary. Its validity check looks for
+        # `application.ini` next to the executable (strings(1) on geckodriver:
+        # "application.ini", "is not a Firefox executable"), so both
+        # `pkgs.librewolf/bin/librewolf` and `pkgs.firefox/bin/firefox` are
+        # rejected -- they are nix wrapper *scripts* in a bin/ dir with no such
+        # file. The unwrapped tree has one, and geckodriver does not care that it
+        # says Name=LibreWolf (verified 2026-11-06, MCP list_pages => about:blank).
         args = [
           "--enable-script"
+          "--firefoxPath"
+          "${pkgs.librewolf-unwrapped}/lib/librewolf/librewolf"
           "--profilePath"
           "/home/marv/.firefox-devtools-mcp"
         ];

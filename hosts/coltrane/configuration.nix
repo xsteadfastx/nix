@@ -102,7 +102,7 @@
       "kernel.hung_task_timeout_secs" = 60;
       "kernel.hung_task_all_cpu_backtrace" = 1;
       # xe GPU buffer churn (see the gfx.canvas.accelerated note in
-      # home-manager/modules/firefox.nix) mixes unmovable pages into movable
+      # home-manager/modules/librewolf.nix) mixes unmovable pages into movable
       # pageblocks constantly; each such event boosted the watermarks and woke
       # kswapd, which then swapped into zram with 24 GiB free. Measured
       # 2026-10-05: 0 halved swap-out (23k -> 10k pages/s). Compaction still runs
@@ -414,7 +414,7 @@
         "--avoid"
         "^(X|niri.*|sshd|systemd|ghostty|alacritty|zellij)$"
         "--prefer"
-        "^(electron|chromium|firefox|chrome|libreoffice|gimp|slack)$"
+        "^(electron|chromium|librewolf|firefox|chrome|libreoffice|gimp|slack)$"
       ];
     };
 

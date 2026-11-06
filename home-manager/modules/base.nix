@@ -41,6 +41,8 @@
     unstable.aria2
     unstable.yt-dlp
 
+    # yt-dlp has no `librewolf` browser name, so the profile path is handed to
+    # the `firefox` reader -- same cookies.sqlite layout, it just works.
     (writeShellScriptBin "yt-dlp-album" ''
       set -euo pipefail
       if [ "$#" -ne 1 ]; then
@@ -56,7 +58,7 @@
         --parse-metadata "%(album_artist,channel,creator,artist|Unknown)s:%(album_artist)s" \
         -o "%(album,playlist_title|Unknown)s/%(track_number,playlist_index)02d - %(title)s.%(ext)s" \
         --no-overwrites --concurrent-fragments 4 \
-        --cookies-from-browser firefox \
+        --cookies-from-browser firefox:/home/marv/.librewolf/default \
         "$1"
     '')
 
