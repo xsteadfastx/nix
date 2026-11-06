@@ -38,11 +38,17 @@ let
   # GIMP 3 has no Catppuccin port and reads no palette file, so its
   # @define-color block is generated from lib/palette.nix and prepended to the
   # layout CSS beside this module (which keeps no colours of its own).
+  #
+  # Widget surfaces use surface0, not surface1: surface1 is #45475a, which is
+  # 2/255 from Dracula's #44475a, so a GIMP whose buttons, borders and text
+  # areas all sat on surface1 still read as the old Dracula theme. Hover and
+  # selection keep surface1 -- one shade only under a pointer/selection is a
+  # hover cue, not the dominant surface.
   gimpColors = {
     "fg-color" = "text";
     "bg-color" = "base";
     "bg-dark-color" = "crust";
-    "border-color" = "surface1";
+    "border-color" = "surface0";
     "bg-extra-dark-color" = "crust";
     "light-special-color" = "mauve";
     "dimmed-fg-color" = "subtext0";
@@ -51,13 +57,13 @@ let
     "hover-color" = "surface1";
     "bright-border-color" = "mauve";
     sap = "crust";
-    border = "surface1";
+    border = "surface0";
     canvas = "base";
     slider = "mauve";
     "fg2-color" = "text";
-    "widget-bg-color" = "surface1";
-    "selected-color" = "surface0";
-    "extreme-bg-color" = "surface1";
+    "widget-bg-color" = "surface0";
+    "selected-color" = "surface1";
+    "extreme-bg-color" = "surface0";
     "extreme-selected-color" = "crust";
     "strong-border-color" = "crust";
     "stronger-border-color" = "overlay0";
