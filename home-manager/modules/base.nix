@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -110,4 +111,20 @@
     '')
   ];
 
+  # Attic as a substituter. Home Manager owns $XDG_CONFIG_HOME/nix/nix.conf, so
+  # the hand-written pre-HM file (still lying around as nix.conf.backup) stopped
+  # taking effect: its `netrc-file` and attic substituter lines were dropped, so
+  # nix hit 401 on `/iot/nix-cache-info` and reported "does not appear to be a
+  # binary cache", building everything locally. The token itself never left
+  # ~/.config/nix/netrc, so only the pointer needs restoring.
+  nix.settings = {
+    netrc-file = "${config.xdg.configHome}/nix/netrc";
+    extra-substituters = [ "https://attic.iot.wolfsburg.digital/iot" ];
+    extra-trusted-public-keys = [ "iot:bOE1P0fv6w0t6N4YjYpCuX3lgenYe3prDGzo7oPC438=" ];
+
+    # atticd pushes lag behind a fresh build; don't keep a stale "absent"
+    # (a *negative* narinfo, cached 1 h by default). The positive TTL is the
+    # "this path exists" cache — leave that at its default.
+    narinfo-cache-negative-ttl = 0;
+  };
 }
