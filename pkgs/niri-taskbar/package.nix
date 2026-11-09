@@ -32,6 +32,11 @@
 #   before that resolved to "show every window" and stayed there until the
 #   next workspace switch. Waybar recreates all its bars whenever the monitor
 #   set changes, so that was every dock/unplug, not just login.
+# - it rebuilds that filter on window events too, not just on WorkspacesChanged.
+#   On resume the outputs churn (eDP-1 + a transient DP-1, then DP-6/DP-7);
+#   a bar whose filter was built while GDK and niri still disagreed stayed on
+#   "show every window" for good, because niri sends no WorkspacesChanged once
+#   the layout has settled (2026-11-09, after a weekend's sleep).
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "niri-taskbar";
   version = "0.4.0+niri.25.11";

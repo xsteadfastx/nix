@@ -1,5 +1,4 @@
 diff --git a/src/lib.rs b/src/lib.rs
-index 67a7eb0..545dd20 100644
 --- a/src/lib.rs
 +++ b/src/lib.rs
 @@ -1,6 +1,7 @@
@@ -10,7 +9,7 @@ index 67a7eb0..545dd20 100644
  };
  
  use button::Button;
-@@ -85,6 +86,10 @@ struct Instance {
+@@ -85,6 +86,10 @@
      buttons: BTreeMap<u64, Button>,
      container: gtk::Box,
      last_snapshot: Option<Snapshot>,
@@ -21,7 +20,7 @@ index 67a7eb0..545dd20 100644
      state: State,
  }
  
-@@ -94,6 +99,7 @@ impl Instance {
+@@ -94,6 +99,7 @@
              buttons: Default::default(),
              container,
              last_snapshot: None,
@@ -29,7 +28,7 @@ index 67a7eb0..545dd20 100644
              state,
          }
      }
-@@ -101,7 +107,7 @@ impl Instance {
+@@ -101,7 +107,7 @@
      pub async fn task(&mut self) {
          // We have to build the output filter here, because until the Glib event loop has run the
          // container hasn't been realised, which means we can't figure out which output we're on.
@@ -38,7 +37,14 @@ index 67a7eb0..545dd20 100644
  
          let mut stream = match self.state.event_stream() {
              Ok(stream) => Box::pin(stream),
-@@ -117,15 +123,66 @@ impl Instance {
+@@ -114,18 +120,78 @@
+             match event {
+                 Event::Notification(notification) => self.process_notification(notification).await,
+                 Event::WindowSnapshot(windows) => {
++                    // A bar created mid-hotplug (resume, docking) can resolve while GDK and Niri
++                    // still disagree about the outputs and end up as `ShowAll`. Niri sends no
++                    // further WorkspacesChanged once things settle, so retry on window events too.
++                    self.refresh_output_filter(&output_filter).await;
                      self.process_window_snapshot(windows, output_filter.clone())
                          .await
                  }
@@ -60,10 +66,7 @@ index 67a7eb0..545dd20 100644
 +                    // still tell us which output we're on. It forgets for a moment while the bar's
 +                    // surface is moved or recreated, and a filter built then comes back as
 +                    // `ShowAll`, i.e. every window on every bar.
-+                    if self.gdk_output_known() {
-+                        let new_filter = self.build_output_filter().await;
-+                        *output_filter.lock().expect("output filter lock") = new_filter;
-+                    }
++                    self.refresh_output_filter(&output_filter).await;
 +
 +                    // A workspace switch does not produce a window snapshot, so
 +                    // re-render what we already have.
@@ -97,6 +100,14 @@ index 67a7eb0..545dd20 100644
 +        self.build_output_filter().await
 +    }
 +
++    /// Rebuilds the output filter, but only while GDK can tell us which output we are on.
++    async fn refresh_output_filter(&self, output_filter: &Mutex<output::Filter>) {
++        if self.gdk_output_known() {
++            let new_filter = self.build_output_filter().await;
++            *output_filter.lock().expect("output filter lock") = new_filter;
++        }
++    }
++
 +    /// Whether GDK has been told which output the bar's window is on.
 +    fn gdk_output_known(&self) -> bool {
 +        let Some(window) = self.container.window() else {
@@ -109,7 +120,7 @@ index 67a7eb0..545dd20 100644
      #[tracing::instrument(level = "DEBUG", skip(self))]
      async fn build_output_filter(&self) -> output::Filter {
          if self.state.config().show_all_outputs() {
-@@ -364,11 +421,25 @@ impl Instance {
+@@ -364,11 +430,25 @@
          // We need to track which, if any, windows are no longer present.
          let mut omitted = self.buttons.keys().copied().collect::<BTreeSet<_>>();
  
@@ -138,10 +149,9 @@ index 67a7eb0..545dd20 100644
              let button = match self.buttons.entry(window.id) {
                  Entry::Occupied(entry) => entry.into_mut(),
 diff --git a/src/state.rs b/src/state.rs
-index 16708b9..0e0bd6b 100644
 --- a/src/state.rs
 +++ b/src/state.rs
-@@ -79,7 +79,7 @@ struct Inner {
+@@ -79,7 +79,7 @@
  pub enum Event {
      Notification(Box<EnrichedNotification>),
      WindowSnapshot(Snapshot),
@@ -150,7 +160,7 @@ index 16708b9..0e0bd6b 100644
  }
  
  async fn notify_stream(tx: Sender<Event>) {
-@@ -102,8 +102,8 @@ async fn window_stream(tx: Sender<Event>, window_stream: WindowStream) {
+@@ -102,8 +102,8 @@
  
  async fn workspace_stream(tx: Sender<Event>, workspace_stream: impl Stream<Item = Vec<Workspace>>) {
      let mut workspace_stream = Box::pin(workspace_stream);
