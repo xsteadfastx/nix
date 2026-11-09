@@ -91,12 +91,12 @@ in
       pkgs.unstable.mpv
       pkgs.unstable.mqttx
       pkgs.unstable.networkmanagerapplet
-      pkgs.unstable.newsflash
+      pkgs.newsflash
       pkgs.unstable.pavucontrol
       pkgs.unstable.peek # gif screen recorder
       pkgs.unstable.rawtherapee
       pkgs.unstable.remmina
-      pkgs.unstable.rustdesk-flutter
+      pkgs.rustdesk-flutter
       pkgs.unstable.signal-desktop
       pkgs.unstable.simple-scan
       pkgs.unstable.system-config-printer

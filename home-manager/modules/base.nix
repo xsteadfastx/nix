@@ -28,7 +28,7 @@
     unstable.python3
     unstable.rlwrap
     unstable.unzip
-    unstable.viddy
+    viddy
     unstable.vimv
 
     # go
