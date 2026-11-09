@@ -40,7 +40,6 @@ let
     "playwright-mcp"
     "mcp-proxy"
     "github-cli"
-    "ripgrep"
   ];
 
   # Built once per `final`, not once per attribute.
