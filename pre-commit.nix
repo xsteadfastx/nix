@@ -1,4 +1,5 @@
 {
+  convco,
   nixfmt,
   prek,
   trufflehog,
@@ -22,7 +23,12 @@
     };
 
     check-yaml.enable = true;
-    convco.enable = true;
+    # Stable convco, not unstable: 0.7.x fails to build against libgit2.
+    # Switch back once NixOS/nixpkgs#585314 reaches nixos-unstable.
+    convco = {
+      enable = true;
+      package = convco;
+    };
     deadnix.enable = true;
 
     ripsecrets = {

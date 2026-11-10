@@ -83,6 +83,7 @@
         pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
 
         preCommit = import ./pre-commit.nix {
+          inherit (pkgs) convco;
           inherit (pkgsUnstable)
             nixfmt
             prek
