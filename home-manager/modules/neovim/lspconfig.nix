@@ -68,9 +68,17 @@
 
         		-- LSP Keybindings
         		local opts = { buffer = args.buf }
-        		vim.keymap.set("n", "<Leader>ho", vim.lsp.buf.hover, opts)
-        		vim.keymap.set("n", "<Leader>gd", vim.lsp.buf.definition, opts)
-        		vim.keymap.set("n", "<Leader>rn", vim.lsp.buf.rename, opts)
+        		-- Only map what this client can do: typos_lsp attaches to every
+        		-- buffer but has no hover, so a markdown file errored on <Leader>ho.
+        		if client:supports_method("textDocument/hover") then
+        			vim.keymap.set("n", "<Leader>ho", vim.lsp.buf.hover, opts)
+        		end
+        		if client:supports_method("textDocument/definition") then
+        			vim.keymap.set("n", "<Leader>gd", vim.lsp.buf.definition, opts)
+        		end
+        		if client:supports_method("textDocument/rename") then
+        			vim.keymap.set("n", "<Leader>rn", vim.lsp.buf.rename, opts)
+        		end
         	end,
         })
 
