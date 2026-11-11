@@ -172,6 +172,17 @@ in
       backdrop-color "${ctp.hex "mantle"}"
   }
 
+  // niri's top-left hot corner toggles the overview. This desktop has its bar
+  // along the top, so every trip to the bar's left end opened the overview --
+  // the "niri jumps when I move over waybar" (confirmed in niri's event stream:
+  // OverviewOpenedOrClosed, no layout or scroll events). sway had no hot
+  // corners and Mod+O is the bind, so they go.
+  gestures {
+      hot-corners {
+          off
+      }
+  }
+
   // Square windows, no app-drawn title bars, as under sway. Apps get told they
   // are tiled (GTK then drops its rounded corners) and are asked to leave the
   // decorations to niri via xdg-decoration. Running apps need a restart.
