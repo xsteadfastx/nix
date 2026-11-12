@@ -231,6 +231,13 @@
           "--profilePath"
           "/home/marv/.firefox-devtools-mcp"
         ];
+        # nixpkgs' claude-code wrapper prefixes LD_LIBRARY_PATH with an alsa-lib
+        # built against a newer glibc (2.44) than librewolf-unwrapped (2.42). The
+        # MCP server inherits it, libxul pulls that libasound in and dies with
+        # "GLIBC_2.43 not found ... Couldn't load XPCOM" -- surfacing as "process
+        # closed with status 127" under Claude Code only (pi, started from fish,
+        # never had the prefix; 2026-11-12). Empty = whatever the RPATH says.
+        env.LD_LIBRARY_PATH = "";
       };
       memory = {
         enable = true;
