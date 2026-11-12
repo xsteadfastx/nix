@@ -116,7 +116,9 @@
   # taking effect: its `netrc-file` and attic substituter lines were dropped, so
   # nix hit 401 on `/iot/nix-cache-info` and reported "does not appear to be a
   # binary cache", building everything locally. The token itself never left
-  # ~/.config/nix/netrc, so only the pointer needs restoring.
+  # ~/.config/nix/netrc, so only the pointer needs restoring. coltrane no longer
+  # has that hand-maintained file: hosts/coltrane/nix-tokens.nix renders both the
+  # attic JWT and the gh token from sops and mkForces this pointer at the result.
   nix.settings = {
     netrc-file = "${config.xdg.configHome}/nix/netrc";
     extra-substituters = [ "https://attic.iot.wolfsburg.digital/iot" ];

@@ -25,7 +25,10 @@
   '';
 
   home-manager.users.marv = {
-    imports = [ ../../home-manager/marv.nix ];
+    imports = [
+      ./nix-tokens.nix
+      ../../home-manager/marv.nix
+    ];
   };
 
   virtualisation.vmVariant = {
