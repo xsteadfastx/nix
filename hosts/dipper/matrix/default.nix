@@ -216,6 +216,18 @@ in
 
     mautrix-signal = {
       enable = true;
+      # Signal's /v4/attachments/form/upload started answering 400 without
+      # ?uploadLength= (~2026-11-05), so every Matrix->Signal attachment failed
+      # with "failed to reupload media" (mautrix/signal#707).
+      # ponytail: drop once nixpkgs ships a mautrix-signal release with #703.
+      package = pkgs.mautrix-signal.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (pkgs.fetchpatch {
+            url = "https://github.com/mautrix/signal/commit/e2e994f99f8dfffe5ad1cc88a2d36449639a609e.patch";
+            hash = "sha256-xz9POxxL4zUfKpx9AEZFDwhKxRbQFHp3mdB3y7bONqY=";
+          })
+        ];
+      });
       settings = {
         homeserver = {
           address = "http://127.0.0.1:${toString hsPort}";
