@@ -87,6 +87,7 @@
 
   dipper = {
     deployment.tags = [
+      "matrix"
       "remote"
       "server"
       "vm"
