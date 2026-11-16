@@ -441,18 +441,14 @@ in
       # this spawns the server, which keeps that shell's environment for the
       # session's lifetime, so a pre-sway console shell wedges every later pane
       # without WAYLAND_DISPLAY/SWAYSOCK.
-      # An EXITED session (server died -- reboot, killed zellij, OOM) is the one
-      # case `attach -c` cannot handle: it prints "Bye from Zellij!" and returns
-      # immediately, and the `kill $fish_pid` below then closes the terminal, so
-      # Mod+Return looks like a crash. Drop such a session first; a live one is
-      # attached as usual, and `-c` still creates one when there is none at all.
+      # An EXITED session (server died -- reboot, killed zellij, OOM) is
+      # resurrected by `attach -c` from its serialized layout (0.45.1, tested
+      # 2026-11-16), so it must not be deleted first: that is what lost the
+      # session on every reboot.
       "fish/conf.d/zellij.fish".text = ''
         if status is-interactive; and not set -q ZELLIJ
             set -gx ZELLIJ_AUTO_ATTACH true
             set -gx ZELLIJ_AUTO_EXIT true
-            if ${pkgs.zellij}/bin/zellij list-sessions --no-formatting 2>/dev/null | string match -qr '^local .*EXITED'
-                ${pkgs.zellij}/bin/zellij delete-session local
-            end
             ${pkgs.zellij}/bin/zellij attach local -c
             kill $fish_pid
         end
