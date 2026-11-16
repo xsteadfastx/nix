@@ -463,14 +463,6 @@
   # start, so no rebuild of the packages is needed.
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  # FreeType stem darkening: thickens thin stems in the light autohinter,
-  # which is what ghostty (light target) and GTK (hintslight) render with.
-  # Fully-on ink for Nerdwand Medium: 0.300 -> 0.352 at 20px, 0.138 -> 0.194
-  # at 14.67px, about one weight step (SemiBold: 0.346 / 0.213). Common NixOS
-  # setting; lucidglyph's stronger darkening-parameters measured 0.417 / 0.221
-  # if this is ever too light. Needs a new login.
-  environment.sessionVariables.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0 autofitter:no-stem-darkening=0";
-
   environment.systemPackages = with pkgs; [
     brightnessctl
     dmidecode
