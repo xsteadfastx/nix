@@ -24,6 +24,10 @@ lib.mkIf cfg.desktop {
       # 15pt = 20px here, a whole-pixel em on the ~92 DPI externals (ghostty is
       # grayscale-only).
       font-size = 15;
+      # Medium, not Regular: sharper at 92 DPI (see the fontconfig rule in
+      # gtk/default.nix). Set by name because a style request slips past that
+      # weight rule.
+      font-style = "Medium";
       # No freetype-load-flags: ghostty's defaults (hinting, light target) are
       # what we want, and they measured sharper than the unhinted rendering
       # (0.379 vs 0.359 fully-snapped ink pixels at 20px). The `no-hinting` this

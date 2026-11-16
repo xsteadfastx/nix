@@ -133,8 +133,8 @@ lib.mkIf cfg.desktop {
     };
 
     # 11pt = 14.67px at 96 dpi on the ~92 DPI externals (ghostty runs 15pt =
-    # 20px). No weight tweak: Nerdwand Mono's Regular is the intended text
-    # weight, unlike Lilex's, which needed a fontconfig nudge to Medium.
+    # 20px). The weight is Medium through the fontconfig rule below, not
+    # through this name (libadwaita's CSS would override a weight given here).
     font = {
       name = "Nerdwand Mono";
       size = 11;
@@ -251,6 +251,21 @@ lib.mkIf cfg.desktop {
               <family>Nerdwand Mono</family>
             </prefer>
           </alias>
+          <!-- At ~92 DPI a Regular stem is ~1.5px, so its edges are all grey
+               ink; Medium keeps a solid core (fully-on ink 0.300 vs 0.216 at
+               20px, 0.138 vs 0.075 at 14.67px). So a request for Nerdwand at
+               the regular weight gets Medium, whatever asked for it: GTK,
+               libadwaita CSS (which pins font-weight: 400), waybar, fuzzel,
+               swaync, swaylock. Bold, italic and lighter weights are
+               untouched. -->
+          <match target="pattern">
+            <test name="family" compare="eq"><string>Nerdwand Mono</string></test>
+            <!-- qual="all" also matches a request without any weight
+                 (fuzzel, plain fc-match), which a plain eq test misses -->
+            <test qual="all" name="weight" compare="more_eq"><const>regular</const></test>
+            <test qual="all" name="weight" compare="less"><const>medium</const></test>
+            <edit name="weight" mode="assign" binding="strong"><const>medium</const></edit>
+          </match>
         </fontconfig>
       '';
 
