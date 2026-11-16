@@ -2,10 +2,12 @@
 """Turn the upstream Nordwand Mono TTFs into Nerdwand Mono.
 
 1. prepare:  slashed zero as the default `0`, and every ligature on by default.
-2. patch:    nerd-font-patcher --complete --mono, one cell per icon.
-3. finalize: undo --mono for the existing glyphs (it squeezes the two-cell
-             ligatures) and set typographic names so all weights form one
-             family, "Nerdwand Mono".
+2. patch:    nerd-font-patcher --complete, without --mono: icons keep a
+             one-cell advance but draw up to ~2 cells wide, so they stay
+             legible in waybar & co. (--mono shrank them to one letter).
+             Terminals are unaffected: ghostty sizes Nerd Font icons itself.
+3. finalize: set typographic names so all weights form one family,
+             "Nerdwand Mono".
 
 Usage: font.py <dir-with-ttfs> <output-dir>
 """
@@ -57,7 +59,6 @@ def patch(patcher, path, output_dir):
             patcher,
             "--complete",
             "--careful",
-            "--mono",
             "--quiet",
             "--no-progressbars",
             "--name",
@@ -73,16 +74,11 @@ def patch(patcher, path, output_dir):
     return style, produced[0]
 
 
-def finalize(style, source, patched, out_path):
+def finalize(style, patched, out_path):
     font = TTFont(patched)
     italic = style.endswith("Italic")
     weight = style[: -len("Italic")] if italic else style
     subfamily = (weight + " Italic").strip() if italic else weight
-    # --mono forces every existing glyph into one cell, squeezing the two-cell
-    # ligatures and widening zero-width marks; only added icons should be 1 cell.
-    for name, (advance, _) in TTFont(source)["hmtx"].metrics.items():
-        if name in font["hmtx"].metrics:
-            font["hmtx"][name] = (advance, font["hmtx"][name][1])
     assert 0xE0B0 in font.getBestCmap(), f"{style}: no nerd icons"
     names = {
         # legacy pair: a non-RIBBI style is folded into the family name
@@ -107,7 +103,7 @@ def main():
         prepare(path)
         with tempfile.TemporaryDirectory(dir=out) as work:
             style, patched = patch("nerd-font-patcher", path, work)
-            finalize(style, path, patched, os.path.join(out, f"NerdwandMono-{style}.ttf"))
+            finalize(style, patched, os.path.join(out, f"NerdwandMono-{style}.ttf"))
 
 
 if __name__ == "__main__":
