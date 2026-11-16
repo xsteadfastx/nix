@@ -143,12 +143,9 @@ lib.mkIf cfg.desktop {
     gtk3.extraConfig = {
       gtk-application-prefer-dark-theme = 1;
     };
-    # NOTE: `gtk-application-prefer-dark-theme` is not set here, but Home
-    # Manager's own mkGtkSettings writes it into gtk-4.0/settings.init for
-    # colorScheme = "dark" anyway, which is why every libadwaita app logs
-    # "Using GtkSettings:gtk-application-prefer-dark-theme with libadwaita is
-    # unsupported". Harmless: libadwaita ignores it and follows the dconf
-    # color-scheme instead.
+    # NOTE: `gtk-application-prefer-dark-theme` is the (older) dark-variant
+    # switch; libadwaita logs it as unsupported and follows the dconf
+    # color-scheme instead, which is harmless.
     # GTK >= 4.16 defaults to "automatic" rendering: subpixel positioning with
     # unhinted metrics, which reads blurry at scale 1 on the ~92 DPI
     # externals. `manual` + hinted metrics puts glyphs back on whole pixels.
@@ -158,6 +155,12 @@ lib.mkIf cfg.desktop {
     gtk4.extraConfig = {
       gtk-font-rendering = "manual";
       gtk-hint-font-metrics = 1;
+      # Instead of `colorScheme = "dark"`, which makes Home Manager write the
+      # raw enum value (`gtk-interface-color-scheme = 2`); GTK >= 4.24 only
+      # parses the nick and logs "Error setting gtk-interface-color-scheme in
+      # .../settings.ini: value that cannot be interpreted" on every start.
+      gtk-application-prefer-dark-theme = 1;
+      gtk-interface-color-scheme = "dark";
     };
     gtk4.theme = {
       name = "catppuccin-${flavor}-${accent}-standard";
@@ -191,7 +194,6 @@ lib.mkIf cfg.desktop {
         color: ${ctp.hex "base"};
       }
     '';
-    colorScheme = "dark";
   };
   dconf.enable = true;
   # Read by GTK 4 through the settings portal (see gtk4.extraConfig above).
