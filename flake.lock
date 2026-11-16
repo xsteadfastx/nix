@@ -101,11 +101,11 @@
     "catppuccin-userstyles": {
       "flake": false,
       "locked": {
-        "lastModified": 1794792216,
-        "narHash": "sha256-TtVXkz7IRT7jFwPFy6c+0HQmTyfBOpN5IVCwqesOJZw=",
+        "lastModified": 1794824860,
+        "narHash": "sha256-IA86XmB7XoymZcovhGhIzqd15SGM5mExKm0BI2xwff0=",
         "owner": "catppuccin",
         "repo": "userstyles",
-        "rev": "81e7cf27efb1677fdc3b97a4fb933508da50a73d",
+        "rev": "7cad6352b192723c9de2b9ebb508079d7ca7cdb2",
         "type": "github"
       },
       "original": {
