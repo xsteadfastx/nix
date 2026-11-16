@@ -90,7 +90,7 @@ in
 
   lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
 
-  lilex-nerdfont-zero = prev.callPackage ../pkgs/lilex-nerdfont-zero.nix { };
+  nordwand-mono-nerd = prev.callPackage ../pkgs/nordwand-mono-nerd/package.nix { };
 
   airmtp = inputs.airmtp.packages.${system}.default;
   compose2nix = inputs.compose2nix.packages.${system}.default;

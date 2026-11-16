@@ -99,7 +99,7 @@ lib.mkIf cfg.desktop {
     # The Papirus icon theme comes from catppuccin.gtk.icon.
     packages = with pkgs; [
       gtkTheme
-      lilex-nerdfont-zero
+      nordwand-mono-nerd
     ];
 
     # GIMP 3 uses its own CSS theme engine with custom widget classes
@@ -132,11 +132,11 @@ lib.mkIf cfg.desktop {
       package = gtkTheme;
     };
 
-    # 11pt: 10pt Lilex reads soft on the ~92 DPI externals. The weight is
-    # Medium through the fontconfig rule below, not through this name
-    # (libadwaita's CSS would override a weight given here).
+    # 11pt = 14.67px at 96 dpi on the ~92 DPI externals (ghostty runs 15pt =
+    # 20px). No weight tweak: Nerdwand Mono's Regular is the intended text
+    # weight, unlike Lilex's, which needed a fontconfig nudge to Medium.
     font = {
-      name = "Lilex Nerd Font";
+      name = "Nerdwand Mono";
       size = 11;
     };
 
@@ -231,13 +231,13 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>sans-serif</family>
             <prefer>
-              <family>Lilex Nerd Font</family>
+              <family>Nerdwand Mono</family>
             </prefer>
           </alias>
           <alias binding="same">
             <family>monospace</family>
             <prefer>
-              <family>Lilex Nerd Font Mono</family>
+              <family>Nerdwand Mono</family>
             </prefer>
           </alias>
           <!-- niri's own UI (hotkey overlay, screenshot UI) asks fontconfig for
@@ -246,24 +246,9 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>mono</family>
             <prefer>
-              <family>Lilex Nerd Font Mono</family>
+              <family>Nerdwand Mono</family>
             </prefer>
           </alias>
-          <!-- Lilex Regular reads thin and soft on the ~92 DPI externals, so a
-               request for Lilex at the regular weight gets Medium instead,
-               whatever asked for it: GTK, libadwaita CSS (which pins
-               font-weight: 400 and so ignores a "Medium" in gtk-font-name),
-               waybar, fuzzel, swaync, ghostty. Bold, italic and lighter
-               weights are untouched. A config that says "Regular" for Lilex
-               therefore renders Medium; this rule is why. -->
-          <match target="pattern">
-            <test name="family" compare="contains"><string>Lilex</string></test>
-            <!-- qual="all" also matches a request without any weight
-                 (fuzzel, plain fc-match), which a plain eq test misses -->
-            <test qual="all" name="weight" compare="more_eq"><const>regular</const></test>
-            <test qual="all" name="weight" compare="less"><const>medium</const></test>
-            <edit name="weight" mode="assign" binding="strong"><const>medium</const></edit>
-          </match>
         </fontconfig>
       '';
 

@@ -56,8 +56,8 @@ let
   # and volume icons live in home-manager/modules/waybar/default.nix).
   #
   # Every codepoint here was checked against the built font's charset
-  # (fc-query / fontTools cmap) of pkgs/lilex-nerdfont-zero.nix -- the
-  # Font Awesome and Material ranges are in nixpkgs' nerd-fonts builds.
+  # (fc-query / fontTools cmap) of pkgs/nordwand-mono-nerd -- the
+  # Font Awesome and Material ranges are in its `--complete` Nerd Font build.
   icons = {
     cpu = glyph "F2DB"; # fa-microchip
     memory = glyph "F035B"; # md-memory

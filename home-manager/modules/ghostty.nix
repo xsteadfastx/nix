@@ -20,21 +20,18 @@ lib.mkIf cfg.desktop {
     enable = true;
     package = pkgs.unstable.ghostty;
     settings = {
-      font-family = "Lilex Nerd Font";
-      # 15pt = 20px here. At 14pt (18.67px) no hinting variant sharpened
-      # Lilex without distorting its widths; the larger size was the only
-      # clear gain on the ~92 DPI externals (ghostty is grayscale-only).
+      font-family = "Nerdwand Mono";
+      # 15pt = 20px here, a whole-pixel em on the ~92 DPI externals (ghostty is
+      # grayscale-only).
       font-size = 15;
-      # Explicit as well: the fontconfig Lilex Regular -> Medium rule
-      # (home-manager/modules/gtk) cannot catch a request by style name.
-      font-style = "Medium";
-      # Lilex draws `->`, `=>` & co. from two glyphs, which FreeType hints
-      # separately: at 15pt the shaft snapped a pixel below the arrowhead
-      # (mishamyrt/Lilex#50, size-dependent, wontfix upstream). Unhinted, both
-      # stay on the same row at every size, at the cost of slightly softer
-      # edges. Measured in ghostty 1.4: hinted 11.45 vs 10.58, unhinted 11.43
-      # vs 11.38 (row of shaft vs head).
-      freetype-load-flags = "no-hinting";
+      # No freetype-load-flags: ghostty's defaults (hinting, light target) are
+      # what we want, and they measured sharper than the unhinted rendering
+      # (0.379 vs 0.359 fully-snapped ink pixels at 20px). The `no-hinting` this
+      # used to set was a Lilex workaround: Lilex builds `->`/`=>` from two
+      # glyphs that FreeType hints separately and misaligns at some sizes
+      # (mishamyrt/Lilex#50). Nerdwand draws them as one ligature glyph, and its
+      # `--`/`===` joins stay on identical pixel rows at every size from 12 to
+      # 24px in both hint modes, so hinting is safe here.
       shell-integration = "fish";
       window-decoration = false;
       gtk-single-instance = true;

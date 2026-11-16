@@ -10,19 +10,19 @@ let
 
   # The Catppuccin port's stylesheet (catppuccin.swaync is off, see
   # ../catppuccin.nix), with the session font instead of its hardcoded
-  # "Ubuntu Nerd Font" -- size stays at the port's 14px: 12px Lilex reads thin
-  # at ~92 DPI -- plus a colour for toggle buttons that are on, which the port
-  # leaves empty. Same blue as its DND switch.
+  # "Ubuntu Nerd Font" -- size stays at the port's 14px -- plus a colour for
+  # toggle buttons that are on, which the port leaves empty. Same blue as its
+  # DND switch.
   inherit (config.catppuccin) flavor;
   ctp = import ../../../lib/palette.nix {
     inherit lib;
     inherit (config) catppuccin;
   };
   style = pkgs.runCommand "swaync-catppuccin-${flavor}.css" { } ''
-    sed 's/"Ubuntu Nerd Font"/"Lilex Nerd Font"/' \
+    sed 's/"Ubuntu Nerd Font"/"Nerdwand Mono"/' \
       ${config.catppuccin.sources.swaync}/${flavor}.css > $out
     # an upstream rename would make the substitution miss silently
-    grep -q '"Lilex Nerd Font"' $out || { echo "font not substituted"; exit 1; }
+    grep -q '"Nerdwand Mono"' $out || { echo "font not substituted"; exit 1; }
     cat >> $out <<'EOF'
 
     .widget-buttons-grid flowboxchild > button.toggle:checked {

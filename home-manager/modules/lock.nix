@@ -51,7 +51,7 @@ lib.mkIf cfg.desktop {
     settings = {
       daemonize = true;
       show-failed-attempts = true;
-      font = "Lilex Nerd Font";
+      font = "Nerdwand Mono";
       indicator-idle-visible = true;
       indicator-radius = 100;
       indicator-thickness = 20;
