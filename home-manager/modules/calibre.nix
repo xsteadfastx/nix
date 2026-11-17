@@ -22,6 +22,14 @@ in
   # separate key import: it picks up DeACSM's Adobe key on its own. DeACSM exists
   # to fulfill Adobe-DRM .acsm files (Thalia, Kobo, Onleihe, Google Play) into
   # EPUB/PDF first.
+  #
+  # DeACSM is removed before every re-add: `calibre-customize -a` initializes the
+  # already-installed copy *and* the new zip in one process, and each bakes the
+  # OpenSSL store path of the build it came from. After an OpenSSL bump the second
+  # `oscrypto.use_openssl()` call then hits oscrypto's "already imported" guard,
+  # which aborts plugin installation - and with it the whole activation. Removing
+  # first leaves one copy, so the paths can never disagree. The plugin's own data
+  # (~/.config/calibre/plugins/ACSMInput) is untouched by `-r`.
   home.activation.calibre-plugins = lib.mkIf cfg.desktop (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       ${lib.escapeShellArgs [
@@ -33,6 +41,11 @@ in
         "${pkgs.calibre}/bin/calibre-customize"
         "-a"
         "${pkgs.calibre-dedrm-plugin}/Obok_plugin.zip"
+      ]}
+      ${lib.escapeShellArgs [
+        "${pkgs.calibre}/bin/calibre-customize"
+        "-r"
+        "ACSM Input"
       ]}
       ${lib.escapeShellArgs [
         "${pkgs.calibre}/bin/calibre-customize"
