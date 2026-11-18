@@ -8,16 +8,16 @@
 
 buildGoModule rec {
   pname = "mautrix-telegram";
-  version = "0.2608.0";
+  version = "0.2611.0";
 
   src = fetchFromGitHub {
     owner = "mautrix";
     repo = "telegram";
     rev = "v${version}";
-    hash = "sha256-EQ7c98GOaXaMcLF5xJfZ6tV+X9TKjNnd8a3ToJahNsE=";
+    hash = "sha256-z3jfjQyh47scBjHNThLn5DluSSS4fT21NAibWyD5Iqc=";
   };
 
-  vendorHash = "sha256-sh3CejNXhSLp2l4ZnfWwdwxqF+yzCn7/T4EWfVX84m8=";
+  vendorHash = "sha256-byvTXR7gy6b/TIVfJ8bwMC/D9vqn6iwjoxBE1gkBNBc=";
 
   subPackages = [ "cmd/mautrix-telegram" ];
 

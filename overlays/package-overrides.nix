@@ -61,19 +61,18 @@ in
   # Go (bridgev2) mautrix-slack pinned past the "missing version data" login
   # bug (mautrix/slack#95, merged; lands in v0.2608.0), which aborts token-login
   # before the real credential check.
-  # ponytail: the 26.05 pin ships 26.04 and unstable 26.09.1; dipper uses the
-  # default mkPackageOption (the pin), so this stays until the pin passes
-  # v0.2608.0.
+  # ponytail: the pin (nixpkgs 26.05) ships 26.04, so this stays until a flake
+  # update brings nixpkgs past v0.2608.0 -- then delete this override.
   mautrix-slack = prev.mautrix-slack.overrideAttrs rec {
-    version = "26.09";
-    tag = "v0.2609.0";
+    version = "26.11";
+    tag = "v0.2611.0";
     src = prev.fetchFromGitHub {
       owner = "mautrix";
       repo = "slack";
       inherit tag;
-      hash = "sha256-FVeRHTYmMZ/Exh8pPwId7+nCrChdBAo/bvQagIua1TY=";
+      hash = "sha256-g8Tx+dkK+OWqchw1laJC8lInhOQk0d17dr4hwZIAqVQ=";
     };
-    vendorHash = "sha256-F4A/ly7LqawBCvRF0U4BxMJmvTLNuZ8TpadkltUi6HQ=";
+    vendorHash = "sha256-1B4e4Ka+IYO1/d0GpGhR85hth3tnPCN7LVuWzyk/x9s=";
     # pkg/msgconv unit tests need env fixtures that don't exist in the nix
     # build sandbox; irrelevant to bridge runtime. Skip them.
     doCheck = false;
