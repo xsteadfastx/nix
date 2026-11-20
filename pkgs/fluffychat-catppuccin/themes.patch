@@ -1,0 +1,34 @@
+--- a/lib/config/themes.dart
++++ b/lib/config/themes.dart
+@@ -4,6 +4,7 @@
+ // SPDX-License-Identifier: AGPL-3.0-or-later
+ 
+ import 'package:fluffychat/config/app_config.dart';
++import 'package:fluffychat/config/catppuccin_theme.g.dart';
+ import 'package:fluffychat/config/setting_keys.dart';
+ import 'package:flutter/services.dart';
+ import 'package:material_ui/material_ui.dart';
+@@ -45,11 +46,10 @@
+     Brightness brightness, [
+     Color? seed,
+   ]) {
+-    final colorScheme = ColorScheme.fromSeed(
+-      brightness: brightness,
+-      seedColor: seed ?? Color(AppSettings.colorSchemeSeedInt.value),
+-      dynamicSchemeVariant: DynamicSchemeVariant.rainbow,
+-    );
++    // Seeded from the "Set color theme" swatch upstream; here it is the
++    // configured Catppuccin flavour and accent (catppuccin_theme.g.dart, written
++    // by the nix build). `seed` is kept for signature compatibility.
++    final colorScheme = catppuccinScheme(brightness);
+     final isColumnMode = FluffyThemes.isColumnMode(context);
+     final dividerColor = brightness == Brightness.dark
+         ? colorScheme.surfaceContainerHighest
+@@ -58,6 +58,7 @@
+       visualDensity: VisualDensity.standard,
+       useMaterial3: true,
+       brightness: brightness,
++      fontFamily: catppuccinFontFamily,
+       colorScheme: colorScheme,
+       dividerColor: dividerColor,
+       segmentedButtonTheme: SegmentedButtonThemeData(
