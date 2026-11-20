@@ -66,6 +66,17 @@ _: {
         owner = "marv";
       };
 
+      # GitLab MCP: the official server is the instance's own /api/v4/mcp
+      # endpoint (StreamableHTTP), bridged to stdio by mcp-proxy with this
+      # token as the Bearer (API_ACCESS_TOKEN). It must be a FINE-GRAINED PAT
+      # with the "MCP" tool resource + Execute: GitLab rejects legacy PATs here
+      # (403 insufficient_scope, scope=mcp). It additionally needs read
+      # permissions on the resources the tools touch, otherwise REST-backed
+      # tools fail with insufficient_granular_scope.
+      "mcp-gitlab-token" = {
+        owner = "marv";
+      };
+
       "gh-token" = {
         owner = "marv";
       };

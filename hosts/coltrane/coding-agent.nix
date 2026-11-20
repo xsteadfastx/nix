@@ -340,6 +340,27 @@
             API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-youtrack-token".path;
           };
         };
+        # GitLab's official MCP server: the instance serves it itself at
+        # /api/v4/mcp (StreamableHTTP, GitLab 18.x+, and an instance admin must
+        # allow MCP access), so this is the youtrack shape -- mcp-proxy bridges
+        # the remote endpoint to stdio and the fine-grained PAT rides as
+        # API_ACCESS_TOKEN via the *_FILE secret wrapper. The PAT needs the
+        # "MCP" tool + Execute (legacy PATs get 403 insufficient_scope) *and*
+        # read permissions on the resources the tools touch: every tool call is
+        # an ordinary API request, so a token holding only execute_mcp_tool
+        # connects fine but then fails per tool with insufficient_granular_scope
+        # (GraphQL-backed tools happen to pass, REST-backed ones do not).
+        # Deliberately not the native `url` + OAuth entry: that signs in per
+        # client, and pi and claude share this one mcp.json.
+        gitlab = {
+          enable = true;
+          args = [
+            "--transport"
+            "streamablehttp"
+            "https://git.wobcom.de/api/v4/mcp"
+          ];
+          secretEnv.API_ACCESS_TOKEN_FILE = config.sops.secrets."mcp-gitlab-token".path;
+        };
       };
 
       # NetBox MCP (netboxlabs/netbox-mcp-server): read-only REST API. URL is a
