@@ -196,8 +196,16 @@ lib.mkIf cfg.desktop {
     '';
   };
   dconf.enable = true;
-  # Read by GTK 4 through the settings portal (see gtk4.extraConfig above).
-  dconf.settings."org/gnome/desktop/interface".font-rendering = "manual";
+  dconf.settings."org/gnome/desktop/interface" = {
+    # Read by GTK 4 through the settings portal (see gtk4.extraConfig above).
+    font-rendering = "manual";
+    # The settings portal exposes this as `org.freedesktop.appearance
+    # color-scheme`, which is what Flutter apps (FluffyChat) and libadwaita
+    # read to pick dark. `gtk-application-prefer-dark-theme` in the GTK
+    # settings files never reaches them -- nothing sets it under niri, so the
+    # portal answered 0 (no preference) and FluffyChat stayed light.
+    color-scheme = "prefer-dark";
+  };
 
   # Qt apps mirror the GTK theme + font, and use the Catppuccin Kvantum style
   # (solid, see kvantumSolid above) instead of adwaita-dark. The kvconfig is
@@ -247,6 +255,16 @@ lib.mkIf cfg.desktop {
                resolves to DejaVu Sans Mono. -->
           <alias binding="same">
             <family>mono</family>
+            <prefer>
+              <family>Nerdwand Mono</family>
+            </prefer>
+          </alias>
+          <!-- Flutter apps (FluffyChat) hardcode Material's default family,
+               `Roboto`, in their theme and never read gtk-font-name; unaliased
+               fontconfig hands them Noto Sans. No Flutter app on this box has
+               any business in Roboto, so the alias is unconditional. -->
+          <alias binding="same">
+            <family>Roboto</family>
             <prefer>
               <family>Nerdwand Mono</family>
             </prefer>
