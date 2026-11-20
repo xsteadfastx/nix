@@ -73,6 +73,7 @@ lib.mkIf cfg.matrix {
     # element-web + Electron locally on every nixpkgs bump. Wayland comes from
     # NIXOS_OZONE_WL in hosts/coltrane/configuration.nix, at runtime.
     pkgs.element-desktop
+    pkgs.fluffychat-catppuccin
   ];
 
   xdg.configFile."iamb/config.toml".source = iambConfig;

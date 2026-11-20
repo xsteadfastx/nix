@@ -14,7 +14,8 @@ lk-jwt, TURN), and the two local bridge modules
 ## Clients on coltrane
 
 [`home-manager/modules/matrix.nix`](../home-manager/modules/matrix.nix) installs
-two: **iamb** (TUI, flat unread-sorted room list) and **Element Desktop**. Only
+three: **iamb** (TUI, flat unread-sorted room list), **Element Desktop** and
+**FluffyChat** (`pkgs.fluffychat-catppuccin`). Only
 Element can join Element Call/LiveKit calls, so it is the client for calls, bridge
 QR logins and the admin room. nheko was dropped once Element arrived: it needed
 an `olm` insecure permission plus a qt6ct wrapper just to be themed, and gave
