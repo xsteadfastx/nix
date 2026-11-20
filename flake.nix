@@ -16,7 +16,6 @@
     christine-preuss-de.inputs.nixpkgs.follows = "nixpkgs-unstable";
     christine-preuss-de.url = "github:xsteadfastx/christine-preuss.de";
     coding-agent.inputs.home-manager.follows = "home-manager";
-    coding-agent.inputs.nixpkgs.url = "github:NixOS/nixpkgs/b91ec660684d035fba9cd692abce86c7c22b7b08";
     coding-agent.url = "git+https://git.xsfx.dev/xsteadfastx/coding-agent.git";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
     colmena.url = "github:zhaofengli/colmena";
