@@ -328,6 +328,14 @@
           };
         };
         # YouTrack remote MCP over StreamableHTTP, Bearer token via mcp-proxy.
+        # The endpoint rides as $YOUTRACK_URL, expanded by the secret wrapper
+        # after it injects YOUTRACK_URL_FILE. That shape was broken for a day
+        # (2026-11-20): youtrack and gitlab both run mcp-proxy, the wrapper is
+        # named after the binary, so only one of the two scripts survived and
+        # YOUTRACK_URL was never set -- mcp-proxy exited "Either a command_or_url
+        # ... must be provided" and the server vanished silently. Fixed upstream
+        # in coding-agent 800da6c (wrappers inject every declared `*_FILE` key),
+        # so this works as long as that fix is in the pinned input.
         youtrack = {
           enable = true;
           args = [
