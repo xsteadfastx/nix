@@ -318,6 +318,22 @@
     # memory save
     oomd.enable = false;
 
+    # Keep an OOM kill down to the process the kernel picked. Default `stop`
+    # stops the *unit* -- and every app2unit app shares one
+    # `app-niri-<app>-<id>.scope` with its terminal, zellij and all its pi
+    # sessions. 2026-11-23: kernel killed a 63 MB activity-mcp, systemd then
+    # SIGKILLed that scope and 19 pi sessions with it.
+    #
+    # `systemd.settings.Manager` writes /etc/systemd/system.conf, i.e. the
+    # system manager only -- app scopes are created by `systemd --user`, which
+    # reads /etc/systemd/user.conf; verified 2026-11-23 that a scope created by
+    # the user manager still reports OOMPolicy=stop while the system manager
+    # reports continue. Applies to scopes created after the user manager
+    # restarts (next login).
+    user.extraConfig = ''
+      DefaultOOMPolicy=continue
+    '';
+
     # Hard ceiling on tasks per user, so a runaway fork storm fails with EAGAIN
     # instead of eating RAM and swap until the OOM killer takes the desktop
     # apart (2026-09-18: ~53k processes, ~17GB swap; 2026-10-07: ~12k
@@ -411,7 +427,18 @@
     earlyoom = {
       enable = true;
       freeMemThreshold = 5;
-      freeSwapThreshold = 5;
+      # earlyoom acts only when BOTH memory and swap are below their minimum
+      # (earlyoom --help). This machine's only swap is zram (hosts/coltrane/
+      # disko.nix), i.e. compressed *RAM*: swap-free is not an independent
+      # signal, it is memory pressure seen a second time, so the default 5 %
+      # gate keeps earlyoom asleep until the zram device is nearly full -- the
+      # instant before the kernel OOM killer acts. 2026-11-23: at 09:33:56 the
+      # kernel dumped "Free swap = 0kB" and 65 MB free RAM, and earlyoom had
+      # killed nothing since June. Raising the gate to 100 % makes it a no-op
+      # and leaves the SIGTERM decision to `-m 5`, which is what zram setups
+      # do upstream (e.g. vic/vix uses freeSwapThreshold = 100).
+      freeSwapThreshold = 100;
+      freeSwapKillThreshold = 100;
       extraArgs = [
         # "-g"
         "--avoid"
