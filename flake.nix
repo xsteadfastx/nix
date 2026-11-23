@@ -109,7 +109,7 @@
         inherit (preCommitGen) formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
         packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
-        packages.paperless-gpt = pkgs.callPackage ./pkgs/paperless-gpt/package.nix { };
+        packages.paperless-mcp = pkgs.callPackage ./pkgs/paperless-mcp/package.nix { };
         packages.nordwand-mono-nerd = pkgs.callPackage ./pkgs/nordwand-mono-nerd/package.nix { };
         packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
         packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };

@@ -9,7 +9,13 @@ _: {
       "paperless-api-token" = {
         owner = "paperless";
       };
-      "paperless-gpt-env" = { };
+      # Same token, separate file for the coding agent's paperless MCP server
+      # (owned by marv: the agent runs as marv and cannot read the paperless-owned
+      # copy above).
+      "mcp-paperless-token" = {
+        key = "paperless-api-token";
+        owner = "marv";
+      };
 
       # grafana-viz-mon MCP (monitoring Grafana instance)
       "mcp-grafana-token" = {

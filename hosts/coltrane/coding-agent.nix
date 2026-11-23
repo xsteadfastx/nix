@@ -393,6 +393,25 @@
         tokenFile = config.sops.secrets."mcp-netbox-token".path;
         extraEnv.NETBOX_URL_FILE = config.sops.secrets."mcp-netbox-url".path;
       };
+
+      # Paperless-NGX MCP (baruchiro/paperless-mcp, packaged in pkgs/paperless-mcp).
+      # Talks to the local instance over loopback; PAPERLESS_PUBLIC_URL only makes
+      # the document links it prints clickable. The API token arrives through the
+      # *_FILE secret wrapper (PAPERLESS_API_KEY_FILE -> PAPERLESS_API_KEY) from a
+      # marv-owned sops copy of paperless-api-token. PAPERLESS_MCP_UPLOAD_PATHS
+      # confines `file_path` uploads to the consume dir instead of /etc/shadow.
+      # Note: upstream has no read-only switch -- this server can delete documents,
+      # tags and correspondents.
+      extra.paperless = {
+        bin = pkgs.paperless-mcp;
+        command = "paperless-mcp";
+        env = {
+          PAPERLESS_URL = "http://127.0.0.1:28981";
+          PAPERLESS_PUBLIC_URL = "https://paperless.local";
+          PAPERLESS_MCP_UPLOAD_PATHS = "/var/lib/paperless/consume";
+          PAPERLESS_API_KEY_FILE = config.sops.secrets."mcp-paperless-token".path;
+        };
+      };
     };
   };
 }
