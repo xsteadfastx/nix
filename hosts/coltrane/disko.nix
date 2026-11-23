@@ -6,7 +6,17 @@
       forceImportRoot = true;
       requestEncryptionCredentials = true;
     };
-    kernel.sysctl."vm.swappiness" = 60;
+    # zram (below) is the only swap, and swapping a page into it costs a
+    # memcpy + zstd instead of a disk seek -- the assumption behind the default
+    # 60. Values above 100 are what the kernel doc recommends for in-memory
+    # swap, and what zram tuning upstream uses (Arch/Pop!_OS 180, e.g.
+    # OmerFarukOruc/nixos-config 150): prefer compressing a cold anon page
+    # (~3:1 here, 8.9 GB held in 2.8 GB of RAM) over dropping page cache that
+    # then has to be read back from ZFS. Not 180: the ZFS ARC (capped 8 GiB,
+    # invisible to MemAvailable) makes this box less cache-expendable than the
+    # desktops those tunings come from. Only has an effect under memory
+    # pressure -- if pswpout barely grows, it is doing nothing.
+    kernel.sysctl."vm.swappiness" = 150;
   };
   environment.systemPackages = [ pkgs.zfs ];
   networking.hostId = "00000001";
