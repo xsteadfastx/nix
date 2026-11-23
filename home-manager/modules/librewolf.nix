@@ -143,6 +143,51 @@ lib.mkIf cfg.desktop {
         # this block. Sites without a dark stylesheet keep their light look.
         "layout.css.prefers-color-scheme.content-override" = 0;
       };
+      # uBlock Origin's filter-list selection, as managed storage. The profile's
+      # uBO once ended up with *every* list unticked (0 filters, "blocked since
+      # install: 0"), so only AdGuard DNS was blocking -- and RTL+ then refused
+      # to play: its player re-fetches a failed smartclip ad request and calls
+      # a hard network failure an ad blocker, a check uBO's own
+      # `plus.rtl.de##+js(no-xhr-if, smartclip)` (uBlock filters 2026) defuses
+      # (2026-11-23). `toOverwrite` replaces the local selection on every uBO
+      # start, so ticking a list in the dashboard does not stick: add it here.
+      # Tokens are assets.json keys, taken from a dashboard backup
+      # ("selectedFilterLists"): uBO's defaults plus the privacy, phishing,
+      # cookie-notice, social-widget and annoyance lists, and DEU-0 (EasyList
+      # Germany).
+      "3rdparty".Extensions."uBlock0@raymondhill.net".toOverwrite.filterLists = [
+        "user-filters"
+        "ublock-filters"
+        "ublock-badware"
+        "ublock-privacy"
+        "ublock-quick-fixes"
+        "ublock-unbreak"
+        "easylist"
+        "easyprivacy"
+        "LegitimateURLShortener"
+        "adguard-spyware-url"
+        "urlhaus-1"
+        "curben-phishing"
+        "plowe-0"
+        "fanboy-cookiemonster"
+        "ublock-cookies-easylist"
+        "adguard-cookies"
+        "ublock-cookies-adguard"
+        "fanboy-social"
+        "adguard-social"
+        "fanboy-thirdparty_social"
+        "fanboy-ai-suggestions"
+        "easylist-chat"
+        "easylist-newsletters"
+        "easylist-notifications"
+        "easylist-annoyances"
+        "adguard-mobile-app-banners"
+        "adguard-other-annoyances"
+        "adguard-popup-overlays"
+        "adguard-widgets"
+        "ublock-annoyances"
+        "DEU-0"
+      ];
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis,
       # which LibreWolf would load (`requireSigning = false`) but which then
@@ -169,9 +214,13 @@ lib.mkIf cfg.desktop {
           # runs VM/TM, and GM4 dropped the sync GM_* APIs (GM_xmlhttpRequest)
           # that the importers rely on.
           "{aecec67f-0d10-4fa7-b7c7-609a2db280cf}" = amo "violentmonkey";
-          # The community fork (Guus), not AMO's "i-dont-care-about-cookies" —
-          # that one is the Gen Digital/Avast-owned original.
-          "idcac-pub@guus.ninja" = amo "istilldontcareaboutcookies";
+          # "I still don't care about cookies": replaced by uBO's four cookie-
+          # notice lists (3rdparty filterLists above), which do the same job
+          # without a second extension rewriting pages. Blocked, not just
+          # dropped -- a removed policy entry leaves the add-on installed.
+          "idcac-pub@guus.ninja" = {
+            installation_mode = "blocked";
+          };
           "uBlock0@raymondhill.net" = amo "ublock-origin";
           "{d7742d87-e61d-4b78-b8a1-b469842139fa}" = amo "vimium-ff";
           # Slack gates huddles on the user agent: Firefox on Windows and macOS is
