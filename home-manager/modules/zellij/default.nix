@@ -651,7 +651,13 @@ in
         // ponytail: only covers `.../pi`/`.../claude` and `.../pi <args>`/
         // `.../claude <args>` shapes; a user-typed `-c` still becomes
         // `--continue -c` (harmless, both mean "continue").
-        // post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
+        //
+        // Disabled on 2026-09-23 (07e55ca) over the pre-sway attach race, which
+        // was never this hook's problem -- the hook only rewrites a command on
+        // resurrection. Re-enabled 2026-11-23: the kernel OOM-killed the whole
+        // ghostty scope, zellij resurrected all 8 tabs correctly, and every `pi`
+        // pane came back as a *fresh* session because this line was off.
+        post_command_discovery_hook "echo $RESURRECT_COMMAND | sed -E '/--continue/ { p; d; }; s#^(([^ ]*/)?(pi|claude))$#\\1 --continue#; t; s#^(([^ ]*/)?(pi|claude)) #\\1 --continue #; t'"
 
         // tmux-style prefix: C-a enters locked (prefix-following) mode, and
         // Ctrl-a is the only key zellij owns -- see the unbind below.
