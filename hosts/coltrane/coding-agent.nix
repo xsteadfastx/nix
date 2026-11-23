@@ -37,6 +37,21 @@
         apply`, no `colmena apply`, no `systemctl restart` of a service, no
         production mutation of any kind. The user alone decides when and how something goes live. If a
         deploy is needed, surface it and let the user run it.
+      - **NEVER destroy data for yourself.** Deletion and anything else
+        irreversible is *proposed*, never performed: deleting documents,
+        correspondents, tags, document types, notes or mail rules in paperless
+        (the `delete_*` MCP tools), `DELETE`/`DROP`/`TRUNCATE` on any database,
+        `rm -rf`, `git push --force`, `nix-collect-garbage -d` (it deletes every
+        non-current generation), removing a nix profile, `mkfs`/`wipefs`/`disko`
+        on a disk, `docker volume rm`, `kubectl delete`. Say what would be lost,
+        name the exact command or tool call, and stop — an explicit yes in this
+        conversation is the only thing that turns a proposal into an action.
+      - **Tidying up is not a deletion instruction.** "Clean this up", "get rid of
+        the duplicates" and "that looks wrong" all mean *report and propose*.
+        Prefer the reversible/reversible-looking operation every time — e.g. a
+        paperless `remove_tag` on specific documents over the system-wide
+        `delete_tag`, an archive/rename over an `rm` — and if only the destructive
+        one exists, ask first.
 
       ## YouTrack — referencing tickets from commits
 

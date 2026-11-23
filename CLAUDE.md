@@ -258,5 +258,6 @@ The agent has the following MCPs configured:
 ## 📝 Guidelines for the Agent
 1. **Secret Handling**: NEVER hardcode secrets. Always use the `sops-nix` pattern.
 2. **Grafana MCP**: the `grafana` MCP is locked read-only (`--disable-write`); use it for telemetry/log queries. Its URL and token come from sops secrets, not this file.
-3. **Persistence**: Update this `CLAUDE.md` file whenever a significant architectural decision is made, a new workaround is discovered, or system changes are implemented.
-4. **End-of-Session Update**: At the end of every session where changes are made, the agent MUST summarize the work and update `CLAUDE.md` to keep the project memory current.
+3. **Destructive operations are proposed, never performed**: deletions and other irreversible actions (paperless `delete_*`, `DELETE`/`DROP`, `rm -rf`, force-push, `nix-collect-garbage -d`, `mkfs`) are named and left for the user to run. The full rule lives in the `soulExtra` in `hosts/coltrane/coding-agent.nix`, so it reaches both pi and Claude.
+4. **Persistence**: Update this `CLAUDE.md` file whenever a significant architectural decision is made, a new workaround is discovered, or system changes are implemented.
+5. **End-of-Session Update**: At the end of every session where changes are made, the agent MUST summarize the work and update `CLAUDE.md` to keep the project memory current.
