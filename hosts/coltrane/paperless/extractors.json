@@ -1,0 +1,21 @@
+[
+  {
+    "name": "paypal",
+    "match": "service@paypal\\.de|PAYPAL \\*",
+    "tag": "paypal",
+    "correspondent": null,
+    "correspondent_regex": "Zahlung an ([^\\n]{2,60}?)(?:\\.\\.\\.|\\s+\\S+@\\S+|\\s+gezahlt|\\s+Mitteilung|\\s+Händler|\\s+Transaktionscode)",
+    "correspondent_fallback_regex": "Subject: Beleg f(?:ü|u)r Ihre Zahlung an ([^\\n]+)",
+    "amount_regex": "Gesamtbetrag(?:\\s+dieser\\s+Transaktion)?:?\\s+([\\d.,]+)\\s*(?:€|EUR)",
+    "amount_fallback_regex": "Summe\\s+([\\d.,]+)\\s*(?:€|EUR)",
+    "title": "{correspondent} {amount} {created}"
+  },
+  {
+    "name": "amazon",
+    "match": "amazon\\.de",
+    "tag": null,
+    "correspondent": "Amazon",
+    "amount_regex": "Summe\\s+([\\d.,]+)\\s*(?:EUR|€)",
+    "title": "{correspondent} {amount} {created}"
+  }
+]

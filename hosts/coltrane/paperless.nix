@@ -5,107 +5,12 @@
   ...
 }:
 let
-
   fetchTessdataBest =
     { lang, hash }:
     pkgs.fetchurl {
       url = "https://github.com/tesseract-ocr/tessdata_best/raw/4.1.0/${lang}.traineddata";
       inherit hash;
     };
-
-  extractAmount = pkgs.writeShellScript "paperless-extract-amount" ''
-    correspondent_id=$1
-    content=$2
-
-    case "$correspondent_id" in
-      1)
-        # Amazon: "Summe 109.99 EUR"
-        printf '%s' "$content" \
-          | ${pkgs.gnugrep}/bin/grep -oP 'Summe\s+\K[\d.]+(?=\s+EUR)' \
-          | head -1
-        ;;
-      14)
-        # PayPal: "Gesamtbetrag 12,99 €" or "Gesamtbetrag dieser Transaktion: 26,94 €"
-        printf '%s' "$content" \
-          | ${pkgs.gnugrep}/bin/grep -oP 'Gesamtbetrag(?:\s+dieser\s+Transaktion)?:?\s+\K[\d,]+(?=\s*€)' \
-          | head -1 \
-          | ${pkgs.gnused}/bin/sed 's/,/./'
-        ;;
-    esac
-  '';
-
-  betragBackfillScript = pkgs.writeShellScript "paperless-betrag-backfill" ''
-    token=$(cat ${config.sops.secrets."paperless-api-token".path})
-
-    for correspondent_id in 1 14; do
-      ids=$(${pkgs.curl}/bin/curl -sf \
-        "http://127.0.0.1:28981/api/documents/?correspondent__id=$correspondent_id&page_size=100" \
-        -H "Authorization: Token $token" \
-        | ${pkgs.jq}/bin/jq -r '
-            .results[]
-            | select(
-                (.custom_fields | map(select(.field == 1 and .value != null)) | length) == 0
-              )
-            | .id')
-
-      if [ -z "$ids" ]; then
-        echo "correspondent $correspondent_id: no documents missing Betrag"
-        continue
-      fi
-
-      for id in $ids; do
-        content=$(${pkgs.curl}/bin/curl -sf \
-          "http://127.0.0.1:28981/api/documents/$id/" \
-          -H "Authorization: Token $token" \
-          | ${pkgs.jq}/bin/jq -r '.content')
-
-        amount=$(${extractAmount} "$correspondent_id" "$content")
-
-        if [ -z "$amount" ]; then
-          echo "doc $id: no amount found, skipping"
-          continue
-        fi
-
-        formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
-        if ${pkgs.curl}/bin/curl -sf -X PATCH \
-          "http://127.0.0.1:28981/api/documents/$id/" \
-          -H "Authorization: Token $token" \
-          -H "Content-Type: application/json" \
-          -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}" > /dev/null; then
-          echo "doc $id: set Betrag EUR$formatted"
-        else
-          echo "doc $id: PATCH failed"
-          exit 1
-        fi
-      done
-    done
-  '';
-
-  postConsumeScript = pkgs.writeShellScript "paperless-post-consume" ''
-    if [ "$DOCUMENT_CORRESPONDENT_ID" != "1" ] && [ "$DOCUMENT_CORRESPONDENT_ID" != "14" ]; then
-      exit 0
-    fi
-
-    token=$(cat ${config.sops.secrets."paperless-api-token".path})
-
-    content=$(${pkgs.curl}/bin/curl -sf \
-      "http://127.0.0.1:28981/api/documents/$DOCUMENT_ID/" \
-      -H "Authorization: Token $token" \
-      | ${pkgs.jq}/bin/jq -r '.content')
-
-    amount=$(${extractAmount} "$DOCUMENT_CORRESPONDENT_ID" "$content")
-
-    if [ -z "$amount" ]; then
-      exit 0
-    fi
-
-    formatted=$(LC_NUMERIC=C printf '%.2f' "$amount")
-    ${pkgs.curl}/bin/curl -sf -X PATCH \
-      "http://127.0.0.1:28981/api/documents/$DOCUMENT_ID/" \
-      -H "Authorization: Token $token" \
-      -H "Content-Type: application/json" \
-      -d "{\"custom_fields\":[{\"field\":1,\"value\":\"EUR$formatted\"}]}"
-  '';
 
   tesseractBest = pkgs.tesseract5.override {
     languages = pkgs.tesseract5.languages // {
@@ -123,6 +28,22 @@ let
       };
     };
   };
+
+  # The script and its extractor table must live in one directory: the script
+  # resolves extractors.json next to itself. Adding a sender is an edit of
+  # /var/lib/paperless/extractors.json, not of this file — see
+  # docs/superpowers/specs/2026-11-23-paperless-paypal-enrichment-design.md
+  enrichSrc = pkgs.runCommand "paperless-enrich-src" { } ''
+    mkdir -p $out
+    cp ${./paperless/paperless-enrich.py} $out/paperless-enrich.py
+    cp ${./paperless/extractors.json} $out/extractors.json
+  '';
+
+  paperless-enrich = pkgs.writeShellScriptBin "paperless-enrich" ''
+    export PAPERLESS_BASE_URL="http://127.0.0.1:${toString config.services.paperless.port}"
+    export PAPERLESS_TOKEN_FILE="${config.sops.secrets."paperless-api-token".path}"
+    exec ${pkgs.python3}/bin/python3 ${enrichSrc}/paperless-enrich.py "$@"
+  '';
 in
 {
   users.users.marv.extraGroups = [ "paperless" ];
@@ -132,23 +53,27 @@ in
     ];
 
     services = {
-      paperless-betrag-backfill = {
-        description = "Backfill Betrag custom field for Amazon documents";
+      paperless-enrich = {
+        description = "Backfill paperless correspondent, title and Betrag from document text";
         after = [ "paperless-web.service" ];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = betragBackfillScript;
+          # `after=` means started, not serving: granian binds the port about a
+          # second before its worker can answer, which made the first backfill
+          # after a switch die on ECONNREFUSED.
+          ExecStartPre = "${paperless-enrich}/bin/paperless-enrich --wait";
+          ExecStart = "${paperless-enrich}/bin/paperless-enrich --backfill";
           User = "paperless";
         };
       };
     };
 
     timers = {
-      paperless-betrag-backfill = {
+      paperless-enrich = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnBootSec = "5min";
-          OnUnitActiveSec = "15min";
+          OnUnitActiveSec = "1h";
         };
       };
     };
@@ -177,7 +102,11 @@ in
         PAPERLESS_URL = "https://paperless.local";
         PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
         PAPERLESS_DATE_ORDER = "DMY";
-        PAPERLESS_POST_CONSUME_SCRIPT = "${postConsumeScript}";
+        PAPERLESS_POST_CONSUME_SCRIPT = "${paperless-enrich}/bin/paperless-enrich";
+        # doc_pk keeps the name collision-free: a duplicate title+date would
+        # otherwise make consumption fail on an existing target path.
+        PAPERLESS_FILENAME_FORMAT = "{created_year}/{correspondent}/{created}_{doc_pk}";
+        PAPERLESS_FILENAME_FORMAT_REMOVE_NONE = "YES";
       };
       passwordFile = config.sops.secrets."paperless-admin-password".path;
     };

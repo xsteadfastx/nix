@@ -11,6 +11,7 @@ hda = "hda"
 abd = "abd" # ZFS ARC Buffered Data (abd_free, arc_hdr_free_abd, ...)
 ba = "ba" # yt-dlp format selector (best audio)
 ratatui = "ratatui" # ratatui-image, the TUI image crate
+Sie = "Sie" # German "Sie" in paperless document fixtures
 
 [default.extend-identifiers]
 # Windows VM/interface name; typos splits identifiers on digits, so this was
