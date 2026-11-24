@@ -431,6 +431,10 @@ def self_test() -> int:
     assert clean_name("thomas.walker@gmx.net") == "thomas.walker"
     assert clean_name("...") is None
 
+    # the post-consume invocation must parse without erroring on its positionals
+    args, _ = build_parser().parse_known_args(POST_CONSUME_ARGV)
+    assert args.document is None, "pk must come from $DOCUMENT_ID, not argv[1]"
+
     print("self-test OK")
     return 0
 
@@ -438,7 +442,24 @@ def self_test() -> int:
 # --- entry point ---------------------------------------------------------
 
 
-def main(argv: list[str]) -> int:
+# paperless-ngx invokes PAPERLESS_POST_CONSUME_SCRIPT as
+# `script <pk> <file> <src> <thumb> <dl> <thumb-url> <correspondent> <tags>`
+# (documents/consumer.py, run_post_consume_script). The pk also arrives as
+# $DOCUMENT_ID, which main() already falls back to -- so unknown positionals
+# must be ignored rather than abort the run with exit 2.
+POST_CONSUME_ARGV = [
+    "171",
+    "2024-01-01 Scan.pdf",
+    "/src.pdf",
+    "/thumb.webp",
+    "/api/documents/171/download/",
+    "/api/documents/171/thumb/",
+    "None",
+    "rechnung",
+]
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     target = parser.add_mutually_exclusive_group()
     target.add_argument("--document", type=int, help="enrich one document id")
@@ -453,7 +474,12 @@ def main(argv: list[str]) -> int:
         "--base-url",
         default=os.environ.get("PAPERLESS_BASE_URL", "http://127.0.0.1:28981"),
     )
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv: list[str]) -> int:
+    args, _ = build_parser().parse_known_args(argv)  # tolerate POST_CONSUME_ARGV
+    parser = build_parser()  # only for parser.error(); parsing already happened
 
     if args.self_test:
         return self_test()
