@@ -12,6 +12,13 @@ abd = "abd" # ZFS ARC Buffered Data (abd_free, arc_hdr_free_abd, ...)
 ba = "ba" # yt-dlp format selector (best audio)
 ratatui = "ratatui" # ratatui-image, the TUI image crate
 Sie = "Sie" # German "Sie" in paperless document fixtures
+# German words in the zettelrobbe SYSTEM_PROMPT (hosts/coltrane/paperless.nix):
+# the prompt is German on purpose, the LLM answers in the document's language.
+Archivs = "Archivs"
+Titel = "Titel"
+Passt = "Passt"
+Feld = "Feld"
+ist = "ist"
 
 [default.extend-identifiers]
 # Windows VM/interface name; typos splits identifiers on digits, so this was
