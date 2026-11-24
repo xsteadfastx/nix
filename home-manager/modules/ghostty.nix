@@ -37,6 +37,11 @@ lib.mkIf cfg.desktop {
       # `--`/`===` joins stay on identical pixel rows at every size from 12 to
       # 24px in both hint modes, so hinting is safe here.
       shell-integration = "fish";
+      # ghostty 1.4 reworked copy-on-select (ghostty#12600): the Linux default
+      # `primary` fills only the PRIMARY selection, so selecting text no longer
+      # lands on the CLIPBOARD that Ctrl+Shift+V pastes from. `both` restores
+      # the 1.3 behavior: mark + select copies to PRIMARY *and* CLIPBOARD.
+      copy-on-select = "both";
       window-decoration = false;
       gtk-single-instance = true;
       mouse-hide-while-typing = true;
