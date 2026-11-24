@@ -11,6 +11,7 @@
     ./meshcore.nix
     ./neovim
     ./secrets.nix
+    ./wayle.nix
     ./wobcom.nix
     ./desktop.nix
   ];

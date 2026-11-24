@@ -273,8 +273,8 @@ lib.mkIf cfg.desktop {
                ink; Medium keeps a solid core (fully-on ink 0.300 vs 0.216 at
                20px, 0.138 vs 0.075 at 14.67px). So a request for Nerdwand at
                the regular weight gets Medium, whatever asked for it: GTK,
-               libadwaita CSS (which pins font-weight: 400), waybar, fuzzel,
-               swaync, swaylock. Bold, italic and lighter weights are
+               libadwaita CSS (which pins font-weight: 400), fuzzel, swaylock.
+               Bold, italic and lighter weights are
                untouched. -->
           <match target="pattern">
             <test name="family" compare="eq"><string>Nerdwand Mono</string></test>

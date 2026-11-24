@@ -79,7 +79,7 @@ lib.mkIf cfg.desktop {
 
   # Starting `niri` instead of `niri-session` is the trap: the compositor comes up
   # but the systemd user manager never learns WAYLAND_DISPLAY/NIRI_SOCKET and
-  # graphical-session.target never starts, so waybar/swayidle/swaync end up in
+  # graphical-session.target never starts, so swayidle/wayle end up in
   # start-limit-hit. ~/.local/bin sits *before* /run/current-system/sw/bin in this
   # login shell's PATH, so this wrapper catches the plain name: no arguments ->
   # the session wrapper, anything else (`niri msg …`, `--session`) -> the real

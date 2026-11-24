@@ -8,8 +8,8 @@ let
   cfg = nixosConfig.features;
 in
 lib.mkIf cfg.desktop {
-  # nm-applet and syncthingtray as systemd user services (like
-  # swayidle/waybar/swaync), instead of backgrounding them from a session script. Two problems that fixes at once: a plain
+  # syncthingtray as a systemd user service (like
+  # swayidle/wayle), instead of backgrounding it from a session script. Two problems that fixes at once: a plain
   # `exec ... &` has no process supervision, so sway-autostart had to pkill
   # leftovers by hand on every sway restart to avoid piling up duplicates --
   # systemd just restarts/replaces the one instance. And Qt apps launched
@@ -22,18 +22,8 @@ lib.mkIf cfg.desktop {
   # flameshot's QT_QPA_PLATFORM=xcb override used to work reliably as a unit
   # rather than a script line.
   #
-  # blueman is not here: its tray icon doesn't render in swaybar at all (SNI
-  # properties unsupported -- see config.nix), so it's launched on demand via
-  # the $mod+b keybind instead of autostarted.
-  systemd.user.services.nm-applet = {
-    Unit.PartOf = [ "graphical-session.target" ];
-    Install.WantedBy = [ "graphical-session.target" ];
-    Service = {
-      ExecStart = "${pkgs.networkmanagerapplet}/bin/nm-applet";
-      Restart = "on-failure";
-    };
-  };
-
+  # blueman and pavucontrol are gone: wayle's bluetooth and audio dropdowns do
+  # pairing and per-app volumes. CLI fallback: bluetoothctl, wpctl.
   systemd.user.services.syncthingtray = lib.mkIf nixosConfig.services.syncthing.enable {
     Unit.PartOf = [ "graphical-session.target" ];
     Install.WantedBy = [ "graphical-session.target" ];

@@ -397,6 +397,9 @@
 
     pcscd.enable = true;
 
+    # wayle's battery module reads UPower; without it the label is "N/A".
+    upower.enable = true;
+
     tailscale = {
       enable = true;
       package = pkgs.tailscale.overrideAttrs { doCheck = false; };
@@ -419,8 +422,6 @@
         };
       };
     };
-
-    blueman.enable = true;
 
     udev.packages = [ pkgs.epkowa ];
 

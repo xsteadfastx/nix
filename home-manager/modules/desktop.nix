@@ -62,8 +62,6 @@ in
     ./niri
     ./applets.nix
     ./lock.nix
-    ./swaync
-    ./waybar
     ./fuzzel.nix
   ];
 
@@ -74,7 +72,7 @@ in
   # wl-copy, native Wayland end to end).
   home.packages = lib.mkIf cfg.desktop (
     [
-      pkgs.blueman
+      pkgs.libnotify # notify-send, for aerc's mail-received hook
       pkgs.wdisplays
       pkgs.grim
       pkgs.slurp
@@ -90,9 +88,7 @@ in
       pkgs.unstable.mediaelch
       pkgs.unstable.mpv
       pkgs.unstable.mqttx
-      pkgs.unstable.networkmanagerapplet
       pkgs.unstable.newsflash
-      pkgs.unstable.pavucontrol
       pkgs.unstable.peek # gif screen recorder
       pkgs.unstable.rawtherapee
       pkgs.unstable.remmina

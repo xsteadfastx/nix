@@ -53,11 +53,10 @@ in
       };
 
       hooks = {
-        # New mail is announced through swaync (the session's
-        # org.freedesktop.Notifications daemon) rather than the terminal bell
-        # alone: notify-send comes from libnotify in ../swaync/default.nix and
-        # reaches swaync over DBUS_SESSION_BUS_ADDRESS, so this works from any
-        # zellij tab, focused or not.
+        # New mail is announced through the session's notification daemon
+        # (wayle) rather than the terminal bell alone: notify-send comes from
+        # libnotify in ../desktop.nix and reaches it over DBUS_SESSION_BUS_ADDRESS,
+        # so this works from any zellij tab, focused or not.
         # Caveats from aerc-config(5): fires only for the folder aerc has
         # *selected* (mail arriving in another folder while you look elsewhere
         # is silent), and only while aerc runs -- its IMAP IDLE connection is

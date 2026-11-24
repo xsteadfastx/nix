@@ -26,11 +26,8 @@ let
   fish = "${pkgs.unstable.fish}/bin/fish";
   fuzzel = "${pkgs.unstable.fuzzel}/bin/fuzzel";
   niri = "${pkgs.niri}/bin/niri";
-  notify-send = "${pkgs.libnotify}/bin/notify-send";
-  brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
   wpctl = "${pkgs.wireplumber}/bin/wpctl";
-  grep = "${pkgs.gnugrep}/bin/grep";
-  awk = "${pkgs.gawk}/bin/awk";
+  brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
   xargs = "${pkgs.findutils}/bin/xargs";
   grim = "${pkgs.grim}/bin/grim";
   slurp = "${pkgs.slurp}/bin/slurp";
@@ -38,24 +35,12 @@ let
   wl-copy = "${pkgs.wl-clipboard}/bin/wl-copy";
   swaylock = "${pkgs.swaylock}/bin/swaylock";
   playerctl = "${pkgs.playerctl}/bin/playerctl";
-  swaync-client = "${pkgs.unstable.swaynotificationcenter}/bin/swaync-client";
+  wayle = "${pkgs.wayle}/bin/wayle";
   gopass = "${pkgs.gopass}/bin/gopass";
 
   ctp = import ../../../lib/palette.nix { inherit lib catppuccin; };
 
-  # sway's OSD one-liners, verbatim: notify-send with swaync's
-  # x-canonical-private-synchronous stack tag ("replace the previous
-  # notification with this value" instead of piling one up per keypress) and
-  # int:value for the progress bar swaync's theme styles.
-  volumeNow = "${wpctl} get-volume @DEFAULT_AUDIO_SINK@ | ${awk} '{print int($2*100)}'";
-  volumeOsd =
-    sign:
-    "${wpctl} set-volume @DEFAULT_AUDIO_SINK@ 5%${sign} && v=$(${volumeNow}) && ${notify-send} -a volume -u low -h string:x-canonical-private-synchronous:volume -h int:value:$v Volume \"$v%\"";
-  muteOsd = "${wpctl} set-mute @DEFAULT_AUDIO_SINK@ toggle && ${notify-send} -a volume -u low -h string:x-canonical-private-synchronous:volume Volume Muted";
-  brightnessNow = "${brightnessctl} | ${grep} -oP '\\d+(?=%)'";
-  brightnessOsd =
-    sign:
-    "${brightnessctl} set 5%${sign} && v=$(${brightnessNow}) && ${notify-send} -a brightness -u low -h string:x-canonical-private-synchronous:brightness -h int:value:$v Brightness \"$v%\"";
+  # OSD is wayle's (it watches audio/backlight), so no bindings for it here.
 
   # sway's two screenshot binds: a quick region grab to the clipboard, and the
   # same grab opened in satty to annotate first (Enter copies, Escape discards).
@@ -174,7 +159,7 @@ in
 
   // niri's top-left hot corner toggles the overview. This desktop has its bar
   // along the top, so every trip to the bar's left end opened the overview --
-  // the "niri jumps when I move over waybar" (confirmed in niri's event stream:
+  // the "niri jumps when I move over the bar" (confirmed in niri's event stream:
   // OverviewOpenedOrClosed, no layout or scroll events). sway had no hot
   // corners and Mod+O is the bind, so they go.
   gestures {
@@ -346,10 +331,8 @@ in
       // sway's gopass picker.
       Mod+P repeat=false { spawn-sh ${q gopassPick}; }
 
-      // Bar visibility. waybar's SIGUSR1 default action is "toggle"; it has to
-      // go through systemd because waybar's comm is .waybar-wrapped, so
-      // `pkill -x waybar` matches nothing.
-      Mod+B repeat=false { spawn "systemctl" "--user" "kill" "--signal=USR1" "waybar"; }
+      // Bar visibility on every monitor.
+      Mod+B repeat=false { spawn ${q wayle} "panel" "toggle"; }
 
       // ── focus and movement ───────────────────────────────────────────────────
       // sway's `focus left|down|up|right` and `move left|down|up|right`.
@@ -401,19 +384,19 @@ in
       Mod+Print { spawn-sh ${q clipShot}; }
       Mod+Shift+Print { spawn-sh ${q sattyShot}; }
 
-      // ── notifications ────────────────────────────────────────────────────────
-      // Same toggle as the bell in waybar.
-      Mod+N { spawn ${q swaync-client} "-t" "-sw"; }
+      // wayle has no "open the dropdown" command, so this is DND.
+      Mod+N { spawn ${q wayle} "notify" "dnd"; }
 
-      // ── OSDs ─────────────────────────────────────────────────────────────────
-      // sway's brightness/volume keys, with swaync standing in for dunst. niri's
-      // defaults already change volume/brightness on these keys, but without the
-      // OSD, so these replace them rather than adding a second handler.
-      XF86MonBrightnessUp allow-when-locked=true { spawn-sh ${q (brightnessOsd "+")}; }
-      XF86MonBrightnessDown allow-when-locked=true { spawn-sh ${q (brightnessOsd "-")}; }
-      XF86AudioRaiseVolume allow-when-locked=true { spawn-sh ${q (volumeOsd "+")}; }
-      XF86AudioLowerVolume allow-when-locked=true { spawn-sh ${q (volumeOsd "-")}; }
-      XF86AudioMute allow-when-locked=true { spawn-sh ${q muteOsd}; }
+      // ── OSD keys ─────────────────────────────────────────────────────────────
+      // niri's default bindings only exist in the config file it writes on first
+      // start; a `binds` block here replaces them wholesale, so without these
+      // the keys are dead. wayle's OSD watches the audio/backlight services, so
+      // no notify-send: just change the value.
+      XF86MonBrightnessUp allow-when-locked=true { spawn ${q brightnessctl} "set" "5%+"; }
+      XF86MonBrightnessDown allow-when-locked=true { spawn ${q brightnessctl} "set" "5%-"; }
+      XF86AudioRaiseVolume allow-when-locked=true { spawn ${q wpctl} "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+" "--limit" "1.0"; }
+      XF86AudioLowerVolume allow-when-locked=true { spawn ${q wpctl} "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+      XF86AudioMute allow-when-locked=true { spawn ${q wpctl} "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
   }
 
   // Dropped from sway's config, no niri equivalent:
