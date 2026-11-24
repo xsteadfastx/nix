@@ -24,10 +24,17 @@
         reverse_proxy 127.0.0.1:28981
       '';
     };
+    virtualHosts."zettelrobbe.local" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy 127.0.0.1:28982
+      '';
+    };
   };
 
   networking.hosts."127.0.0.1" = [
     "paperless.local"
+    "zettelrobbe.local"
   ];
 
   security.pki.certificateFiles = [ ./local-ca.crt ];

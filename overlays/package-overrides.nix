@@ -146,6 +146,7 @@ in
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };
   importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
   paperless-mcp = prev.callPackage ../pkgs/paperless-mcp/package.nix { };
+  zettelrobbe = prev.callPackage ../pkgs/zettelrobbe/package.nix { };
   calibre-dedrm-plugin = prev.callPackage ../pkgs/calibre-dedrm-plugin/package.nix { };
   calibre-deacsm-plugin = prev.callPackage ../pkgs/calibre-deacsm-plugin/package.nix { };
   niri-taskbar = prev.callPackage ../pkgs/niri-taskbar/package.nix { };
