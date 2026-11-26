@@ -95,12 +95,42 @@
         -- option trees, so hover on `services.*` / `programs.*` shows the real
         -- description and default, not just a type signature.
         --
-        -- The exprs are built per workspace in `before_init` (not baked in at
-        -- build time): the flake comes from the workspace root and the host
-        -- from `hostname`, so this file stays portable and never points at a
-        -- frozen /nix/store copy or someone else's checkout. A workspace that
-        -- is not a flake just fails to evaluate -- nixd drops the provider and
-        -- keeps working with types only.
+        -- nixd resolves options against one flake attribute, so pinning it to
+        -- this machine gives wrong hovers, completions and go-to-definition while
+        -- editing another host's file. The host follows the buffer -- and only if
+        -- `hosts/<name>/` is a real host in this tree, since a typo'd path would
+        -- otherwise make nixd drop the option provider entirely; else this
+        -- machine. Packages come from the host's own `pkgs`, not
+        -- `import inputs.nixpkgs { }`: only the former has this repo's overlays,
+        -- so `pkgs.unstable.*` resolves.
+        --
+        -- Same shape as jdguillot/.dotfiles and joshan-kana/.files; the
+        -- `git+file://` ref is 5n7/dotfiles' trick -- Nix otherwise snapshots the
+        -- whole tree into the store on every re-evaluation (measured here: 1.3s
+        -- vs 0.7s), and a dirty tree is fine because nixd evaluates impurely.
+        local function nixd_host(root)
+        	local name = vim.api.nvim_buf_get_name(0):match("/hosts/([^/]+)/")
+        	if name and root and vim.uv.fs_stat(("%s/hosts/%s/default.nix"):format(root, name)) then
+        		return name
+        	end
+        	return vim.fn.hostname()
+        end
+
+        local function nixd_settings(host, root)
+        	local ref = vim.uv.fs_stat(root .. "/.git") and "git+file://" .. root or root
+        	local system = string.format('(builtins.getFlake %q).nixosConfigurations.%q', ref, host)
+        	return {
+        		nixpkgs = { expr = system .. ".pkgs" },
+        		options = {
+        			nixos = { expr = system .. ".options" },
+        			home_manager = {
+        				expr = system .. ".options.home-manager.users.type.getSubOptions []",
+        			},
+        		},
+        		host = host,
+        	}
+        end
+
         vim.lsp.config("nixd", {
         	capabilities = capabilities,
         	settings = {
@@ -109,22 +139,41 @@
         		},
         	},
         	before_init = function(_, config)
-        		local root = config.root_dir
-        		if not root then
+        		if not config.root_dir then
         			return
         		end
-        		local flake = string.format('(builtins.getFlake "%s")', root)
-        		local host = string.format("%s.nixosConfigurations.%s", flake, vim.fn.hostname())
-        		config.settings.nixd.nixpkgs = { expr = "import " .. flake .. ".inputs.nixpkgs { }" }
-        		config.settings.nixd.options = {
-        			nixos = { expr = host .. ".options" },
-        			home_manager = {
-        				expr = host .. ".options.home-manager.users.type.getSubOptions []",
-        			},
-        		}
+        		config.settings.nixd = vim.tbl_extend(
+        			"force",
+        			config.settings.nixd,
+        			nixd_settings(nixd_host(config.root_dir), config.root_dir)
+        		)
         	end,
         })
         vim.lsp.enable("nixd")
+
+        -- Another host's files in the same session: re-point the running client
+        -- and let nixd re-pull its config -- `workspace/didChangeConfiguration`
+        -- re-evaluates every provider (Controller::onDidChangeConfiguration), so
+        -- the server does not need a restart.
+        vim.api.nvim_create_autocmd("BufEnter", {
+        	pattern = "*.nix",
+        	callback = function()
+        		local client = vim.lsp.get_clients({ name = "nixd" })[1]
+        		if not client or not client.config.root_dir then
+        			return
+        		end
+        		local host = nixd_host(client.config.root_dir)
+        		if client.settings.nixd.host == host then
+        			return
+        		end
+        		client.settings.nixd = vim.tbl_extend(
+        			"force",
+        			client.settings.nixd,
+        			nixd_settings(host, client.config.root_dir)
+        		)
+        		client:notify("workspace/didChangeConfiguration", { settings = client.settings })
+        	end,
+        })
 
         -- Go (with gofumpt)
         vim.lsp.config("gopls", {
