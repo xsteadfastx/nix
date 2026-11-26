@@ -147,10 +147,29 @@ lib.mkIf cfg.desktop {
       # uBO once ended up with *every* list unticked (0 filters, "blocked since
       # install: 0"), so only AdGuard DNS was blocking -- and RTL+ then refused
       # to play: its player re-fetches a failed smartclip ad request and calls
-      # a hard network failure an ad blocker, a check uBO's own
-      # `plus.rtl.de##+js(no-xhr-if, smartclip)` (uBlock filters 2026) defuses
-      # (2026-11-23). `toOverwrite` replaces the local selection on every uBO
-      # start, so ticking a list in the dashboard does not stick: add it here.
+      # a hard network failure an ad blocker. Current uBlock filters handles it
+      # with `plus.rtl.de##+js(json-prune, adReinsertion)`; the older
+      # `no-xhr-if, smartclip` rule that was quoted here is gone upstream, so do
+      # not look for it (2026-11-26). `toOverwrite` replaces the local selection
+      # on every uBO start, so ticking a list in the dashboard does not stick:
+      # add it here.
+      #
+      # If all lists ever show 0 again ("0 network filters", every group 0/N) the
+      # policy is still being applied -- uBO re-runs restoreAdminSettings() on
+      # every start (js/start.js) -- but its asset cache is desynced: the
+      # registry claims the lists are cached while the blobs are gone, so it
+      # never re-fetches and prunes the selection to nothing. That is what the
+      # 1.77 update left behind on 2026-11-23. Nothing declarative clears it; with
+      # the browser closed, drop *only* uBO's store and it rebuilds from this
+      # policy. The uuid is per profile (never a literal) -- a bare
+      # `moz-extension+++*` would also wipe Violentmonkey, UA Switcher, Vimium and
+      # the theme:
+      #
+      #   uuid=$(grep -o 'uBlock0@raymondhill\.net[^0-9a-f]*\([0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}\)' \
+      #     ~/.librewolf/default/prefs.js | grep -o '[0-9a-f-]\{36\}' | head -1)
+      #   rm -rf ~/.librewolf/default/storage/default/moz-extension+++"$uuid"*
+      #
+      # (or dashboard -> Filter lists -> "Purge all caches" -> "Update now").
       # Tokens are assets.json keys, taken from a dashboard backup
       # ("selectedFilterLists"): uBO's defaults plus the privacy, phishing,
       # cookie-notice, social-widget and annoyance lists, and DEU-0 (EasyList
@@ -187,6 +206,23 @@ lib.mkIf cfg.desktop {
         "adguard-widgets"
         "ublock-annoyances"
         "DEU-0"
+      ];
+      # Logging in with the Amazon broker is a two-hop redirect chain:
+      # plus.rtl.de -> auth.rtl.de/.../broker/amazon/login -> www.amazon.com/ap/oa
+      # -> auth.rtl.de/.../broker/amazon/endpoint?code=...&state=... Keycloak
+      # validates `state` on that callback and aborts with "Fehlender
+      # state-Parameter in der Antwort vom Identitaetsanbieter" when it is
+      # missing. With the lists above active, the browser's own history shows
+      # both the /ap/oa URL and the endpoint URL being redirected to a copy with
+      # `state` removed (2026-11-26 10:15:28 -> 10:15:29, visit_type 6 then 5),
+      # and a full uBO disable made the login work again -- so a rule in one of
+      # them rewrites exactly that parameter. Whitelisting the two auth documents
+      # keeps uBO out of the handshake while plus.rtl.de stays filtered, which is
+      # what playback needs. `toOverwrite.filters` replaces the dashboard's user
+      # filter list on every start, like the list selection above.
+      "3rdparty".Extensions."uBlock0@raymondhill.net".toOverwrite.filters = [
+        "@@||auth.rtl.de^$document"
+        "@@||www.amazon.com/ap/oa^$document"
       ];
       # Add-ons through Firefox's own policy, not home-manager's
       # `profiles.<p>.extensions.packages`: that route installs *unsigned* xpis,
