@@ -9,7 +9,8 @@
       cook-cli # `cook lsp` — Cooklang language server
       gopls
       lua-language-server
-      nil
+      nixd
+      nixfmt
       pkgs.golangci-lint-langserver
       pkgs.python3Packages.python-lsp-server
       rust-analyzer
@@ -90,16 +91,40 @@
         })
         vim.lsp.enable("lua_ls")
 
-        -- Nix (with formatting)
-        vim.lsp.config("nil_ls", {
+        -- Nix. nixd instead of nil: nil only infers types, nixd can evaluate
+        -- option trees, so hover on `services.*` / `programs.*` shows the real
+        -- description and default, not just a type signature.
+        --
+        -- The exprs are built per workspace in `before_init` (not baked in at
+        -- build time): the flake comes from the workspace root and the host
+        -- from `hostname`, so this file stays portable and never points at a
+        -- frozen /nix/store copy or someone else's checkout. A workspace that
+        -- is not a flake just fails to evaluate -- nixd drops the provider and
+        -- keeps working with types only.
+        vim.lsp.config("nixd", {
         	capabilities = capabilities,
         	settings = {
-        		["nil"] = {
+        		nixd = {
         			formatting = { command = { "nixfmt" } },
         		},
         	},
+        	before_init = function(_, config)
+        		local root = config.root_dir
+        		if not root then
+        			return
+        		end
+        		local flake = string.format('(builtins.getFlake "%s")', root)
+        		local host = string.format("%s.nixosConfigurations.%s", flake, vim.fn.hostname())
+        		config.settings.nixd.nixpkgs = { expr = "import " .. flake .. ".inputs.nixpkgs { }" }
+        		config.settings.nixd.options = {
+        			nixos = { expr = host .. ".options" },
+        			home_manager = {
+        				expr = host .. ".options.home-manager.users.type.getSubOptions []",
+        			},
+        		}
+        	end,
         })
-        vim.lsp.enable("nil_ls")
+        vim.lsp.enable("nixd")
 
         -- Go (with gofumpt)
         vim.lsp.config("gopls", {
