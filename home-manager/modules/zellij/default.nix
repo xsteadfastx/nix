@@ -5,17 +5,15 @@
   ...
 }:
 let
-  # Glyphs and every metric's colour/threshold, shared with the waybar bar so
-  # the two cannot disagree -- see home-manager/lib/statusbar.nix. Here they
-  # are rendered into zjstatus' dialect: the layout's color_* vars, the
-  # command_*_format strings, and the shell script's glyphs/colours.
+  # Clock and battery percentage only; cpu/ram/disk belong to the desktop bar
+  # (home-manager/modules/wayle.nix). The clock glyph comes from
+  # home-manager/lib/statusbar.nix.
   statusbar = import ../../lib/statusbar.nix { inherit lib; };
   ctp = import ../../../lib/palette.nix {
     inherit lib;
     inherit (config) catppuccin;
   };
-  inherit (statusbar) segments;
-  inherit (statusbar) char;
+  inherit (statusbar) char segments;
 
   # Every Catppuccin colour as a zjstatus var: `$base`, `$mauve`, `$surface1`, …
   zjVars = lib.mapAttrs (_: c: c.hex) ctp.colors;
@@ -28,171 +26,6 @@ let
     lib.mapAttrsToList (name: hex: "color_${name} " + lib.strings.escapeNixString hex) zjVars
   );
 
-  # A metric's zjstatus format: its colour, bold, on the bar's $surface1.
-  metricFormat = segment: "#[fg=$" + segments.${segment}.color + ",bg=$surface1,bold] {stdout} ";
-
-  # The shell script prints a raw SGR when a value crosses a threshold (zjstatus
-  # parses `#[fg=...]` only in its own format string, never in a command's
-  # stdout), so each warning/critical/status colour needs its `r;g;b`.
-  sgrOf =
-    segment: state:
-    "38;2;" + lib.concatMapStringsSep ";" toString (ctp.rgb (statusbar.stateOf segment state).color);
-
-  # Thresholds the script compares against, and the SGR parameters it prints
-  # when a value crosses one.
-  at = segment: state: (statusbar.stateOf segment state).at;
-  inherit (segments) battery;
-
-  # Backing shell commands for the zjstatus powerline segments below — no
-  # native zellij/zjstatus widget for battery/cpu/ram/disk, so shell out (same
-  # any tmux status plugin does).
-  statusbarMetrics = pkgs.writeShellApplication {
-    name = "zellij-statusbar-metrics";
-    text = ''
-      case "$1" in
-      battery)
-      	cap=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo "")
-      	st=$(cat /sys/class/power_supply/BAT0/status 2>/dev/null || echo "")
-      	# blank only while actually discharging or at a full charge; the AC
-      	# word -- from the same entry in home-manager/lib/statusbar.nix that
-      	# waybar's format-charging / format-not-charging / format-plugged print
-      	# -- for every other status (Charging, "Not charging" while plugged in
-      	# but topped off, Unknown, ...). The default case, not just "Charging".
-      	case "$st" in
-      	Discharging | discharging) stat_word="" ;;
-      	Full | high) stat_word="" ;;
-      	*) stat_word="${battery.word}" ;;
-      	esac
-      	# Same icons and bucketing as waybar's battery format-icons: cap/n
-      	# (0-19/20-39/40-59/60-79/80-100 for the five below), capped at the last
-      	# icon. Icons, thresholds and colours all come from
-      	# home-manager/lib/statusbar.nix.
-      	icons=(${lib.concatMapStringsSep " " char battery.icons})
-      	idx=$((''${cap:-0} / ${toString (100 / (lib.length battery.icons))}))
-      	last=${toString ((lib.length battery.icons) - 1)}
-      	[ "$idx" -gt "$last" ] && idx=$last
-      	# Same colours as waybar's battery CSS, from the same data: its
-      	# charging/full/plugged classes green, then warning (<=${toString (at "battery" "warning")}%) yellow
-      	# and critical (<=${toString (at "battery" "critical")}%) red. Green is decided first because waybar's
-      	# CSS paints a charging battery green even while the charge is low, and
-      	# waybar's classes are not the raw sysfs status -- src/modules/battery.cpp
-      	# resolves it: a status of "Unknown" goes through the AC adapter (full at
-      	# 100%, else plugged while the adapter is online), and "Discharging" or
-      	# "Not charging" become "Plugged" whenever the adapter is online -- the TLP
-      	# charge-threshold case, which is why waybar gives Plugged priority. The
-      	# adapter is looked up by the names it goes by (AC, ADP1); waybar takes the
-      	# last /sys/class/power_supply node that has an online file, which the USB-C
-      	# port nodes also satisfy.
-      	ac=""
-      	for d in /sys/class/power_supply/AC /sys/class/power_supply/ADP*; do
-      		[ -e "$d/online" ] && ac="$d" && break
-      	done
-      	plugged=""
-      	if [ -n "$ac" ] && [ "$(cat "$ac/online" 2>/dev/null)" = 1 ] \
-      		&& [ "$(cat "$ac/status" 2>/dev/null)" != Discharging ]; then
-      		plugged=1
-      	fi
-      	case "$st" in
-      	"" | Unknown | unknown)
-      		if [ "''${cap:-0}" -eq 100 ]; then eff=Full
-      		elif [ -n "$plugged" ]; then eff=Plugged
-      		else eff=Discharging; fi
-      		;;
-      	Discharging | "Not charging")
-      		if [ -n "$plugged" ]; then eff=Plugged; else eff="$st"; fi
-      		;;
-      	*) eff="$st" ;;
-      	esac
-      	esc=$(printf '\033')
-      	sgr=""
-      	case "$eff" in
-      	Charging | Full | Plugged) sgr="''${esc}[${sgrOf "battery" "charging"}m" ;;
-      	*)
-      		if [ -n "$cap" ]; then
-      			[ "$cap" -le ${toString (at "battery" "warning")} ] && sgr="''${esc}[${sgrOf "battery" "warning"}m"
-      			[ "$cap" -le ${toString (at "battery" "critical")} ] && sgr="''${esc}[${sgrOf "battery" "critical"}m"
-      		fi
-      		;;
-      	esac
-      	echo "''${sgr}''${icons[$idx]} $stat_word $cap" | tr -s ' '
-      	;;
-      cpu)
-      	# Delta since the LAST invocation, not an internal 1s sleep-sample:
-      	# waybar's cpu module (interval=5, matching command_cpu_interval
-      	# below) computes usage the same way -- a delta between successive
-      	# polls -- so a same-formula 1s spot-sample here used to disagree
-      	# with it, sometimes by a lot during a burst. Caching the previous
-      	# /proc/stat reading gives the same ~5s window waybar uses.
-      	#
-      	# Two more waybar details, read off its cpu_usage/linux.cpp and
-      	# measured against it: it counts iowait as idle
-      	# (`idle_time = times[3] + times[4]`), and it truncates the percentage
-      	# (`uint16_t tmp = 100 * ...`). Counting bare idle read 33% where
-      	# waybar read 10% in the same 5s window -- iowait is ~20% of the ticks
-      	# on this laptop whenever nix hammers the disk.
-      	# Deliberately not matched: waybar sums all ten /proc/stat fields, so
-      	# it double-counts guest/guest_nice (guest time is already inside
-      	# user); both are 0 here, so this keeps the first eight.
-      	state="''${XDG_RUNTIME_DIR:-/tmp}/zellij-statusbar-cpu-stat"
-      	read -r _ a b c i d e f g _ _ </proc/stat
-      	if [ -f "$state" ]; then
-      		read -r a1 b1 c1 i1 d1 e1 f1 g1 <"$state"
-      		t1=$((a1 + b1 + c1 + i1 + d1 + e1 + f1 + g1))
-      		t2=$((a + b + c + i + d + e + f + g))
-      		awk -v i1="$((i1 + d1))" -v i2="$((i + d))" -v t1="$t1" -v t2="$t2" \
-      			'BEGIN { d = t2 - t1; printf "${char segments.cpu.glyph} %d%%", (d > 0 ? 100 * (1 - (i2 - i1) / d) : 0) }'
-      	else
-      		echo " ..."
-      	fi
-      	echo "$a $b $c $i $d $e $f $g" >"$state"
-      	;;
-      ram)
-      	# MemTotal - (MemAvailable + ZFS ARC), matching waybar's memory
-      	# module formula exactly -- memory/linux.cpp sets
-      	# `memfree = MemAvailable + zfs_size`, because the ARC is a reclaimable
-      	# cache, not consumed RAM. On this ZFS-root laptop the ARC is ~15 GiB
-      	# of 31 GiB, so counting it as used read 81% where waybar read 33%.
-      	# free -g used a different "used" definition again (and rounded to
-      	# whole GB).
-      	# Reported as a bare percentage, not usedGB/totalGB -- waybar's
-      	# memory module (`{percentage}%`) is the same kind of number as its
-      	# own cpu module, and zellij's cpu case above; GB/GB was a different
-      	# unit from both.
-      	# arcstats `size` is bytes; waybar divides by 1024 in integer math.
-      	# The `|| echo 0` keeps `set -e` (writeShellApplication) from killing
-      	# the segment on a machine without ZFS, where the file is absent.
-      	arc=$(awk '$1 == "size" { printf "%d", $3 / 1024 }' /proc/spl/kstat/zfs/arcstats 2>/dev/null || echo 0)
-      	awk -v arc="''${arc:-0}" '
-          /^MemTotal:/     { total = $2 }
-          /^MemAvailable:/ { avail = $2 }
-          END               { printf "${char segments.memory.glyph} %d%%", (total - avail - arc) / total * 100 }
-        ' /proc/meminfo
-      	;;
-      disk)
-      	# waybar's disk module (src/modules/disk.cpp) counts root-reserved
-      	# blocks as used: its percentage_used is
-      	# (f_blocks - f_bfree) * 100 / f_blocks, truncated by uint math. `df`'s
-      	# Use% divides by (used + f_bavail) instead, so it reads one point high
-      	# on this ZFS root (11% where waybar reads 10%). stat -f prints the
-      	# statvfs fields waybar itself reads: %b = f_blocks, %f = f_bfree (%a
-      	# is f_bavail, the one not to use).
-      	pct=$(stat -f --format='%b %f' / | awk '{ printf "%d", ($1 - $2) * 100 / $1 }')
-      	# Same thresholds and colours as waybar's disk `states`, from the same data.
-      	# zjstatus parses `#[fg=...]` only in the format string it is handed
-      	# (src/render.rs `from_format_string`), never in a command's stdout, so the
-      	# colour switch has to ride along in this script's stdout as a raw SGR
-      	# sequence. Safe because zjstatus wraps that stdout in the format's own SGR
-      	# and resets after it (`format_string`): only fg is overridden here, bg=$surface1
-      	# and bold survive, and the next format part sets its own colours anyway.
-      	esc=$(printf '\033')
-      	sgr=""
-      	if [ "$pct" -ge ${toString (at "disk" "warning")} ]; then sgr="''${esc}[${sgrOf "disk" "warning"}m"; fi
-      	if [ "$pct" -ge ${toString (at "disk" "critical")} ]; then sgr="''${esc}[${sgrOf "disk" "critical"}m"; fi
-      	printf '%s${char segments.disk.glyph} %d%%' "$sgr" "$pct"
-      	;;
-      esac
-    '';
-  };
 in
 {
   # zellij writes an auto-generated default config.kdl on first run; force ours
@@ -317,10 +150,8 @@ in
 
                         format_left   "{mode}#[fg=$base,bg=$mauve,bold] {session} #[fg=$text,bg=$surface1]{tabs}"
                         format_center ""
-                        // order matches waybar's modules-right: cpu, memory,
-                        // disk, battery, clock (its network modules have no
-                        // zellij equivalent, so they're just skipped here).
-                        format_right  "{command_cpu}#[fg=$base,bg=$surface1]│{command_ram}#[fg=$base,bg=$surface1]│{command_disk}#[fg=$base,bg=$surface1]│{command_battery}#[fg=$base,bg=$surface1]│{datetime}"
+                        // battery then clock, the order wayle ends with.
+                        format_right  "{command_battery}#[fg=$base,bg=$surface1]│{datetime}"
                         format_space  "#[bg=$surface1]"
 
                         // An overlong line does not clip, it wraps: it is written
@@ -332,9 +163,9 @@ in
                         // zellij_pane_title in fish), and this is the net for what
                         // fixed numbers cannot cover on a narrower window: drop a
                         // whole part instead of scrolling. The default
-                        // format_precedence drops right first, so the metrics+clock
-                        // are what goes -- and a part is all-or-nothing, whatever the
-                        // precedence.
+                        // format_precedence drops right first, so the battery and the
+                        // clock are what goes -- and a part is all-or-nothing, whatever
+                        // the precedence.
                         format_hide_on_overlength "true"
 
                         border_enabled "false"
@@ -394,33 +225,22 @@ in
                         // still an open feature request (dj95/zjstatus#298).
                         // Measured on this bar (174 cols: 1908 px / 11 px cell,
                         // ghostty font-size 14): mode+session chip 16 ("local"),
-                        // metrics+clock 57, so the tabs get 101. A label is
-                        // `{index} {title} ` = title + 3, so the six shown at the
-                        // 12-char bound in zellij_pane_title are 90, and the two
-                        // markers (~6) still leave room for the indicators -- the
-                        // clock survives.
-                        // ponytail: 6 + 12 is a fixed fit for this width, not a fit;
-                        // a narrower window is what format_hide_on_overlength above
-                        // is for.
-                        tab_display_count        "6"
+                        // battery+clock 30, so the tabs get 128. A label is
+                        // `{index} {title} ` = title + 3, so eight labels at the
+                        // 12-char bound in zellij_pane_title are 120 and the two
+                        // markers (~6) still fit -- which is why the bound stays 12.
+                        // ponytail: 8 + 12 is a fixed fit for this width; a narrower
+                        // window is what format_hide_on_overlength above is for.
+                        tab_display_count        "8"
                         tab_truncate_start_format "#[fg=$overlay1,bg=$surface1]‹{count} "
                         tab_truncate_end_format   "#[fg=$overlay1,bg=$surface1] {count}›"
 
-                        command_battery_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics battery"
-                        command_battery_format   "${metricFormat "battery"}"
-                        command_battery_interval "15"
-
-                        command_cpu_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics cpu"
-                        command_cpu_format   "${metricFormat "cpu"}"
-                        command_cpu_interval "5"
-
-                        command_ram_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics ram"
-                        command_ram_format   "${metricFormat "memory"}"
-                        command_ram_interval "15"
-
-                        command_disk_command  "${statusbarMetrics}/bin/zellij-statusbar-metrics disk"
-                        command_disk_format   "${metricFormat "disk"}"
-                        command_disk_interval "30"
+                        // Charge left, straight out of sysfs. wayle draws the level
+                        // icons and AC state; this is only a hint for when the terminal
+                        // covers it.
+                        command_battery_command  "${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/capacity"
+                        command_battery_format   "#[fg=$pink,bg=$surface1,bold] {stdout}% "
+                        command_battery_interval "60"
 
                         datetime          "#[fg=$overlay1,bg=$surface1,bold] ${char segments.clock.glyph} {format} "
                         datetime_format   "%H:%M:%S %d/%m/%Y"
@@ -492,8 +312,8 @@ in
           # its tabs widget is unbounded, so a single long name (a deep
           # directory, a store path `zellij_pane_running` reduced to its
           # basename) eats the right half of the bar. Keep the head -- the part
-          # that identifies it. 12 is the largest bound at which six labels plus
-          # markers plus chip plus metrics still fit this bar's 174 columns --
+          # that identifies it. 12 is the largest bound at which eight labels plus
+          # markers plus chip plus battery and clock still fit this bar's 174 columns --
           # see the arithmetic in tab_display_count (layouts/default.kdl).
           test (string length -- $name) -gt 12; and set name (string sub -l 11 -- $name)"…"
           # Targeted by pane id, so this never renames the pane the *client* is

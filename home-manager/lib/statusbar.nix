@@ -1,30 +1,11 @@
-# The one description of the metrics *both* bars show.
+# The one description of the desktop bar's metrics.
 #
-# waybar (wayland) and zellij's zjstatus bar both carry cpu, memory, disk,
-# battery and clock, and are meant to read identically: same glyph, same colour,
-# same warning/critical thresholds. Those values live here, once; each bar
-# renders them into its own dialect:
+# wayle draws cpu, memory, disk, battery and clock from here -- glyph, colour,
+# battery icons -- see home-manager/modules/wayle.nix. zellij's bar borrows only
+# the clock glyph (home-manager/modules/zellij/default.nix).
 #
-#   waybar    config JSON (icons, states, format-icons) and the generated part
-#             of style.css (the metric colour/state rules) -- see
-#             home-manager/modules/waybar/default.nix
-#   zjstatus  the layout's color_* vars and command_*_format strings, and the
-#             zellij-statusbar-metrics shell script (glyphs, thresholds, and the
-#             SGR it prints for a warning/critical value) -- see
-#             home-manager/modules/zellij/default.nix
-#
-# A bar with segments of its own keeps them entirely in its own module: not
-# every waybar module has a zjstatus counterpart (network, volume), and
-# nothing but the five metrics above is shared.
-#
-# So "the two bars disagree" is impossible by construction rather than by two
-# comments asking the next reader to keep them in sync. Adding a metric means one
-# entry in `segments` here and one consumer-side line for it; the values each
-# consumer needs (glyph, colour, thresholds) are already in the entry.
-#
-# `color` is a Catppuccin colour name (lib/palette.nix); each bar resolves it
-# itself -- waybar as `@<name>` from the port's @define-color file, zjstatus as
-# its `$<name>` var.
+# `color` is a Catppuccin colour name (lib/palette.nix); wayle resolves it as
+# `@<name>` from the port's @define-color file.
 { lib }:
 let
   # Glyph codepoints are written as hex strings: nixfmt (1.5.0) rewrites a
