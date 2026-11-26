@@ -56,6 +56,18 @@ let
   # The tool modules ship Lucide/Cosmic icons; these draw the Nerd Font
   # equivalent instead, so the whole bar is one glyph family (and matches the
   # zellij bar). Codepoints checked against the built font's charset.
+  # app_id globs -> bar glyph. Read by niri-workspaces (the cluster) and
+  # window-title (the focused window); both match window class by glob.
+  appIcons = {
+    "*librewolf*" = toolIcon "web";
+    "*ghostty*" = toolIcon "console";
+    "*fluffychat*" = toolIcon "chat";
+    # Globs are case-sensitive (glob::matches, no lowercasing), and a user entry
+    # beats wayle's builtin "*code*" glob. Not in wayle's builtin app_id globs
+    # either (upstream #228 would make the icon theme the source).
+    "*codeberg*" = "ld-app-window-symbolic";
+  };
+
   toolGlyphs = {
     # md's wifi-strength-* glyphs are filled wedges, nothing like a wifi arc;
     # md-wifi is the arc. Signal level is not drawn, only connected/off.
@@ -130,6 +142,23 @@ in
       "${config.xdg.configFile."wayle/config.toml".source}"
     ];
 
+    # wayle hands the focused workspace's button a `.focused` class and ships no
+    # rule for it; with monitor-specific = false every output has an active
+    # workspace, so the accent fill/underline marks three buttons and says
+    # nothing. Keep the accent for the one that has focus. `styles/` is wayle's
+    # own override hook: compiled by grass and hot-reloaded on change.
+    xdg.configFile."wayle/styles/index.scss" = {
+      force = true;
+      text = ''
+        .workspaces.niri .workspace.active:not(.focused) .workspace-icon {
+          color: var(--ws-occupied-color);
+        }
+        .workspaces.niri .workspace.active:not(.focused).indicator-underline {
+          background-image: none;
+        }
+      '';
+    };
+
     services.wayle = {
       enable = true;
       autoInstallDependencies = false;
@@ -158,6 +187,7 @@ in
               ];
               center = [ "window-title" ];
               right = [
+                "cpu"
                 "ram"
                 "storage"
                 "battery"
@@ -178,6 +208,14 @@ in
           # wayle draws its own icon set (SVG), zellij Nerd-Font glyphs -- the two
           # cannot be the same character. Colours come from the shared table.
           storage.mount-point = "/";
+
+          # Peach chip, first in the right group: cpu before memory, disk, battery,
+          # clock -- the old waybar order.
+          cpu = {
+            icon-name = iconName "cpu";
+            icon-bg-color = seg "cpu";
+            label-color = seg "cpu";
+          };
 
           # Icon only, value as colour: normal state keeps the module colour, the
           # thresholds turn it yellow then red. No number to read, no width spent.
@@ -311,14 +349,23 @@ in
             # the app_id itself as an icon name (upstream #228), so each app that
             # should not fall back to the window glyph is named here.
             app-icons-fallback = "ld-app-window-symbolic";
-            app-icon-map = {
-              "*librewolf*" = toolIcon "web";
-              "*ghostty*" = toolIcon "console";
-              "*fluffychat*" = toolIcon "chat";
-              # Globs are case-sensitive (glob::matches, no lowercasing), and a
-              # user entry beats wayle's builtin "*code*" glob.
-              "*codeberg*" = "ld-app-window-symbolic";
-            };
+            app-icon-map = appIcons;
+            # Every output's *active* workspace is filled with active-color, so
+            # three monitors painted three accent slabs; an underline marks them
+            # without the flood. wayle has no per-window styling either -- it puts
+            # a `focused` class on the button, with no rule behind it -- so the
+            # focused window is named by the window-title module below.
+            active-indicator = "underline";
+            active-color = ctp.hex "mauve";
+          };
+
+          # The window that has focus: its app icon (same map as the cluster, so a
+          # mauve square on the left of the title matches one of the quiet icons)
+          # and its title.
+          "window-title" = {
+            icon-mappings = appIcons;
+            icon-bg-color = ctp.hex "mauve";
+            label-color = ctp.hex "text";
           };
         };
       };

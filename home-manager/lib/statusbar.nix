@@ -60,7 +60,9 @@ let
   # Font Awesome and Material ranges are there.
   icons = {
     cpu = glyph "F2DB"; # fa-microchip
-    memory = glyph "F035B"; # md-memory
+    # fa-memory (EFC5) is a DIMM stick; md-memory (F035B), the obvious pick, is a
+    # second square chip with pins -- indistinguishable from fa-microchip at 15px.
+    memory = glyph "EFC5"; # fa-memory
     disk = glyph "F02CA"; # md-harddisk
     clock = glyph "F0954"; # md-clock
 
