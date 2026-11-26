@@ -4,7 +4,7 @@
   fluffychat,
   paletteFile,
   flavor ? "mocha",
-  fontFamily ? "Nerdwand Mono",
+  fontFamily ? "JetBrainsMono Nerd Font",
 }:
 
 # FluffyChat cannot be themed at runtime, so the scheme is compiled in:

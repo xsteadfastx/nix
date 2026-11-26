@@ -89,7 +89,7 @@ in
 
   lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
 
-  nordwand-mono-nerd = prev.callPackage ../pkgs/nordwand-mono-nerd/package.nix { };
+  jetbrains-mono-nerd = prev.callPackage ../pkgs/jetbrains-mono-nerd/package.nix { };
 
   airmtp = inputs.airmtp.packages.${system}.default;
   compose2nix = inputs.compose2nix.packages.${system}.default;

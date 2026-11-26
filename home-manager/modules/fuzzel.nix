@@ -21,7 +21,7 @@ lib.mkIf cfg.desktop {
 
     settings = {
       main = {
-        font = "Nerdwand Mono:size=16";
+        font = "JetBrainsMono Nerd Font:size=16";
         # NBSP, not spaces: the ini parser strips trailing whitespace, so a
         # plain "  " collapses and the glyph ends up glued to the input.
         prompt = "${searchGlyph}  ";

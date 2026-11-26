@@ -99,7 +99,7 @@ lib.mkIf cfg.desktop {
     # The Papirus icon theme comes from catppuccin.gtk.icon.
     packages = with pkgs; [
       gtkTheme
-      nordwand-mono-nerd
+      jetbrains-mono-nerd
     ];
 
     # GIMP 3 uses its own CSS theme engine with custom widget classes
@@ -136,7 +136,7 @@ lib.mkIf cfg.desktop {
     # 20px). The weight is Medium through the fontconfig rule below, not
     # through this name (libadwaita's CSS would override a weight given here).
     font = {
-      name = "Nerdwand Mono";
+      name = "JetBrainsMono Nerd Font";
       size = 11;
     };
 
@@ -241,13 +241,13 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>sans-serif</family>
             <prefer>
-              <family>Nerdwand Mono</family>
+              <family>JetBrainsMono Nerd Font</family>
             </prefer>
           </alias>
           <alias binding="same">
             <family>monospace</family>
             <prefer>
-              <family>Nerdwand Mono</family>
+              <family>JetBrainsMono Nerd Font</family>
             </prefer>
           </alias>
           <!-- niri's own UI (hotkey overlay, screenshot UI) asks fontconfig for
@@ -256,7 +256,7 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>mono</family>
             <prefer>
-              <family>Nerdwand Mono</family>
+              <family>JetBrainsMono Nerd Font</family>
             </prefer>
           </alias>
           <!-- Flutter apps (FluffyChat) hardcode Material's default family,
@@ -266,18 +266,18 @@ lib.mkIf cfg.desktop {
           <alias binding="same">
             <family>Roboto</family>
             <prefer>
-              <family>Nerdwand Mono</family>
+              <family>JetBrainsMono Nerd Font</family>
             </prefer>
           </alias>
           <!-- At ~92 DPI a Regular stem is ~1.5px, so its edges are all grey
-               ink; Medium keeps a solid core (fully-on ink 0.300 vs 0.216 at
-               20px, 0.138 vs 0.075 at 14.67px). So a request for Nerdwand at
-               the regular weight gets Medium, whatever asked for it: GTK,
+               ink; Medium keeps a solid core (fully-on ink 0.259 vs 0.222 at
+               20px). So a request for JetBrains Mono at the regular weight
+               gets Medium, whatever asked for it: GTK,
                libadwaita CSS (which pins font-weight: 400), fuzzel, swaylock.
                Bold, italic and lighter weights are
                untouched. -->
           <match target="pattern">
-            <test name="family" compare="eq"><string>Nerdwand Mono</string></test>
+            <test name="family" compare="eq"><string>JetBrainsMono Nerd Font</string></test>
             <!-- qual="all" also matches a request without any weight
                  (fuzzel, plain fc-match), which a plain eq test misses -->
             <test qual="all" name="weight" compare="more_eq"><const>regular</const></test>

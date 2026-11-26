@@ -32,7 +32,7 @@ let
   # right edge (checked by rasterising every icon and asserting no edge ink).
   glyphSvg = cp: ''
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-      <text x="7" y="14.4" font-family="Nerdwand Mono" font-size="15" text-anchor="middle">&#x${lib.toUpper (lib.toHexString cp)};</text>
+      <text x="7" y="14.4" font-family="JetBrainsMono Nerd Font" font-size="15" text-anchor="middle">&#x${lib.toUpper (lib.toHexString cp)};</text>
     </svg>
   '';
   glyphIcon = name: glyphSvg bar.segments.${name}.glyph;

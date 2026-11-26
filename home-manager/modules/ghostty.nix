@@ -20,7 +20,7 @@ lib.mkIf cfg.desktop {
     enable = true;
     package = pkgs.unstable.ghostty;
     settings = {
-      font-family = "Nerdwand Mono";
+      font-family = "JetBrainsMono Nerd Font";
       # 15pt = 20px here, a whole-pixel em on the ~92 DPI externals (ghostty is
       # grayscale-only).
       font-size = 15;
@@ -33,9 +33,9 @@ lib.mkIf cfg.desktop {
       # (0.379 vs 0.359 fully-snapped ink pixels at 20px). The `no-hinting` this
       # used to set was a Lilex workaround: Lilex builds `->`/`=>` from two
       # glyphs that FreeType hints separately and misaligns at some sizes
-      # (mishamyrt/Lilex#50). Nerdwand draws them as one ligature glyph, and its
-      # `--`/`===` joins stay on identical pixel rows at every size from 12 to
-      # 24px in both hint modes, so hinting is safe here.
+      # (mishamyrt/Lilex#50). JetBrains Mono draws them as one glyph (its
+      # ligatures come from `calt`, which ghostty enables), so hinting is safe
+      # here.
       shell-integration = "fish";
       # ghostty 1.4 reworked copy-on-select (ghostty#12600): the Linux default
       # `primary` fills only the PRIMARY selection, so selecting text no longer

@@ -119,7 +119,7 @@
         packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
         packages.paperless-mcp = pkgs.callPackage ./pkgs/paperless-mcp/package.nix { };
         packages.zettelrobbe = pkgs.callPackage ./pkgs/zettelrobbe/package.nix { };
-        packages.nordwand-mono-nerd = pkgs.callPackage ./pkgs/nordwand-mono-nerd/package.nix { };
+        packages.jetbrains-mono-nerd = pkgs.callPackage ./pkgs/jetbrains-mono-nerd/package.nix { };
         packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
         packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
         # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
