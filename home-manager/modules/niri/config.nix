@@ -37,6 +37,7 @@ let
   playerctl = "${pkgs.playerctl}/bin/playerctl";
   wayle = "${pkgs.wayle}/bin/wayle";
   gopass = "${pkgs.gopass}/bin/gopass";
+  grep = "${pkgs.gnugrep}/bin/grep";
 
   ctp = import ../../../lib/palette.nix { inherit lib catppuccin; };
 
@@ -48,8 +49,11 @@ let
   clipShot = "${grim} -g \"$(${slurp})\" - | ${wl-copy}";
   sattyShot = "${grim} -g \"$(${slurp})\" - | ${satty} --filename - --output-filename ~/tmp/satty-%Y%m%d-%H%M%S.png --copy-command ${wl-copy} --early-exit --actions-on-enter save-to-clipboard";
 
-  # sway's gopass picker: list, filter in fuzzel, copy the password of the choice.
+  # gopass, all three grouped under Mod+P: password, OTP, and any key of the
+  # entry (that is where the username lives; the store has no fixed key name).
   gopassPick = "${gopass} ls --flat | ${fuzzel} --dmenu --prompt 'gopass> ' | ${xargs} --no-run-if-empty ${gopass} show -c";
+  gopassOtp = "${gopass} ls --flat | ${fuzzel} --dmenu --prompt 'otp> ' | ${xargs} --no-run-if-empty ${gopass} otp -c";
+  gopassField = "e=$(${gopass} ls --flat | ${fuzzel} --dmenu --prompt 'entry> '); [ -n \"$e\" ] || exit 1; f=$(${gopass} show \"$e\" | ${grep} -oE '^[a-zA-Z0-9_.-]+:' | ${fuzzel} --dmenu --prompt 'copy> '); [ -n \"$f\" ] || exit 1; ${gopass} show -c \"$e\" \"\${f%:}\"";
 
 in
 ''
@@ -330,6 +334,8 @@ in
 
       // sway's gopass picker.
       Mod+P repeat=false { spawn-sh ${q gopassPick}; }
+      Mod+Alt+P repeat=false { spawn-sh ${q gopassOtp}; }
+      Mod+Ctrl+P repeat=false { spawn-sh ${q gopassField}; }
 
       // Bar visibility on every monitor.
       Mod+B repeat=false { spawn ${q wayle} "panel" "toggle"; }
