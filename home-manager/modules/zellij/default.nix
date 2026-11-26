@@ -26,6 +26,32 @@ let
     lib.mapAttrsToList (name: hex: "color_${name} " + lib.strings.escapeNixString hex) zjVars
   );
 
+  # The SGR for a warning colour: zjstatus parses `#[fg=...]` only in its own
+  # format string, never in a command's stdout, so a colour that depends on the
+  # value has to ride along as a raw escape sequence.
+  sgr = colour: "38;2;" + lib.concatMapStringsSep ";" toString (ctp.rgb colour);
+
+  # Charge left, with the icon for its level -- the same five wayle's battery
+  # module steps through, and the same buckets (cap / (100 / 5)), clamped at the
+  # last one. Uncoloured unless it is a warning (yellow <=20, red <=10): a colour
+  # that does not depend on the value marks nothing. No charging/plugged state:
+  # wayle draws that, and this is only a hint for when the terminal covers it.
+  battery = pkgs.writeShellApplication {
+    name = "zellij-battery";
+    text = ''
+      cap=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo 0)
+      icons=(${lib.concatMapStringsSep " " char segments.battery.icons})
+      last=$((''${#icons[@]} - 1))
+      idx=$((cap / ${toString (100 / (lib.length segments.battery.icons))}))
+      [ "$idx" -gt "$last" ] && idx=$last
+      esc=$(printf '\033')
+      sgr=""
+      if [ "$cap" -le 10 ]; then sgr="''${esc}[${sgr (statusbar.stateOf "battery" "critical").color}m"
+      elif [ "$cap" -le 20 ]; then sgr="''${esc}[${sgr (statusbar.stateOf "battery" "warning").color}m"
+      fi
+      echo "''${sgr}''${icons[$idx]} $cap"
+    '';
+  };
 in
 {
   # zellij writes an auto-generated default config.kdl on first run; force ours
@@ -235,11 +261,8 @@ in
                         tab_truncate_start_format "#[fg=$overlay1,bg=$surface1]‹{count} "
                         tab_truncate_end_format   "#[fg=$overlay1,bg=$surface1] {count}›"
 
-                        // Charge left, straight out of sysfs. wayle draws the level
-                        // icons and AC state; this is only a hint for when the terminal
-                        // covers it.
-                        command_battery_command  "${pkgs.coreutils}/bin/cat /sys/class/power_supply/BAT0/capacity"
-                        command_battery_format   "#[fg=$pink,bg=$surface1,bold] {stdout}% "
+                        command_battery_command  "${battery}/bin/zellij-battery"
+                        command_battery_format   "#[fg=$text,bg=$surface1] {stdout}% "
                         command_battery_interval "60"
 
                         datetime          "#[fg=$overlay1,bg=$surface1,bold] ${char segments.clock.glyph} {format} "
