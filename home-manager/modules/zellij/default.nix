@@ -538,8 +538,8 @@ in
                 bind "[" { SwitchToMode "Scroll"; } // tmux's prefix-[ copy mode
                 bind "s" { SwitchToMode "Scroll"; }
                 bind "t" { SwitchToMode "Tab"; }     // tab overview
-                // The way out of zellij itself: prefix + d only detaches.
-                bind "q" { Quit; }
+                // Prefix + d detaches; nothing here kills the session (`q` used
+                // to, and got hit by accident).
 
                 // splits (mirror tmux: v = split-window -h (right), H = split-window (down))
                 bind "v" { NewPane "Right"; SwitchToMode "Normal"; }
