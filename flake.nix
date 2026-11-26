@@ -62,7 +62,8 @@
       nixosModules.home-manager = import ./modules/home-manager;
       nixosModules.lix = import ./modules/lix;
       nixosModules.ssh = import ./modules/ssh;
-      nixosModules.tlsrouter = import ./modules/tlsrouter;
+      # from nixpkgs-unstable: the pinned nixpkgs predates the module/package
+      nixosModules.tlsrouter = import "${inputs.nixpkgs-unstable}/nixos/modules/services/networking/tlsrouter.nix";
       nixosModules.users = import ./modules/users;
       nixosModules.vm-variant = import ./modules/vm-variant;
       overlays.default = import ./overlays { inherit inputs; };
@@ -116,7 +117,6 @@
         devShells.default = preCommitGen.devShell;
         inherit (preCommitGen) formatter;
         packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
-        packages.tlsrouter = pkgsUnstable.callPackage ./pkgs/tlsrouter/package.nix { };
         packages.paperless-mcp = pkgs.callPackage ./pkgs/paperless-mcp/package.nix { };
         packages.zettelrobbe = pkgs.callPackage ./pkgs/zettelrobbe/package.nix { };
         packages.jetbrains-mono-nerd = pkgs.callPackage ./pkgs/jetbrains-mono-nerd/package.nix { };
