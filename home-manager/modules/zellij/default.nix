@@ -250,14 +250,19 @@ in
                         // the tab list is unbounded, and "as many tabs as fit" is
                         // still an open feature request (dj95/zjstatus#298).
                         // Measured on this bar (174 cols: 1908 px / 11 px cell,
-                        // ghostty font-size 14): mode+session chip 16 ("local"),
-                        // battery+clock 30, so the tabs get 128. A label is
-                        // `{index} {title} ` = title + 3, so eight labels at the
-                        // 12-char bound in zellij_pane_title are 120 and the two
-                        // markers (~6) still fit -- which is why the bound stays 12.
-                        // ponytail: 8 + 12 is a fixed fit for this width; a narrower
+                        // ghostty font-size 14): mode+session chip 15 ("local"),
+                        // battery+clock 32, so the tabs get 127. A label is
+                        // `{index} {title} `, and past nine tabs the index is two
+                        // digits: ten labels at the 8-char bound in
+                        // zellij_pane_title are at most 120, plus the two markers
+                        // (~6). One char more per title would overflow, and what
+                        // goes on overflow is the clock.
+                        // The clock ("%H:%M:%S %d/%m/%Y", 19 chars) is what the
+                        // rest of the 127 pays for; drop it to %H:%M and ten
+                        // 12-char titles fit instead.
+                        // ponytail: 10 + 8 is a fixed fit for this width; a narrower
                         // window is what format_hide_on_overlength above is for.
-                        tab_display_count        "8"
+                        tab_display_count        "10"
                         tab_truncate_start_format "#[fg=$overlay1,bg=$surface1]‹{count} "
                         tab_truncate_end_format   "#[fg=$overlay1,bg=$surface1] {count}›"
 
@@ -335,10 +340,10 @@ in
           # its tabs widget is unbounded, so a single long name (a deep
           # directory, a store path `zellij_pane_running` reduced to its
           # basename) eats the right half of the bar. Keep the head -- the part
-          # that identifies it. 12 is the largest bound at which eight labels plus
+          # that identifies it. 8 is the largest bound at which ten labels plus
           # markers plus chip plus battery and clock still fit this bar's 174 columns --
           # see the arithmetic in tab_display_count (layouts/default.kdl).
-          test (string length -- $name) -gt 12; and set name (string sub -l 11 -- $name)"…"
+          test (string length -- $name) -gt 8; and set name (string sub -l 7 -- $name)"…"
           # Targeted by pane id, so this never renames the pane the *client* is
           # looking at: a background pane finishing a command names itself, not
           # whatever is on screen.
