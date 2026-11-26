@@ -25,6 +25,10 @@
   '';
 
   home-manager.users.marv = {
+    # The bar goes on the laptop panel; wayle has no primary-output concept, so
+    # the connector is named here, per host.
+    wayleBarMonitor = "eDP-1";
+
     imports = [
       ./nix-tokens.nix
       ../../home-manager/marv.nix
