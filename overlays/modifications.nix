@@ -116,20 +116,4 @@ in
   };
 
   attic = inputs.attic.packages.${system}.attic;
-
-  cliamp = pin "cliamp" rec {
-    version = "1.63.2";
-    src = prev.fetchFromGitHub {
-      owner = "bjarneo";
-      repo = "cliamp";
-      tag = "v${version}";
-      hash = "sha256-HqFDT8jGvrKqb6bupvXqZ5ECpvColRB5dXPwcKCX4RQ=";
-    };
-    vendorHash = "sha256-WYyv0w5KFA15axb+NA9tClfc1H4Znj8kI2boR8XziXg=";
-    meta = {
-      description = "CLI amp – a simple audio volume controller for the terminal";
-      homepage = "https://github.com/bjarneo/cliamp";
-      license = prev.lib.licenses.mit;
-    };
-  };
 }
