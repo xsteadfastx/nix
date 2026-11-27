@@ -412,6 +412,40 @@
           PAPERLESS_API_KEY_FILE = config.sops.secrets."mcp-paperless-token".path;
         };
       };
+
+      # REA (morluto/rea): reverse engineering of binaries, JS/Electron, .NET and
+      # websites. nixpkgs `rea` instead of upstream's `npx rea-agents setup`, which
+      # would hand-edit ~/.claude.json. 255 tools: pi only starts it on first call
+      # (pi-mcp-adapter, lazy), Claude Code spawns it per session (~100 MiB idle)
+      # but defers its tools behind ToolSearch. No native engine configured, so
+      # binary decompilation reports provider_unavailable until GHIDRA_INSTALL_DIR
+      # is set.
+      extra.rea = {
+        # nixpkgs-unstable only: not in the pinned 26.05 stable tree.
+        bin = pkgs.unstable.rea;
+        command = "rea";
+        # Global server flag. `rea mcp` serves the same tools over a pipe and
+        # only prints help when started from a terminal.
+        args = [ "--mcp" ];
+        # Analysis engines. rea only finds tools through these absolute paths;
+        # its prlimit default is /usr/bin/prlimit, which NixOS lacks.
+        env =
+          let
+            prlimit = "${pkgs.util-linux}/bin/prlimit";
+          in
+          {
+            GHIDRA_INSTALL_DIR = "${pkgs.unstable.ghidra}/lib/ghidra";
+            # The JDK nixpkgs builds ghidra with; lib/ghidra has no java of its own.
+            JAVA_HOME = pkgs.unstable.jdk25.home;
+            REA_UNBLOB_COMMAND = lib.getExe pkgs.unstable.unblob;
+            REA_BINWALK_COMMAND = lib.getExe pkgs.unstable.binwalk;
+            REA_TSHARK_COMMAND = "${pkgs.unstable.wireshark-cli}/bin/tshark";
+            REA_FIRMWARE_PRLIMIT_COMMAND = prlimit;
+            REA_JAVASCRIPT_PRLIMIT_COMMAND = prlimit;
+            REA_TSHARK_PRLIMIT_COMMAND = prlimit;
+            REA_EVM_PRLIMIT_COMMAND = prlimit;
+          };
+      };
     };
   };
 }
