@@ -28,6 +28,15 @@
     '';
 
     extraConfig = ''
+      # Anubis (PoW anti-scraper) in front of Forgejo on :3000 (see
+      # hosts/abed/anubis.nix). X-Real-IP so Anubis sees the real client, not
+      # the loopback address.
+      (anubis) {
+        reverse_proxy 127.0.0.1:8923 {
+          header_up X-Real-IP {remote_host}
+        }
+      }
+
       (badbots) {
         @badbots {
           header User-Agent *AhrefsBot*
@@ -53,17 +62,24 @@
     virtualHosts = {
       "git.xsfx.dev" = {
         extraConfig = ''
-          import badbots
+          # route keeps this order; bare, Caddy would sort the handles ahead of
+          # the badbots abort.
+          route {
+            import badbots
 
-          defender block {
-            ranges aliyun vpn aws deepseek githubcopilot gcloud oci azurepubliccloud openai mistral vultr cloudflare digitalocean linode
-          }
-
-          # Proxy to Anubis (PoW anti-scraper), which forwards to Forgejo on
-          # :3000 (see hosts/abed/anubis.nix). X-Real-IP so Anubis sees the real
-          # client, not the loopback address.
-          reverse_proxy 127.0.0.1:8923 {
-            header_up X-Real-IP {remote_host}
+            # Read-only git fetches skip the IP blocklist: GitHub Actions runners
+            # come from AWS and Azure and fetch this repo's flake inputs from
+            # here. Pushes (git-receive-pack) and the web UI stay blocked.
+            @gitfetch expression path('*/git-upload-pack') || (path('*/info/refs') && {query.service} == 'git-upload-pack')
+            handle @gitfetch {
+              import anubis
+            }
+            handle {
+              defender block {
+                ranges aliyun vpn aws deepseek githubcopilot gcloud oci azurepubliccloud openai mistral vultr cloudflare digitalocean linode
+              }
+              import anubis
+            }
           }
         '';
       };
