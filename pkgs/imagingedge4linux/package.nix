@@ -11,13 +11,13 @@
 }:
 stdenv.mkDerivation {
   pname = "imagingedge4linux";
-  version = "0-unstable-2025-04-07";
+  version = "0.2-unstable-2026-10-18";
 
   src = fetchFromGitHub {
     owner = "schorschii";
     repo = "ImagingEdge4Linux";
-    rev = "12cff443eb39a125ba801b3b1ecbe892c93b860f";
-    hash = "sha256-zE78ZlrKREb0zC4Ug9PSjcTO0vEpnE7mVuI+DNywy5w=";
+    rev = "5317d416ed5296fc5a3343442b17276afb9ccc77";
+    hash = "sha256-viI7G61XJ6o+cYNjIQQ0NGR2PYb6IQvUJmapYQ3+qHE=";
   };
 
   doCheck = false;
