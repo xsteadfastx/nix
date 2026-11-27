@@ -87,6 +87,5 @@ stdenv.mkDerivation rec {
     homepage = "https://clover.moe/lilium-voyager";
     license = licenses.gpl2Only;
     platforms = [ "x86_64-linux" ];
-    maintainers = with maintainers; [ marv ];
   };
 }

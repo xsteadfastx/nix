@@ -165,7 +165,6 @@ in
       description = "CLI amp – a simple audio volume controller for the terminal";
       homepage = "https://github.com/bjarneo/cliamp";
       license = prev.lib.licenses.mit;
-      maintainers = with prev.lib.maintainers; [ marv ];
     };
   };
 }

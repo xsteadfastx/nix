@@ -95,7 +95,6 @@ python3Packages.buildPythonApplication (finalAttrs: {
     '';
     homepage = "https://meshy-app.org";
     license = lib.licenses.gpl3Plus;
-    maintainers = with lib.maintainers; [ marv ];
     platforms = lib.platforms.linux;
     mainProgram = "meshy";
   };
