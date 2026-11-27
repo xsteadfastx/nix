@@ -1,0 +1,40 @@
+name: update-packages
+on:
+  schedule:
+    - cron: "0 4 * * *" # daily 04:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write # to dispatch check.yml
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-nix
+      # A failed package must not hold back the others: open the PR anyway,
+      # fail the job at the end.
+      - id: update
+        continue-on-error: true
+        run: nix run .#update-packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # nix-update's GitHub API calls
+      - id: pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: update-packages
+          commit-message: "chore(pkgs): update packages"
+          title: "chore(pkgs): update packages"
+          body: Automated `nix run .#update-packages`.
+          delete-branch: true
+      # PRs opened with GITHUB_TOKEN trigger no workflows; workflow_dispatch is
+      # the exception.
+      - if: steps.pr.outputs.pull-request-operation == 'created' || steps.pr.outputs.pull-request-operation == 'updated'
+        run: gh workflow run check.yml --ref update-packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - if: steps.update.outcome == 'failure'
+        run: |
+          echo "::error::some packages failed to update, see the update step"
+          exit 1

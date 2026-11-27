@@ -2,6 +2,7 @@ name: check
 on:
   push:
   pull_request:
+  workflow_dispatch: # update-packages.yml runs it on its PR branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

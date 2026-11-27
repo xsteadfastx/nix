@@ -53,7 +53,8 @@ nix run .#update-packages      # bump version+hash of our pkgs/ packages
 
 `update-packages` runs the `passthru.updateScript` (`nix-update-script`) of
 every package in `pkgs/default.nix`; arguments go straight to nix-update
-(`nix run .#update-packages -- --build`).
+(`nix run .#update-packages -- --build`). CI runs it daily
+(`.github/workflows/update-packages.yml`) and opens a PR with the bumps.
 
 Build a host without switching (no sudo needed — `marv` is in `trusted-users`):
 
