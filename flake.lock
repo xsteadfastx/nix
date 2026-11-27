@@ -148,11 +148,11 @@
         "pre-commit": "pre-commit_2"
       },
       "locked": {
-        "lastModified": 1795604564,
-        "narHash": "sha256-shsjOVotS6MafB0Oj8CBZC6BLT82l8b7rLiml1uYgHw=",
+        "lastModified": 1795778387,
+        "narHash": "sha256-Kil2TiC3kcK1xi6aXwu75PTD/5+DF21GWJ8VlqLRjwE=",
         "ref": "refs/heads/main",
-        "rev": "bbf8a144f89cb9e7799335cbfd797d5c8862aeee",
-        "revCount": 95,
+        "rev": "f9ca3d3cf568b25625832c14e531a78d03bd28aa",
+        "revCount": 97,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/coding-agent.git"
       },
