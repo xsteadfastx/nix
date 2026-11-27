@@ -6,7 +6,7 @@
 }:
 buildGo126Module rec {
   pname = "localsend-go";
-  version = "1.2.7";
+  version = "1.3.0";
 
   doCheck = false;
 
@@ -14,7 +14,7 @@ buildGo126Module rec {
     owner = "meowrain";
     repo = "localsend-go";
     rev = "v${version}";
-    hash = "sha256-Aier2AhFVi0jJ34VQtCGvOw1mHmfHH6a2697iYyZggo=";
+    hash = "sha256-qipDTrugEIiI04Jth+Ny14Bhk3Gc+ac5E5jH9mkPr00=";
   };
 
   vendorHash = "sha256-LtYzNt5YmBJWFB6tIidy+4xzgXOwcmy0Yms3Ppx7ooY=";
