@@ -19,6 +19,7 @@ pkgs: {
   importsony = pkgs.callPackage ./importsony/package.nix { };
   importsony-jpegs = pkgs.callPackage ./importsony-jpegs/package.nix { };
   paperless-mcp = pkgs.callPackage ./paperless-mcp/package.nix { };
+  jadx-headless-mcp = pkgs.callPackage ./jadx-headless-mcp/package.nix { };
   zettelrobbe = pkgs.callPackage ./zettelrobbe/package.nix { };
   calibre-dedrm-plugin = pkgs.callPackage ./calibre-dedrm-plugin/package.nix { };
   calibre-deacsm-plugin = pkgs.callPackage ./calibre-deacsm-plugin/package.nix { };
