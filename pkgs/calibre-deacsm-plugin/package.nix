@@ -30,8 +30,8 @@ let
   src = fetchFromGitHub {
     owner = "Leseratte10";
     repo = "acsm-calibre-plugin";
-    rev = "4eff3ee35ac760ccad063639401b303b7207aa9c";
-    hash = "sha256-vHWPxwF4UlSzrEkfC6YmQFNBUJNifZ0vzynzN68UPh0=";
+    rev = "c3f50909d20a6eac59cf22a6ccd783600c230820";
+    hash = "sha256-acEKvhkkNbEF+dU8ntxA2AUvHW16BnUkhokmmxJsTSI=";
   };
 
   # Prebuilt module zips from the repo's `config` release, as upstream's
@@ -52,7 +52,7 @@ in
 runCommand "calibre-deacsm-plugin"
   {
     # for nix-update
-    version = "0-unstable-2026-09-23";
+    version = "0.0.16-unstable-2026-11-19";
     passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
     inherit src asn1crypto oscrypto;
     nativeBuildInputs = [
