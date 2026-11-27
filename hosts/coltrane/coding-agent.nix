@@ -440,6 +440,10 @@
             REA_UNBLOB_COMMAND = lib.getExe pkgs.unstable.unblob;
             REA_BINWALK_COMMAND = lib.getExe pkgs.unstable.binwalk;
             REA_TSHARK_COMMAND = "${pkgs.unstable.wireshark-cli}/bin/tshark";
+            # Android. Version pinned by rea, see pkgs/jadx-headless-mcp.
+            REA_JADX_MCP_JAR = "${pkgs.jadx-headless-mcp}/share/java/jadx-headless-mcp.jar";
+            REA_APKTOOL_COMMAND = lib.getExe pkgs.unstable.apktool;
+            REA_ADB_PATH = "${pkgs.unstable.android-tools}/bin/adb";
             REA_FIRMWARE_PRLIMIT_COMMAND = prlimit;
             REA_JAVASCRIPT_PRLIMIT_COMMAND = prlimit;
             REA_TSHARK_PRLIMIT_COMMAND = prlimit;
