@@ -15,6 +15,7 @@ which is what `nixosConfigurations` is generated from.
 | `hosts/<host>/` | one machine: `configuration.nix`, hardware, service modules, `secrets.nix` |
 | `modules/` | reusable NixOS / Home Manager modules (`base`, `users`, `ssh`, `tlsrouter`, …) |
 | `home-manager/` | per-user config (`marv.nix` + modules) |
+| `checks.nix` | flake checks (pre-commit, paperless-enrich self-test) |
 | `overlays/` | `additions` (our `pkgs/`), `modifications` (overrides, wrappers), `unstable` (plain `pkgs.unstable`), nixpak, coding-agent |
 | `pkgs/` | custom packages, listed in `pkgs/default.nix` |
 | `lib/` | per-host helpers the hive calls with that host's values (node exporter, the small Hetzner VM profile) |
