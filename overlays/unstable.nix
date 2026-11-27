@@ -1,31 +1,15 @@
 {
   inputs,
-  packageOverrides,
   ...
 }:
-
-# Factory: given the custom-package overlay (`packageOverrides`) and the
-# coding-agent data (`codingAgent`), expose a single nested nixpkgs-unstable
-# instance as `pkgs.unstable`. Importing a second channel once, centrally, is
-# the idiomatic way to mix channels — it avoids the "1000 instances of
-# nixpkgs" antipattern of scattering `import nixpkgs-unstable {...}` across
-# modules. Reachable anywhere `pkgs` is (system and, via useGlobalPkgs,
-# home-manager) as `pkgs.unstable.<name>`.
-#
-# `import` (not `.legacyPackages`) is required for `allowUnfree`; the same
-# packageOverrides are applied so custom packages resolve identically on both
-# channels (`pkgs.foo` = stable, `pkgs.unstable.foo` = unstable). The
-# coding-agent repo's overlay is NOT applied here: its packages build against
-# the channel that repo pins, not ours (see coding-agent.nix).
+# nixpkgs-unstable as `pkgs.unstable`, imported once, centrally (avoids the
+# "1000 instances of nixpkgs" antipattern). Plain on purpose: our overlays only
+# apply to the main channel; a package that needs unstable picks it explicitly
+# (`pkgs.unstable.callPackage` in pkgs/default.nix). `import`, not
+# `.legacyPackages`, so `allowUnfree` can be set.
 _final: prev: {
   unstable = import inputs.nixpkgs-unstable {
     inherit (prev.stdenv.hostPlatform) system;
     config.allowUnfree = true;
-    overlays = [
-      packageOverrides
-      # tint the zellij pane red while an ssh session runs — must build against
-      # nixpkgs-unstable, which is the only channel with pkgsCross.wasm32-wasip1
-      (_: prev: { zellij-ssh-tint = prev.callPackage ../pkgs/zellij-ssh-tint/package.nix { }; })
-    ];
   };
 }

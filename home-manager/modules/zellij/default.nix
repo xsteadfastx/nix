@@ -625,7 +625,7 @@ in
             // tints a pane red while it runs `ssh <host>` — see /pkgs/zellij-ssh-tint.
             // color is configurable; the plugin passively watches PaneUpdate, no
             // wrapper or remote changes needed.
-            "file:${pkgs.unstable.zellij-ssh-tint}" {
+            "file:${pkgs.zellij-ssh-tint}" {
                 // NOT plain red: set_pane_color paints the pane's whole grid
                 // background, not just its frame, so the tint has to stay near the
                 // background's own luminance or every colour an app draws on it

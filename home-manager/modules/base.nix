@@ -77,11 +77,11 @@
     tectonic
     unstable.cook-cli
     unstable.babelfish
-    unstable.compose2nix
+    compose2nix
     unstable.croc
     unstable.doggo
     unstable.fx
-    unstable.githubCliTokenWrapped
+    githubCliTokenWrapped
     unstable.glab
     unstable.go-task
     unstable.pandoc
@@ -94,10 +94,10 @@
     unstable.sshfs
 
     # camera
-    unstable.airmtp
-    unstable.imagingedge4linux
-    unstable.importsony
-    unstable.importsony-jpegs
+    airmtp
+    imagingedge4linux
+    importsony
+    importsony-jpegs
 
     # music
     unstable.picard

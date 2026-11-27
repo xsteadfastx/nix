@@ -3,11 +3,8 @@
   ...
 }:
 
-# Custom package overrides for this user's machines. Factored into a named
-# overlay so it can be applied to BOTH the stable base pkgs AND the nested
-# unstable instance (see default.nix) without duplicating definitions. It
-# deliberately does NOT define `unstable` itself — applying it to the unstable
-# import would otherwise recurse forever (unstable.unstable.unstable...).
+# Changes to nixpkgs packages (version pins, patches), wrappers, and packages
+# taken from flake inputs. Our own packages are in additions.nix.
 final: prev:
 let
   system = prev.stdenv.hostPlatform.system;
@@ -49,15 +46,6 @@ in
     exec ${final.github-cli}/bin/gh "$@"
   '';
 
-  localsend-go = prev.callPackage ../pkgs/localsend-go.nix { };
-
-  # ESP32-C5 ITS-G5 -> MQTT bridge for the duemmel receiver (hosts/duemmel).
-  its-g5-bridge = prev.callPackage ../pkgs/its-g5-bridge { };
-
-  # Go (bridgev2) mautrix-telegram, shadows nixpkgs' legacy Python one. Builds
-  # against cgo libolm (olm-3.2.16) — only on hosts that permit it (dipper does).
-  mautrix-telegram = prev.callPackage ../pkgs/mautrix-telegram.nix { };
-
   # Go (bridgev2) mautrix-slack pinned past the "missing version data" login
   # bug (mautrix/slack#95, merged; lands in v0.2608.0), which aborts token-login
   # before the real credential check.
@@ -78,20 +66,18 @@ in
     doCheck = false;
   };
 
-  meshtui = prev.python3Packages.callPackage ../pkgs/meshtui/package.nix { };
-
-  meshy = prev.callPackage ../pkgs/meshy/package.nix { };
-
-  meshtui2 = prev.python3Packages.callPackage ../pkgs/meshtui2/package.nix { };
-
   meshtuiProfile = profileBinOnly "meshtui" final.meshtui;
   meshtui2Profile = profileBinOnly "meshtui2" final.meshtui2;
 
-  lilium-voyager = prev.callPackage ../pkgs/lilium-voyager.nix { };
-
-  jetbrains-mono-nerd = prev.callPackage ../pkgs/jetbrains-mono-nerd/package.nix { };
-
   airmtp = inputs.airmtp.packages.${system}.default;
+
+  # FluffyChat (from unstable) with the Catppuccin palette compiled in.
+  fluffychat-catppuccin = prev.callPackage ../pkgs/fluffychat-catppuccin/package.nix {
+    fluffychat = final.unstable.fluffychat;
+    # the palette repo, not a built port: evaluation-only
+    paletteFile = "${inputs.catppuccin.packages.${system}.palette}/palette.json";
+    inherit (import ../lib/catppuccin.nix) flavor;
+  };
   compose2nix = inputs.compose2nix.packages.${system}.default;
 
   # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
@@ -118,14 +104,6 @@ in
       })
     ) prev.epkowa.plugins;
   };
-
-  imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
-  importsony = prev.callPackage ../pkgs/importsony/package.nix { };
-  importsony-jpegs = prev.callPackage ../pkgs/importsony-jpegs/package.nix { };
-  paperless-mcp = prev.callPackage ../pkgs/paperless-mcp/package.nix { };
-  zettelrobbe = prev.callPackage ../pkgs/zettelrobbe/package.nix { };
-  calibre-dedrm-plugin = prev.callPackage ../pkgs/calibre-dedrm-plugin/package.nix { };
-  calibre-deacsm-plugin = prev.callPackage ../pkgs/calibre-deacsm-plugin/package.nix { };
 
   attic = inputs.attic.packages.${system}.attic;
 

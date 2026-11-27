@@ -78,6 +78,9 @@
         };
         pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
 
+        # the pkgs/ packages, built against the same overlaid set the hosts get
+        additions = import ./pkgs (pkgs.extend (import ./overlays { inherit inputs; }));
+
         preCommit = import ./pre-commit.nix {
           inherit (pkgs) convco;
           inherit (pkgsUnstable)
@@ -112,15 +115,10 @@
         '';
         devShells.default = preCommitGen.devShell;
         inherit (preCommitGen) formatter;
-        packages.phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
-        packages.paperless-mcp = pkgs.callPackage ./pkgs/paperless-mcp/package.nix { };
-        packages.zettelrobbe = pkgs.callPackage ./pkgs/zettelrobbe/package.nix { };
-        packages.jetbrains-mono-nerd = pkgs.callPackage ./pkgs/jetbrains-mono-nerd/package.nix { };
-        packages.lilium-voyager = pkgs.callPackage ./pkgs/lilium-voyager.nix { };
-        packages.mautrix-telegram = pkgs.callPackage ./pkgs/mautrix-telegram.nix { };
-        # only nixpkgs-unstable has pkgsCross.wasm32-wasip1 (needed for the wasm build)
-        packages.zellij-ssh-tint = pkgsUnstable.callPackage ./pkgs/zellij-ssh-tint/package.nix { };
-        packages.duemmel-sdcard-img = import ./hosts/duemmel/sdcard-img.nix { inherit inputs; };
+        packages = additions // {
+          phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
+          duemmel-sdcard-img = import ./hosts/duemmel/sdcard-img.nix { inherit inputs; };
+        };
       }
     );
 }
