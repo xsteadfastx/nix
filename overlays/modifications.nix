@@ -21,6 +21,16 @@ let
         ln -s "$f" "$out/bin/$(basename "$f")"
       done
     '';
+
+  # Version bump of a nixpkgs package; warns once nixpkgs has caught up.
+  pin =
+    name: attrs:
+    let
+      pkg = prev.${name}.overrideAttrs attrs;
+    in
+    prev.lib.warnIf (prev.lib.versionAtLeast prev.${name}.version pkg.version)
+      "overlay: nixpkgs has ${name} ${prev.${name}.version} >= pinned ${pkg.version}, drop the override"
+      pkg;
 in
 {
   # `gh` wrapper that authenticates from the sops-decrypted token file at
@@ -51,7 +61,7 @@ in
   # before the real credential check.
   # ponytail: the pin (nixpkgs 26.05) ships 26.04, so this stays until a flake
   # update brings nixpkgs past v0.2608.0 -- then delete this override.
-  mautrix-slack = prev.mautrix-slack.overrideAttrs rec {
+  mautrix-slack = pin "mautrix-slack" rec {
     version = "26.11";
     tag = "v0.2611.0";
     src = prev.fetchFromGitHub {
@@ -107,7 +117,7 @@ in
 
   attic = inputs.attic.packages.${system}.attic;
 
-  cliamp = prev.cliamp.overrideAttrs rec {
+  cliamp = pin "cliamp" rec {
     version = "1.63.2";
     src = prev.fetchFromGitHub {
       owner = "bjarneo";
