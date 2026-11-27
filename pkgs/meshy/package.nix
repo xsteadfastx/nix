@@ -30,7 +30,7 @@
 # `meson` is the app package that carries the hook.
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "meshy";
-  version = "26.09";
+  version = "26.11.1";
   pyproject = false;
 
   src = fetchFromGitea {
@@ -38,7 +38,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     owner = "sesivany";
     repo = "meshy";
     tag = finalAttrs.version;
-    hash = "sha256-U23MuusLKePra/qe+J1Co7aeIwmVmKTegE8BM8j4md4=";
+    hash = "sha256-gP/h3h9m4ld2BR460iGaUrQUGZBN65Nyj8HwkIZnPSY=";
   };
 
   nativeBuildInputs = [
