@@ -94,27 +94,6 @@ in
   airmtp = inputs.airmtp.packages.${system}.default;
   compose2nix = inputs.compose2nix.packages.${system}.default;
 
-  # swaync only whitelists <b>/<u>/<i> in notification bodies
-  # (src/notification/notification.vala: TAGS). Any body containing an
-  # <a href> (e.g. a Matrix client's link, or a Chromium web-push
-  # notification) makes Pango.parse_markup throw, which drops into an
-  # escape-fallback that HTML-escapes the WHOLE body and restores only
-  # b/u/i -- so the anchor renders as literal `<a href="...">text</a>`
-  # tag-soup, and any other markup in that same body is lost with it.
-  # Upstream tracks this as a missing feature (clickable hyperlinks), not
-  # a bug: https://github.com/ErikReider/SwayNotificationCenter/issues/220
-  # (open since 2023). A real fix exists upstream --
-  # https://github.com/ErikReider/SwayNotificationCenter/pull/755 -- but
-  # it targets `main`, doesn't apply cleanly to this pinned v0.12.6, and
-  # is itself unreviewed; not worth backporting for this.
-  # This patch only strips the <a> tags before the markup parse, so the
-  # rest of the body renders as clean text instead of garbage -- NOT
-  # clickable links. DROP THIS PATCH if PR #755 (or equivalent) merges
-  # and the pin moves past it.
-  swaynotificationcenter = prev.swaynotificationcenter.overrideAttrs (o: {
-    patches = (o.patches or [ ]) ++ [ ../pkgs/swaync/anchor-tags.patch ];
-  });
-
   # Hardens the flaky upstream `epkowa` plugin builds. Each plugin extracts
   # an Epson rpm via `rpm2cpio X | cpio -idmv`; stdenv sets `pipefail`, and
   # cpio exits after the archive trailer while rpm2cpio is still writing, so
@@ -139,8 +118,6 @@ in
       })
     ) prev.epkowa.plugins;
   };
-
-  quickemu = inputs.quickemu.packages.${system}.default;
 
   imagingedge4linux = prev.callPackage ../pkgs/imagingedge4linux/package.nix { };
   importsony = prev.callPackage ../pkgs/importsony/package.nix { };

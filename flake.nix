@@ -28,8 +28,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
-    microvm.inputs.nixpkgs.follows = "nixpkgs-unstable";
-    microvm.url = "github:microvm-nix/microvm.nix";
     nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
     nixos-anywhere.url = "github:nix-community/nixos-anywhere";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
@@ -39,8 +37,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     pre-commit.inputs.pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs-unstable";
     pre-commit.url = "git+https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git";
-    quickemu.inputs.nixpkgs.follows = "nixpkgs";
-    quickemu.url = "github:quickemu-project/quickemu";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     srvos.inputs.nixpkgs.follows = "nixpkgs";
