@@ -303,23 +303,11 @@ in
             searching-icon = toolIcon "bluetooth";
           };
 
-          # Wayle picks the popup output itself and picks it ONCE, when its
-          # single popup window is built at shell start: `popup-monitor`
-          # (default "primary") resolves to the first monitor GDK reports, which
-          # on this box is the leftmost output -- eDP-1, the laptop panel. It is
-          # not re-evaluated per notification (the window is only hidden/shown),
-          # and niri's layer-shell fallback (`layout.active_output()`, i.e. the
-          # pointer's output) applies only when wayle sets no monitor at all,
-          # which no value of `popup-monitor` can produce: "primary" always sets
-          # one and an unknown connector falls back to the first monitor too.
-          # So with the panel on, popups are pinned to the laptop whatever screen
-          # you work on; with the panel off (lid shut, DPMS) the leftmost output
-          # becomes the external and popups land there instead -- that is what
-          # made them look like they followed the active screen. wayle 0.7.1 and
-          # master only accept "primary" or a connector (upstream #246, "all" /
-          # "focused", is still open), so name the connector if the bar should
-          # pop up on a specific screen: an unplugged one falls back to the first
-          # monitor. Check with `notify-send a b; niri msg layers`.
+          # Popups go to the active output: wayle is patched (overlays/wayle/)
+          # so the default popup-monitor "primary" sets no monitor and niri
+          # places each popup. Unpatched, "primary" meant the
+          # first GDK monitor, fixed at shell start. Check with
+          # `notify-send a b; niri msg layers`.
           notifications = {
             icon-bg-color = ctp.hex "surface0";
             icon-color = ctp.hex "subtext0";

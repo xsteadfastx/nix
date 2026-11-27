@@ -116,4 +116,11 @@ in
   };
 
   attic = inputs.attic.packages.${system}.attic;
+
+  # Notification popups on the active output instead of the first monitor
+  # (wayle-rs/wayle#246 is open): popup-monitor "primary" sets no monitor and
+  # niri places the popup.
+  wayle = prev.wayle.overrideAttrs (o: {
+    patches = (o.patches or [ ]) ++ [ ./wayle/notification-popup-active-output.patch ];
+  });
 }
