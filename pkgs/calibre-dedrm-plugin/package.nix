@@ -19,14 +19,14 @@
 # extracted.
 runCommand "calibre-dedrm-plugin"
   rec {
-    version = "10.0.34";
+    version = "10.0.35";
     # skip the junk `v10.0.6s` tag, which outranks 10.0.35
     passthru.updateScript = nix-update-script {
       extraArgs = [ "--version-regex=^v?([0-9]+(?:\\.[0-9]+)+)$" ];
     };
     src = fetchurl {
       url = "https://github.com/Satsuoni/DeDRM_tools/releases/download/v${version}/DeDRM_tools.zip";
-      hash = "sha256-+XQxNBSQeKBz3i0p2nUP11NiINtesm0SznWNUv3qFOE=";
+      hash = "sha256-XIXM6VSxeDbCtCHWrosxPwqusZCpo/gYgWNtvIDiW8M=";
     };
     nativeBuildInputs = [ unzip ];
   }
