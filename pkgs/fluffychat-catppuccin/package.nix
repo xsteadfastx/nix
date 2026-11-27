@@ -96,7 +96,10 @@ in
 fluffychat.overrideAttrs (old: {
   # pname/version stay upstream's: the desktop item's `exec` and the app dir
   # under $out/app are derived from them.
-  patches = (old.patches or [ ]) ++ [ ./themes.patch ];
+  patches = (old.patches or [ ]) ++ [
+    ./themes.patch
+    ./clipboard-image.patch # pasted images went out as nameless files
+  ];
 
   postPatch = (old.postPatch or "") + ''
     install -Dm644 ${catppuccinTheme} lib/config/catppuccin_theme.g.dart

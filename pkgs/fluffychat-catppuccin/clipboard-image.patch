@@ -1,0 +1,25 @@
+--- a/lib/pages/chat/chat.dart
++++ b/lib/pages/chat/chat.dart
+@@ -821,10 +821,21 @@
+ 
+   Future<void> sendImageFromClipBoard(Uint8List? image) async {
+     if (image == null) return;
++    // Without a name and mimetype the image is sent as a nameless m.file.
++    final mimeType = lookupMimeType('', headerBytes: image) ?? 'image/png';
++    // dart:io's XFile ignores `name` and takes it from `path`.
++    final fileName = 'image.${extensionFromMime(mimeType) ?? 'png'}';
+     await showAdaptiveDialog(
+       context: context,
+       builder: (c) => SendFileDialog(
+-        files: [XFile.fromData(image)],
++        files: [
++          XFile.fromData(
++            image,
++            name: fileName,
++            path: fileName,
++            mimeType: mimeType,
++          ),
++        ],
+         room: room,
+         outerContext: context,
+         threadRootEventId: activeThreadId,
