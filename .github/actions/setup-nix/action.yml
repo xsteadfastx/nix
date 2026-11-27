@@ -6,4 +6,4 @@ runs:
     - uses: DeterminateSystems/nix-installer-action@v22
     - uses: nix-community/cache-nix-action@v7
       with:
-        primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+        primary-key: nix-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.lock') }}

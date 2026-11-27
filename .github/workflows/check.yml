@@ -14,10 +14,15 @@ jobs:
       - uses: ./.github/actions/setup-nix
       - run: nix flake check
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        host: [abed, coltrane, dipper]
+        include:
+          - {host: abed, runner: ubuntu-latest}
+          - {host: coltrane, runner: ubuntu-latest}
+          - {host: dipper, runner: ubuntu-latest}
+          - {host: duemmel, runner: ubuntu-24.04-arm}
+          - {host: phil, runner: ubuntu-24.04-arm}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-nix
