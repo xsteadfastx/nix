@@ -1,7 +1,11 @@
 {
+  additions,
   pkgs,
   preCommitGen,
 }:
+let
+  inherit (pkgs) lib;
+in
 {
   inherit (preCommitGen) pre-commit-check;
 
@@ -14,3 +18,4 @@
     touch $out
   '';
 }
+// lib.mapAttrs' (name: pkg: lib.nameValuePair "package-${name}" pkg) additions

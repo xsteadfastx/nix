@@ -104,7 +104,13 @@
         };
       in
       {
-        checks = import ./checks.nix { inherit pkgs preCommitGen; };
+        checks = import ./checks.nix {
+          inherit
+            pkgs
+            preCommitGen
+            additions
+            ;
+        };
         devShells.default = preCommitGen.devShell;
         inherit (preCommitGen) formatter;
         packages = additions // {
