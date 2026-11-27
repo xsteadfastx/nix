@@ -66,7 +66,7 @@ in
       # https://github.com/dj95/zjstatus/blob/main/examples/simple.kdl): mode +
       # session name, then tabs on the left; battery/cpu/ram/disk/clock on the right,
       # divided by a thin dim divider instead of the example's "::". Flat --
-      # no powerline arrows, matching waybar/neovim. Each segment is just
+      # no powerline arrows, matching neovim. Each segment is just
       # colored text on the one flat $surface1 bar background, not its own block.
       #
       # The swap_tiled_layout / swap_floating_layout blocks below are zellij's

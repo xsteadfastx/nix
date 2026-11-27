@@ -16,7 +16,7 @@ let
   # from it. JSON's \u takes exactly four hex digits, so codepoints above
   # U+FFFF -- most of the Material Design set -- have to be written as a UTF-16
   # surrogate pair; hand-writing those is how a glyph once silently turned into
-  # an empty string and waybar got `format: ""`.
+  # an empty string.
   # ponytail: no codepoint->char in nixpkgs lib (charToInt only, checked on
   # master), and literal glyphs would lose the codepoints the fc-query note
   # depends on. Leave it.
@@ -32,9 +32,8 @@ let
       # 55296 = 0xD800, 56320 = 0xDC00 (the UTF-16 surrogate bases)
       "\\u${hex4 (55296 + n / 1024)}\\u${hex4 (56320 + lib.mod n 1024)}";
 
-  # Glyphs for the metrics below -- the segments *both* bars carry. A bar with
-  # segments of its own keeps their glyphs in its own module (waybar's network,
-  # and volume icons live in home-manager/modules/waybar/default.nix).
+  # Glyphs for the metrics below. A bar with segments of its own keeps their
+  # glyphs in its own module.
   #
   # Every codepoint here was checked against the built font's charset
   # (fc-query / fontTools cmap) of pkgs/jetbrains-mono-nerd -- the
@@ -56,60 +55,23 @@ let
     batteryFull = glyph "F240";
   };
 
-  # The metrics on both bars. `waybar` / `zjstatus` are the names each side
-  # knows the segment by; `color` is a Catppuccin colour name; `states` are the
-  # warning/critical steps each side renders (waybar as CSS classes, the shell
-  # script as SGR).
+  # `color` is a Catppuccin colour name.
   segments = {
     cpu = {
-      waybar = "cpu";
-      zjstatus = "command_cpu";
       glyph = icons.cpu;
       color = "peach";
     };
     memory = {
-      waybar = "memory";
-      zjstatus = "command_ram";
       glyph = icons.memory;
       color = "sky";
     };
     disk = {
-      waybar = "disk";
-      zjstatus = "command_disk";
       glyph = icons.disk;
       color = "green";
-      # Order is the order both bars paint them in (waybar's CSS classes,
-      # the shell script's SGR); an attrset would sort them.
-      states = [
-        {
-          name = "warning";
-          at = 80;
-          color = "yellow";
-        }
-        {
-          name = "critical";
-          at = 90;
-          color = "red";
-        }
-      ];
     };
     battery = {
-      waybar = "battery";
-      zjstatus = "command_battery";
       color = "pink";
-      # The word both bars print while the machine is on mains but not topped
-      # off, and which waybar classes count as that (waybar puts the sysfs
-      # status on the module lowercased -- `not-charging` -- and swaps its whole
-      # format per class, so it repeats the word per class rather than having a
-      # placeholder for it). Nothing is printed while discharging or full.
-      word = "AC";
-      wordClasses = [
-        "charging"
-        "not-charging"
-        "plugged"
-        "unknown"
-      ];
-      # No single glyph: both bars step through these by charge level.
+      # No single glyph: the bars step through these by charge level.
       icons = [
         icons.batteryEmpty
         icons.batteryQuarter
@@ -118,42 +80,17 @@ let
         icons.batteryFull
       ];
       states = [
-        # Charge, so the comparison is the other way round from disk's:
-        # waybar's battery module is the one module that passes
-        # `lesser = true` to getState.
         {
           name = "warning";
-          at = 30;
           color = "yellow";
-          lesser = true;
         }
         {
           name = "critical";
-          at = 15;
           color = "red";
-          lesser = true;
-        }
-        # Not thresholds: waybar puts one of these classes on the module from
-        # the battery status instead. Last, so a plugged-in battery reads
-        # green even when it is also low.
-        {
-          name = "charging";
-          classes = [
-            "charging"
-            "plugged"
-          ];
-          color = "green";
-        }
-        {
-          name = "full";
-          classes = [ "full" ];
-          color = "green";
         }
       ];
     };
     clock = {
-      waybar = "clock";
-      zjstatus = "datetime";
       glyph = icons.clock;
       color = "overlay1";
     };
@@ -171,17 +108,6 @@ rec {
   # layout and the shell script).
   char = cp: builtins.fromJSON ''"${jsonEscape cp}"'';
 
-  # `states` as waybar's modules want it: name -> threshold, thresholds only
-  # (status-derived ones like battery.charging have no number).
-  statesFor =
-    name:
-    lib.listToAttrs (
-      map (state: lib.nameValuePair state.name state.at) (
-        lib.filter (state: state ? at) (segments.${name}.states or [ ])
-      )
-    );
-
-  # One state by name, for consumers that render just one of them (the shell
-  # script's warning/critical steps).
+  # One state by name (zellij's battery warning/critical colours).
   stateOf = segment: name: lib.findFirst (state: state.name == name) null segments.${segment}.states;
 }

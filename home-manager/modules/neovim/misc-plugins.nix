@@ -55,7 +55,7 @@ in
         	options = {
         		-- follows the active catppuccin flavour
         		theme = "catppuccin-nvim",
-        		-- Flat, no powerline arrows -- matches the waybar/zellij look.
+        		-- Flat, no powerline arrows -- matches the zellij look.
         		section_separators = "",
         		component_separators = "",
         	},
