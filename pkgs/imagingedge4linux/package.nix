@@ -20,7 +20,7 @@ stdenv.mkDerivation {
     hash = "sha256-viI7G61XJ6o+cYNjIQQ0NGR2PYb6IQvUJmapYQ3+qHE=";
   };
 
-  doCheck = false;
+  doCheck = true;
 
   nativeBuildInputs = [
     wrapGAppsNoGuiHook
