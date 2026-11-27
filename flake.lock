@@ -271,11 +271,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1791463433,
-        "narHash": "sha256-CNSHu5tKx//E9+ayDlfhk9C/3JVDFxiB0PKYQA37CC4=",
+        "lastModified": 1795697072,
+        "narHash": "sha256-JX00SVX791kyU+WIUkRRZNHymQt8rrkWxAUCqzHRCys=",
         "owner": "Mic92",
         "repo": "fast-nix-gc",
-        "rev": "b4471ec56911541f72f7a7b9b8fee7f42183f21b",
+        "rev": "7e0e446e3dcb1c9454685f8d346e13e456e7fa84",
         "type": "github"
       },
       "original": {
@@ -754,11 +754,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795549782,
-        "narHash": "sha256-0mlYwyAv7lUDD6HBgPMqBXjMcIfIZBsLryNnkspeIGs=",
+        "lastModified": 1795690694,
+        "narHash": "sha256-9QjYnidlKg7EtcPkr07D3epP7I1WuVBfA5nk47+I5dc=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "97a30ee0974b815496bec7b136af6b945bd65aef",
+        "rev": "ec39df522f291a1da3bee80d3ff67d99c57a17b0",
         "type": "github"
       },
       "original": {
@@ -1159,11 +1159,11 @@
         "pre-commit-hooks": "pre-commit-hooks_3"
       },
       "locked": {
-        "lastModified": 1795083662,
-        "narHash": "sha256-RFTKR/yrMRBuZtZ4z3QL9JbCvDn8EI8uZwYVOsfPJ14=",
+        "lastModified": 1795687208,
+        "narHash": "sha256-hzzTquHH0o+oa4vMiY7pecBeWUDdnnpFUq/Jy/+mJEc=",
         "ref": "refs/heads/main",
-        "rev": "7b9619dffcd93abef2f6501b97668e3a81823f97",
-        "revCount": 27,
+        "rev": "76c77621cc862f96c716bb6fe9a1c23be0b56f7e",
+        "revCount": 28,
         "type": "git",
         "url": "https://git.xsfx.dev/xsteadfastx/pre-commit-nix.git"
       },
