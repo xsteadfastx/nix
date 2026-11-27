@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   lib,
   fetchFromGitea,
   gettext,
@@ -84,6 +85,8 @@ python3Packages.buildPythonApplication (finalAttrs: {
   '';
 
   pythonImportsCheck = [ "meshy" ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "GTK4/libadwaita client for MeshCore companion radio nodes";

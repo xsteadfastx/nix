@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   fetchurl,
   runCommand,
   unzip,
@@ -17,9 +18,14 @@
 # kindledecr_*, Frida scripts) next to the two plugin zips; only the zips are
 # extracted.
 runCommand "calibre-dedrm-plugin"
-  {
+  rec {
+    version = "10.0.34";
+    # skip the junk `v10.0.6s` tag, which outranks 10.0.35
+    passthru.updateScript = nix-update-script {
+      extraArgs = [ "--version-regex=^v?([0-9]+(?:\\.[0-9]+)+)$" ];
+    };
     src = fetchurl {
-      url = "https://github.com/Satsuoni/DeDRM_tools/releases/download/v10.0.34/DeDRM_tools.zip";
+      url = "https://github.com/Satsuoni/DeDRM_tools/releases/download/v${version}/DeDRM_tools.zip";
       hash = "sha256-+XQxNBSQeKBz3i0p2nUP11NiINtesm0SznWNUv3qFOE=";
     };
     nativeBuildInputs = [ unzip ];

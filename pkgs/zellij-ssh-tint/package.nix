@@ -38,4 +38,9 @@ let
     };
   };
 in
-zellijPlugins.wrapper "ssh-tint" unwrapped
+# local source: drop the update script zellijPlugins.wrapper adds for nixpkgs' plugins
+(zellijPlugins.wrapper "ssh-tint" unwrapped).overrideAttrs (o: {
+  passthru = o.passthru // {
+    updateScript = null;
+  };
+})

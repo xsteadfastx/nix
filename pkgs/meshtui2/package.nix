@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   lib,
   buildPythonApplication,
   fetchFromGitHub,
@@ -77,6 +78,8 @@ buildPythonApplication (finalAttrs: {
     qrcode
     paho-mqtt
   ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "MeshCore and Meshtastic operator suite, gateway, and web companion";

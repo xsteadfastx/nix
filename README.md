@@ -16,6 +16,7 @@ which is what `nixosConfigurations` is generated from.
 | `modules/` | reusable NixOS / Home Manager modules (`base`, `users`, `ssh`, `tlsrouter`, …) |
 | `home-manager/` | per-user config (`marv.nix` + modules) |
 | `checks.nix` | flake checks (pre-commit, paperless-enrich self-test) |
+| `update-packages.nix` | `nix run .#update-packages`: bumps the packages in `pkgs/` |
 | `overlays/` | `additions` (our `pkgs/`), `modifications` (overrides, wrappers), `unstable` (plain `pkgs.unstable`), nixpak, coding-agent |
 | `pkgs/` | custom packages, listed in `pkgs/default.nix` |
 | `lib/` | per-host helpers the hive calls with that host's values (node exporter, the small Hetzner VM profile) |
@@ -47,7 +48,12 @@ sudo nixos-rebuild switch      # build and activate on this host
 nix flake check                # lint + pre-commit checks (the CI gate)
 nix fmt                        # format; run before committing
 nix flake update               # bump locked inputs (then rebuild)
+nix run .#update-packages      # bump version+hash of our pkgs/ packages
 ```
+
+`update-packages` runs the `passthru.updateScript` (`nix-update-script`) of
+every package in `pkgs/default.nix`; arguments go straight to nix-update
+(`nix run .#update-packages -- --build`).
 
 Build a host without switching (no sudo needed — `marv` is in `trusted-users`):
 

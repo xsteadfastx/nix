@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   buildNpmPackage,
   fetchFromGitHub,
   lib,
@@ -47,6 +48,8 @@ buildNpmPackage rec {
       --prefix PATH : ${lib.makeBinPath [ poppler-utils ]}
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "AI tagging for paperless-ngx (fork of clusterzx/paperless-ai)";

@@ -1,4 +1,9 @@
-{ buildGo126Module, fetchFromGitHub, ... }:
+{
+  buildGo126Module,
+  fetchFromGitHub,
+  nix-update-script,
+  ...
+}:
 buildGo126Module rec {
   pname = "localsend-go";
   version = "1.2.7";
@@ -19,4 +24,6 @@ buildGo126Module rec {
   ];
 
   env.CGO_ENABLED = 0;
+
+  passthru.updateScript = nix-update-script { };
 }

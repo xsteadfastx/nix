@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   fetchFromGitHub,
   gobject-introspection,
   libnotify,
@@ -39,4 +40,6 @@ stdenv.mkDerivation {
     install -Dm755 imaging-edge.py $out/bin/imagingedge4linux
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 }

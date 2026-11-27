@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   fetchFromGitHub,
   lib,
   makeWrapper,
@@ -53,6 +54,8 @@ stdenvNoCC.mkDerivation {
       --add-flags $out/lib/its-g5-bridge/its_g5_bridge.py
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
   meta = {
     description = "ESP32-C5 ITS-G5/USB-to-MQTT bridge for opentrafficmap.org";

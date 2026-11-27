@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   lib,
   stdenv,
   fetchurl,
@@ -81,6 +82,8 @@ stdenv.mkDerivation rec {
       --set LD_LIBRARY_PATH "$rpath"
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Engine replacement for Star Trek Voyager: Elite Force Holomatch";

@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   fetchFromGitHub,
   fetchurl,
   openssl,
@@ -50,6 +51,9 @@ let
 in
 runCommand "calibre-deacsm-plugin"
   {
+    # for nix-update
+    version = "0-unstable-2026-09-23";
+    passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
     inherit src asn1crypto oscrypto;
     nativeBuildInputs = [
       python3

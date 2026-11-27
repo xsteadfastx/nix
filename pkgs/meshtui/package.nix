@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   lib,
   buildPythonApplication,
   fetchPypi,
@@ -39,6 +40,8 @@ buildPythonApplication (finalAttrs: {
   ];
 
   pythonImportsCheck = [ "meshtui" ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Terminal User Interface for MeshCore companion radios";

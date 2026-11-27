@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   buildNpmPackage,
   fetchFromGitHub,
   lib,
@@ -33,6 +34,8 @@ buildNpmPackage rec {
     ln -s $out/lib/node_modules/@baruchiro/paperless-mcp/build/index.js $out/bin/paperless-mcp
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "MCP server for paperless-ngx";

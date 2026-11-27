@@ -110,6 +110,10 @@
         packages = additions // {
           phil-sdcard-img = import ./pkgs/phil-sdcard-img { inherit inputs; };
           duemmel-sdcard-img = import ./hosts/duemmel/sdcard-img.nix { inherit inputs; };
+          update-packages = pkgs.callPackage ./update-packages.nix {
+            inherit additions;
+            inherit (pkgsUnstable) nix-update;
+          };
         };
       }
     );

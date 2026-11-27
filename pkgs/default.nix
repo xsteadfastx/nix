@@ -1,5 +1,5 @@
-# Our packages. Added to pkgs by overlays/additions.nix and exposed as flake
-# `packages`.
+# Our packages. Added to pkgs by overlays/additions.nix, exposed as flake
+# `packages` and updated by update-packages.nix (via passthru.updateScript).
 pkgs: {
   localsend-go = pkgs.callPackage ./localsend-go.nix { };
 

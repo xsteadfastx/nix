@@ -1,4 +1,5 @@
 {
+  nix-update-script,
   buildGoModule,
   fetchFromGitHub,
   lib,
@@ -23,6 +24,8 @@ buildGoModule rec {
 
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ olm ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "A Matrix-Telegram puppeting bridge (Go rewrite, successors to mautrix-telegram)";
